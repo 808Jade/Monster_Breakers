@@ -18,9 +18,13 @@ CMesh::~CMesh()
 	{
 		for (int i = 0; i < m_nSubMeshes; i++)
 		{
-			if (m_ppd3dSubSetIndexBuffers[i]) m_ppd3dSubSetIndexBuffers[i]->Release();
-			if (m_ppnSubSetIndices[i]) delete[] m_ppnSubSetIndices[i];
+			if (m_ppd3dSubSetIndexBuffers && m_ppd3dSubSetIndexBuffers[i])
+				m_ppd3dSubSetIndexBuffers[i]->Release();
+
+			if (m_ppnSubSetIndices && m_ppnSubSetIndices[i])
+				delete[] m_ppnSubSetIndices[i];
 		}
+
 		if (m_ppd3dSubSetIndexBuffers) delete[] m_ppd3dSubSetIndexBuffers;
 		if (m_pd3dSubSetIndexBufferViews) delete[] m_pd3dSubSetIndexBufferViews;
 
@@ -36,13 +40,18 @@ void CMesh::ReleaseUploadBuffers()
 	if (m_pd3dPositionUploadBuffer) m_pd3dPositionUploadBuffer->Release();
 	m_pd3dPositionUploadBuffer = NULL;
 
+
 	if ((m_nSubMeshes > 0) && m_ppd3dSubSetIndexUploadBuffers)
 	{
 		for (int i = 0; i < m_nSubMeshes; i++)
 		{
-			if (m_ppd3dSubSetIndexUploadBuffers[i]) m_ppd3dSubSetIndexUploadBuffers[i]->Release();
+			if (m_ppd3dSubSetIndexUploadBuffers[i])
+			{
+				m_ppd3dSubSetIndexUploadBuffers[i]->Release();
+				m_ppd3dSubSetIndexUploadBuffers[i] = NULL;
+			}
 		}
-		if (m_ppd3dSubSetIndexUploadBuffers) delete[] m_ppd3dSubSetIndexUploadBuffers;
+		delete[] m_ppd3dSubSetIndexUploadBuffers;
 		m_ppd3dSubSetIndexUploadBuffers = NULL;
 	}
 }
@@ -551,11 +560,11 @@ void CStandardMesh::LoadMeshFromFile(ID3D12Device *pd3dDevice, ID3D12GraphicsCom
 			nReads = (UINT)::fread(&(m_nSubMeshes), sizeof(int), 1, pInFile);
 			if (m_nSubMeshes > 0)
 			{
-				m_pnSubSetIndices = new int[m_nSubMeshes];
-				m_ppnSubSetIndices = new UINT*[m_nSubMeshes];
+				m_pnSubSetIndices = new int[m_nSubMeshes]();
+				m_ppnSubSetIndices = new UINT*[m_nSubMeshes]();
 
-				m_ppd3dSubSetIndexBuffers = new ID3D12Resource*[m_nSubMeshes];
-				m_ppd3dSubSetIndexUploadBuffers = new ID3D12Resource*[m_nSubMeshes];
+				m_ppd3dSubSetIndexBuffers = new ID3D12Resource*[m_nSubMeshes]();
+				m_ppd3dSubSetIndexUploadBuffers = new ID3D12Resource*[m_nSubMeshes]();
 				m_pd3dSubSetIndexBufferViews = new D3D12_INDEX_BUFFER_VIEW[m_nSubMeshes];
 
 				for (int i = 0; i < m_nSubMeshes; i++)
