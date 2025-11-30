@@ -1218,10 +1218,10 @@ void CStartScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLi
 	m_GameObjects.clear();
 	m_GameObjects.resize(2);
 
-	m_pFontID = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"Enter ID : ", -0.5f, -0.25f);
+	m_pFontID = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"Enter ID : ", 0.75f, -0.55f);
 	m_GameObjects[0] = m_pFontID;
 
-	m_pFontIP = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"Enter IP : ", -0.5f, -0.55f);
+	m_pFontIP = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"Enter IP : ", 0.75f, -0.75f);
 	m_GameObjects[1] = m_pFontIP;
 
 
