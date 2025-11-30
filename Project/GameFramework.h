@@ -82,8 +82,6 @@ public:
 	const float Recognized_Range = 2.0f;
 
 	void InitItemToScene(long long id, ITEM_TYPE type, const XMFLOAT3& position)
-
-
 	{
 		if (m_pScene) {
 			m_pScene->AddItem(id, type, position);

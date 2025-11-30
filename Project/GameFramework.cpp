@@ -469,7 +469,7 @@ void CGameFramework::BuildObjects()
 	m_ppScenes = new CScene * [m_nScenes];
 
 	bool b = false;
-
+	m_nCurrentScene = 1;
 	if (m_nCurrentScene == 0) {
 		m_ppScenes[0] = new CStartScene();
 		m_ppScenes[0]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
@@ -481,11 +481,11 @@ void CGameFramework::BuildObjects()
 		m_ppScenes[1]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
 		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[1]->GetGraphicsRootSignature(), NULL);
 
-		m_ppScenes[1]->SetPlayer(pPlayer);
-		m_pPlayer->SetPosition(XMFLOAT3(3, 0, 20));
+		//m_ppScenes[1]->SetPlayer(pPlayer);
+		//m_pPlayer->SetPosition(XMFLOAT3(3, 0, 20));
 
-		m_ppScenes[1]->GenerateGameObjectsBoundingBox();
-		m_ppScenes[1]->InitializeCollisionSystem();
+		//m_ppScenes[1]->GenerateGameObjectsBoundingBox();
+		//m_ppScenes[1]->InitializeCollisionSystem();
 	}
 	else if (m_nCurrentScene == 2) {
 		m_ppScenes[2] = new CEndScene();

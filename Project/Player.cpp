@@ -476,52 +476,52 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 	CLoadedModelInfo *pPlayerModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, "Model/Player.bin", NULL);
 	SetChild(pPlayerModel->m_pModelRootObject, true);
 
-	m_pSkinnedAnimationController = new CAnimationController(pd3dDevice, pd3dCommandList, 7, pPlayerModel);
-	m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); // 기본
-	m_pSkinnedAnimationController->SetTrackAnimationSet(1, 1); // 걷기
-	m_pSkinnedAnimationController->SetTrackAnimationSet(2, 2); // 뛰기
-	m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); // 점프
-	m_pSkinnedAnimationController->SetTrackAnimationSet(4, 4); // 휘두르기
-	m_pSkinnedAnimationController->SetTrackAnimationSet(5, 5); // 웅크리기
-	m_pSkinnedAnimationController->SetTrackAnimationSet(6, 6); // 웅크리고 걷기
-	m_pSkinnedAnimationController->SetTrackEnable(1, false); 
-	m_pSkinnedAnimationController->SetTrackEnable(2, false); 
-	m_pSkinnedAnimationController->SetTrackEnable(3, false); 
-	m_pSkinnedAnimationController->SetTrackEnable(4, false); 
-	m_pSkinnedAnimationController->SetTrackEnable(5, false); 
-	m_pSkinnedAnimationController->SetTrackEnable(6, false); 
-	m_pSkinnedAnimationController->SetTrackType(3, 0);
-	m_pSkinnedAnimationController->SetTrackType(4, 0);
-
-	m_pSkinnedAnimationController->SetCallbackKeys(1, 2);
-#ifdef _WITH_SOUND_RESOURCE
-	m_pSkinnedAnimationController->SetCallbackKey(0, 0.1f, _T("Footstep01"));
-	m_pSkinnedAnimationController->SetCallbackKey(1, 0.5f, _T("Footstep02"));
-	m_pSkinnedAnimationController->SetCallbackKey(2, 0.9f, _T("Footstep03"));
-#else
-	//m_pSkinnedAnimationController->SetCallbackKey(1, 0, 0.2f, _T("Sound/Footstep01.wav"));
-	//m_pSkinnedAnimationController->SetCallbackKey(1, 1, 0.5f, _T("Sound/Footstep02.wav"));
-//	m_pSkinnedAnimationController->SetCallbackKey(1, 2, 0.39f, _T("Sound/Footstep03.wav"));
-#endif
-	//CAnimationCallbackHandler *pAnimationCallbackHandler = new CSoundCallbackHandler();
-	//m_pSkinnedAnimationController->SetAnimationCallbackHandler(1, pAnimationCallbackHandler);
-
-	CreateShaderVariables(pd3dDevice, pd3dCommandList);
-	
-	SetPlayerUpdatedContext(pContext);
-	SetCameraUpdatedContext(pContext);
-
-	m_pText = new CText(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, L"debt : ", -0.9f, 0.9f);
-	
-	m_playerHP = new CTextureToScreenShader(1);
-	m_playerHP->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
-	CTexture* pTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
-	pTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/hp.dds", RESOURCE_TEXTURE2D, 0);
-	CScene::CreateShaderResourceViews(pd3dDevice, pTexture, 0, 15);
-	
-	CScreenRectMeshTextured* pMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.25f, 0.5f, 0.9f, 0.1f);
-	m_playerHP->SetMesh(0, pMesh);
-	m_playerHP->SetTexture(pTexture);
+//	m_pSkinnedAnimationController = new CAnimationController(pd3dDevice, pd3dCommandList, 7, pPlayerModel);
+//	m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); // 기본
+//	m_pSkinnedAnimationController->SetTrackAnimationSet(1, 1); // 걷기
+//	m_pSkinnedAnimationController->SetTrackAnimationSet(2, 2); // 뛰기
+//	m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); // 점프
+//	m_pSkinnedAnimationController->SetTrackAnimationSet(4, 4); // 휘두르기
+//	m_pSkinnedAnimationController->SetTrackAnimationSet(5, 5); // 웅크리기
+//	m_pSkinnedAnimationController->SetTrackAnimationSet(6, 6); // 웅크리고 걷기
+//	m_pSkinnedAnimationController->SetTrackEnable(1, false); 
+//	m_pSkinnedAnimationController->SetTrackEnable(2, false); 
+//	m_pSkinnedAnimationController->SetTrackEnable(3, false); 
+//	m_pSkinnedAnimationController->SetTrackEnable(4, false); 
+//	m_pSkinnedAnimationController->SetTrackEnable(5, false); 
+//	m_pSkinnedAnimationController->SetTrackEnable(6, false); 
+//	m_pSkinnedAnimationController->SetTrackType(3, 0);
+//	m_pSkinnedAnimationController->SetTrackType(4, 0);
+//
+//	m_pSkinnedAnimationController->SetCallbackKeys(1, 2);
+//#ifdef _WITH_SOUND_RESOURCE
+//	m_pSkinnedAnimationController->SetCallbackKey(0, 0.1f, _T("Footstep01"));
+//	m_pSkinnedAnimationController->SetCallbackKey(1, 0.5f, _T("Footstep02"));
+//	m_pSkinnedAnimationController->SetCallbackKey(2, 0.9f, _T("Footstep03"));
+//#else
+//	//m_pSkinnedAnimationController->SetCallbackKey(1, 0, 0.2f, _T("Sound/Footstep01.wav"));
+//	//m_pSkinnedAnimationController->SetCallbackKey(1, 1, 0.5f, _T("Sound/Footstep02.wav"));
+////	m_pSkinnedAnimationController->SetCallbackKey(1, 2, 0.39f, _T("Sound/Footstep03.wav"));
+//#endif
+//	//CAnimationCallbackHandler *pAnimationCallbackHandler = new CSoundCallbackHandler();
+//	//m_pSkinnedAnimationController->SetAnimationCallbackHandler(1, pAnimationCallbackHandler);
+//
+//	CreateShaderVariables(pd3dDevice, pd3dCommandList);
+//	
+//	SetPlayerUpdatedContext(pContext);
+//	SetCameraUpdatedContext(pContext);
+//
+//	m_pText = new CText(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, L"debt : ", -0.9f, 0.9f);
+//	
+//	m_playerHP = new CTextureToScreenShader(1);
+//	m_playerHP->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
+//	CTexture* pTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+//	pTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/hp.dds", RESOURCE_TEXTURE2D, 0);
+//	CScene::CreateShaderResourceViews(pd3dDevice, pTexture, 0, 15);
+//	
+//	CScreenRectMeshTextured* pMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.25f, 0.5f, 0.9f, 0.1f);
+//	m_playerHP->SetMesh(0, pMesh);
+//	m_playerHP->SetTexture(pTexture);
 
 	device = pd3dDevice;
 	cmdList = pd3dCommandList;
