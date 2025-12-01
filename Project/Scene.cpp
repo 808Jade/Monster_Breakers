@@ -1087,15 +1087,15 @@ void CScene::AnimateObjects(float fTimeElapsed)
 
 	for(auto* shader : m_Shaders) if(shader) shader->AnimateObjects(fTimeElapsed);
 
-	// 손전등
-	if (m_pLights && m_GameObjects[0])
-	{	
-		m_pLights[0].m_xmf3Position = m_GameObjects[0]->GetPosition();
-		m_pLights[0].m_xmf3Direction = m_GameObjects[0]->GetLook();
-	}
+	//// 손전등
+	//if (m_pLights && m_GameObjects[0])
+	//{	
+	//	m_pLights[0].m_xmf3Position = m_GameObjects[0]->GetPosition();
+	//	m_pLights[0].m_xmf3Direction = m_GameObjects[0]->GetLook();
+	//}
 
-	// 삽
-	if (m_pEffect&& m_GameObjects[1]) m_pEffect->Animate(fTimeElapsed, m_GameObjects[1]->GetPosition());
+	//// 삽
+	//if (m_pEffect&& m_GameObjects[1]) m_pEffect->Animate(fTimeElapsed, m_GameObjects[1]->GetPosition());
 }
 
 void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
