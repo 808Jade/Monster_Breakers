@@ -467,7 +467,6 @@ void CGameFramework::BuildObjects()
 
 	m_nScenes = 3; // 총 Scene 개수
 	m_ppScenes = new CScene * [m_nScenes];
-	m_nCurrentScene = 1;
 	bool b = false;
 	if (m_nCurrentScene == 0) {
 		m_ppScenes[0] = new CStartScene();
