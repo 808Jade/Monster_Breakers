@@ -77,9 +77,9 @@ struct sc_packet_user_info {
 	XMFLOAT3		position;
 	XMFLOAT3		look;
 	XMFLOAT3		right;
-	//uint8_t			animState;
+	//uint8_t		animState;
 	short			hp;
-	//uint8_t			job;
+	//uint8_t		job;
 };
 
 
@@ -90,7 +90,7 @@ struct sc_packet_move {
 	XMFLOAT3			position;
 	XMFLOAT3			look;
 	XMFLOAT3			right;
-	//uint8_t				animState;
+	//uint8_t			animState;
 };
 
 
@@ -101,7 +101,7 @@ struct sc_packet_enter {
 	XMFLOAT3			position;
 	XMFLOAT3			look;
 	XMFLOAT3			right;
-	//uint8_t				animState;
+	//uint8_t			animState;
 	short				hp;
 	//uint8_t			job;
 
@@ -134,7 +134,7 @@ struct cs_packet_move {
 	XMFLOAT3			position;
 	XMFLOAT3			look;
 	XMFLOAT3			right;
-	//uint8_t				animState;
+	//uint8_t			animState;
 };
 
 
