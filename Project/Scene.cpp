@@ -158,45 +158,45 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 
 //	m_pEffect = new CParticle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 //
-//#pragma region Monsters
 //
-//	m_Monsters.clear();
-//	m_Monsters.resize(4);
-//	int monsterIDs[4] = { 10001,10002,10003,10004 };
 //
-//	CLoadedModelInfo* pSpiderModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/spider_myOldOne.bin", NULL);
-//	XMFLOAT3 monsterPos[4] = {
-//		{27, 0, -2},
-//		{-54, 0, -90},
-//		{4, 0, -50},
-//		{-46, 0,-42}
-//	};
-//	for (int i = 0; i < static_cast<int>(m_Monsters.size()); ++i)
-//	{
-//		m_Monsters[i] = new CSpider(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pSpiderModel, 5);
-//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); //idle
-//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(1, 1); //walk
-//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(2, 2); //run
-//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); //attack
-//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(4, 4); //death
-//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(1, false);
-//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(2, false);
-//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(3, false);
-//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(4, false);
-//
-//		m_Monsters[i]->SetPosition(monsterPos[i]);
-//		m_Monsters[i]->Rotate(0, 0, 0);
-//		m_Monsters[i]->SetScale(3, 3, 3);
-//
-//		std::string spiderName = "Spider" + std::to_string(i);
-//		m_Monsters[i]->SetFrameName(spiderName.c_str());
-//
-//		static_cast<CSpider*>(m_Monsters[i])->SetMonsterID(monsterIDs[i]);
-//		g_monsters[monsterIDs[i]] = static_cast<CSpider*>(m_Monsters[i]);
-//
-//	}
-//
-//	if (pSpiderModel) delete pSpiderModel;
+	m_Monsters.clear();
+	m_Monsters.resize(4);
+	int monsterIDs[4] = { 10001,10002,10003,10004 };
+
+	CLoadedModelInfo* pSpiderModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/SalamanderPA.bin", NULL);
+	XMFLOAT3 monsterPos[4] = {
+		{27, 0, -2},
+		{-54, 0, -90},
+		{4, 0, -50},
+		{-46, 0,-42}
+	};
+	for (int i = 0; i < static_cast<int>(m_Monsters.size()); ++i)
+	{
+		m_Monsters[i] = new CSpider(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pSpiderModel, 5);
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); //idle
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(1, 1); //walk
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(2, 2); //attack
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); //gethit
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(4, 4); //death
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(1, false);
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(2, false);
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(3, false);
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(4, false);
+
+		m_Monsters[i]->SetPosition(monsterPos[i]);
+		m_Monsters[i]->Rotate(0, 0, 0);
+		m_Monsters[i]->SetScale(3, 3, 3);
+
+		std::string spiderName = "Spider" + std::to_string(i);
+		m_Monsters[i]->SetFrameName(spiderName.c_str());
+
+		static_cast<CSpider*>(m_Monsters[i])->SetMonsterID(monsterIDs[i]);
+		g_monsters[monsterIDs[i]] = static_cast<CSpider*>(m_Monsters[i]);
+
+	}
+
+	if (pSpiderModel) delete pSpiderModel;
 //
 //	m_GameObjects.clear();
 //	m_GameObjects.resize(8);
