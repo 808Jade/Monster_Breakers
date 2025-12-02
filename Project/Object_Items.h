@@ -39,23 +39,23 @@ protected:
 
 
 
-class Shovel : public Item
-{
-public:
-	Shovel(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature, CLoadedModelInfo* pModel);
-	virtual ~Shovel();
-
-	int				m_damage = 1;
-	bool			m_bIsSwingActive = false;
-	BoundingBox		m_attackBoundingBox;
-
-	BoundingBox GetattackBoundingBox() { return m_attackBoundingBox; };
-
-	void ProccessSwing();
-	void GenerateSwingBoundingBox(XMFLOAT3 playerPos, XMFLOAT3 playerLook); 
-	void UpdateSwingBoundingBox(); 
-	void DeleteSwingBoundingBox(); 
-};
+//class Shovel : public Item
+//{
+//public:
+//	Shovel(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature, CLoadedModelInfo* pModel);
+//	virtual ~Shovel();
+//
+//	int				m_damage = 1;
+//	bool			m_bIsSwingActive = false;
+//	BoundingBox		m_attackBoundingBox;
+//
+//	BoundingBox GetattackBoundingBox() { return m_attackBoundingBox; };
+//
+//	void ProccessSwing();
+//	void GenerateSwingBoundingBox(XMFLOAT3 playerPos, XMFLOAT3 playerLook); 
+//	void UpdateSwingBoundingBox(); 
+//	void DeleteSwingBoundingBox(); 
+//};
 
 class Handmap : public Item
 {

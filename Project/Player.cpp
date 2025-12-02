@@ -200,14 +200,32 @@ void CPlayer::CalculateBoundingBox()
 	ConvertCylinderToAABB(m_BoundingCylinder, m_BoundingBox);
 }
 
-void CPlayer::GenerateShovelAttackBoundingBox()
+void CPlayer::GenerateSwordAttackBoundingBox()
 {
 	// 바운딩 박스의 중심: 플레이어 위치에서 전방(Look) 방향으로 0.5f 이동
 	XMFLOAT3 forwardOffset = Vector3::ScalarProduct(Vector3::Normalize(m_xmf3Look), 0.5f);
-	m_shovelAttackBoundingBox.Center = Vector3::Add(m_xmf3Position, forwardOffset);
+	m_swordAttackBoundingBox.Center = Vector3::Add(m_xmf3Position, forwardOffset);
 
 	// 바운딩 박스의 크기
-	m_shovelAttackBoundingBox.Extents = XMFLOAT3(0.5f, 0.5f, 1.0f);
+	m_swordAttackBoundingBox.Extents = XMFLOAT3(0.5f, 0.5f, 1.0f);
+}
+
+BoundingBox CPlayer::GetSwordAttackBoundingBox()
+{
+	BoundingBox emptyBox{};
+	emptyBox.Center = XMFLOAT3(0, 0, 0);
+	emptyBox.Extents = XMFLOAT3(0, 0, 0);   // 널 박스
+
+	CGameObject* pWeapon = FindFrame("SM_Weapon_04");
+	if (!pWeapon)
+	{
+		// 디버깅용 로그 (처음엔 켜두고, 나중에 되면 주석처리해도 됨)
+		std::cout << "Weapon frame SM_Weapon_04 not found!\n";
+		return emptyBox;
+	}
+
+	pWeapon->CalculateBoundingBox();
+	return pWeapon->GetBoundingBox();
 }
 
 void CPlayer::Update(float fTimeElapsed)
@@ -305,150 +323,6 @@ void CPlayer::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamer
 	DWORD nCameraMode = (pCamera) ? pCamera->GetMode() : 0x00;
 	if (nCameraMode == THIRD_PERSON_CAMERA) CGameObject::Render(pd3dCommandList, pCamera);
 }
-
-bool CPlayer::TryPickUpItem(CGameObject* pItem)
-{
-	if (!pItem || !pItem->GetFrameName()) return false;
-	/*CGameObject* pRightHand = FindFrame("hand_r");
-	if (!pRightHand) return false;*/
-
-	if (pItem->GetParent() == m_pHand) return false;
-
-	for (int i = 0; i < 4; ++i)
-	{
-		if (!m_pHeldItems[i])
-		{
-			m_pHeldItems[i] = pItem;
-			pItem->SetVisible(i == m_nSelectedInventoryIndex);
-
-			// 위치 보정
-			//if (strcmp(pItem->GetFrameName(), "Shovel") == 0)
-			//	pItem->SetPosition(0.05f, -0.05f, 1.0f);
-			//else
-				pItem->SetPosition(0.05f, -0.05f, 0.1f);
-
-			m_pHeldItems[i] = pItem;
-			pItem->SetVisible(i == m_nSelectedInventoryIndex);
-			UpdateTransform(nullptr);
-
-			Item* pickedItem = dynamic_cast<Item*>(pItem);
-			if (pickedItem) {
-				XMFLOAT3 curPos = pickedItem->GetPosition();
-				XMFLOAT3 look = GetLook();
-				XMFLOAT3 right = GetRight();
-				//SendItemMove(pickedItem->GetUniqueID(), curPos, look, right);
-			}
-
-			return true;
-		}
-	}
-	return false; // 가득 참
-}
-
-bool CPlayer::DropItem(int index)
-{
-	if (index < 0 || index >= 4) return false;
-	CGameObject* pItem = m_pHeldItems[index];
-	if (!pItem) return false;
-	
-	XMFLOAT3 currentPos = pItem->GetPosition();
-
-	m_pHeldItems[index] = nullptr;
-
-	pItem->isFalling = true;
-	pItem->SetVisible(true);
-
-	return true;
-}
-
-void CPlayer::UpdateItem()
-{
-    CGameObject* pRightHand = FindFrame("hand_r");
-    if (!pRightHand) return;
-
-    XMFLOAT3 handPos = pRightHand->GetPosition();
-    XMFLOAT3 handR = pRightHand->GetRight(); 
-    XMFLOAT3 handL = pRightHand->GetLook();
-    XMFLOAT3 handU = pRightHand->GetUp();
-
-	XMFLOAT3 pR = GetRight();
-	XMFLOAT3 pU = GetUp();
-	XMFLOAT3 pL = GetLook();
-
-	// 초기 로컬 회전 캐시
-	struct Basis { XMFLOAT3 r, u, l; };
-	static std::unordered_map<Item*, Basis> sInitBasis;
-
-	auto mul = [&](const XMFLOAT3& v)->XMFLOAT3 {
-		return {
-			pR.x * v.x + pU.x * v.y + pL.x * v.z,
-			pR.y * v.x + pU.y * v.y + pL.y * v.z,
-			pR.z * v.x + pU.z * v.y + pL.z * v.z
-		};
-	};
-
-	for (int i = 0; i < 4; ++i)
-	{
-		CGameObject* it = m_pHeldItems[i];
-		if (!it) continue;
-
-		if (i == m_nSelectedInventoryIndex)
-		{	
-			XMFLOAT3 off = XMFLOAT3(0.05f, -0.05f, 0.1f);
-
-            XMFLOAT3 worldOff{
-                handR.x * off.x + handU.x * off.y + handL.x * off.z,
-                handR.y * off.x + handU.y * off.y + handL.y * off.z,
-                handR.z * off.x + handU.z * off.y + handL.z * off.z
-            };
-
-            XMFLOAT3 targetPos{
-                handPos.x + worldOff.x,
-                handPos.y + worldOff.y,
-                handPos.z + worldOff.z
-            };
-
-			Item* obj = dynamic_cast<Item*>(it);
-			if (!obj) continue;
-
-			// 아이템 초기 회전(생성 시 각도) 1회 캐싱: ToParent의 3x3 회전부
-			Basis init{};
-			auto fnd = sInitBasis.find(obj);
-			if (fnd == sInitBasis.end()) {
-				XMFLOAT4X4& t = obj->m_xmf4x4ToParent; // 생성 시 넣어둔 회전 값 보관돼 있음
-				XMFLOAT3 vec1{ t._11, t._12, t._13 };
-				XMFLOAT3 vec2{ t._21, t._22, t._23 };
-				XMFLOAT3 vec3{ t._31, t._32, t._33 };
-				init.r = Vector3::Normalize(vec1);
-				init.u = Vector3::Normalize(vec2);
-				init.l = Vector3::Normalize(vec3);
-				sInitBasis.emplace(obj, init);
-			}
-			else {
-				init = fnd->second;
-			}
-
-			// 최종 회전 = 플레이어 회전 * 초기 회전
-			XMFLOAT3 fR = mul(init.r);
-			XMFLOAT3 fU = mul(init.u);
-			XMFLOAT3 fL = mul(init.l);
-
-			// ToParent에 직접 적용 + 변환 갱신
-			obj->m_xmf4x4ToParent._11 = fR.x; obj->m_xmf4x4ToParent._12 = fR.y; obj->m_xmf4x4ToParent._13 = fR.z;
-			obj->m_xmf4x4ToParent._21 = fU.x; obj->m_xmf4x4ToParent._22 = fU.y; obj->m_xmf4x4ToParent._23 = fU.z;
-			obj->m_xmf4x4ToParent._31 = fL.x; obj->m_xmf4x4ToParent._32 = fL.y; obj->m_xmf4x4ToParent._33 = fL.z;
-			obj->m_xmf4x4ToParent._41 = targetPos.x; obj->m_xmf4x4ToParent._42 = targetPos.y; obj->m_xmf4x4ToParent._43 = targetPos.z;
-			obj->UpdateTransform(nullptr);
-
-			//SendItemMove(dynamic_cast<Item*>(it)->GetUniqueID(), targetPos, fL, fR);
-		}
-		else
-		{
-			it->SetVisible(false);
-		}
-	}
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
@@ -570,7 +444,7 @@ CCamera *CTerrainPlayer::ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed)
 			SetMaxVelocityY(400.0f);
 			m_pCamera = OnChangeCamera(THIRD_PERSON_CAMERA, nCurrentCameraMode);
 			m_pCamera->SetTimeLag(0.25f);
-			m_pCamera->SetOffset(XMFLOAT3(0.0f, 3.0f, -3.5f));
+			m_pCamera->SetOffset(XMFLOAT3(0.0f, 6.0f, -8.f));
 			m_pCamera->GenerateProjectionMatrix(1.01f, 5000.0f, ASPECT_RATIO, 60.0f);
 			m_pCamera->SetViewport(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
 			m_pCamera->SetScissorRect(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
@@ -630,7 +504,6 @@ void CTerrainPlayer::Move(DWORD dwDirection, float fDistance, bool bUpdateVeloci
 	if (dwDirection & DIR_DOWN) fDistance *= 2.0f;
 
 	bool isMoving = dwDirection & (DIR_FORWARD | DIR_BACKWARD | DIR_LEFT | DIR_RIGHT);
-	bool isCrouching = dwDirection & DIR_CROUCH;
 	bool isRunning = dwDirection & DIR_DOWN;
 	bool isJumping = dwDirection & DIR_UP;
 
@@ -690,7 +563,7 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 			}
 			break;
 		case AnimationState::SWING:
-			PlayAnimationTrack(4, 2.0f);
+			PlayAnimationTrack(4, 1.0f);
 			if (IsAnimationFinished(4)) {
 				m_pSkinnedAnimationController->SetTrackPosition(4, 0.0f);
 				m_currentAnim = AnimationState::IDLE;
@@ -737,8 +610,6 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 	//	// 서버 동기화
 	//	SendItemMove(pItem->GetUniqueID(), curPos);
 	//}
-
-	UpdateItem();
 
 	m_pHand = FindFrame("hand_r");
 
@@ -823,20 +694,4 @@ void CTerrainPlayer::StartAnimationBlend(int fromTrack, int toTrack, float blend
 
 	m_pSkinnedAnimationController->SetTrackWeight(fromTrack, 1.0f);
 	m_pSkinnedAnimationController->SetTrackWeight(toTrack, 0.0f);
-}
-
-bool CTerrainPlayer::IsShovel()
-{
-	CGameObject* pHand = FindFrame("hand_r");
-	if (!pHand) return false;
-
-	CGameObject* pHeld = pHand->GetChild();
-	while (pHeld)
-	{
-		if (strcmp(pHeld->GetFrameName(), "Shovel") == 0)
-			return true;
-
-		pHeld = pHeld->GetSibling();
-	}
-	return false;
 }

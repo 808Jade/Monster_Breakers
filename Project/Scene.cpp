@@ -188,8 +188,8 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 		m_Monsters[i]->Rotate(0, 0, 0);
 		m_Monsters[i]->SetScale(3, 3, 3);
 
-		std::string spiderName = "Spider" + std::to_string(i);
-		m_Monsters[i]->SetFrameName(spiderName.c_str());
+		//std::string spiderName = "SalamanderPA" + std::to_string(i);
+		//m_Monsters[i]->SetFrameName(spiderName.c_str());
 
 		static_cast<CSpider*>(m_Monsters[i])->SetMonsterID(monsterIDs[i]);
 		g_monsters[monsterIDs[i]] = static_cast<CSpider*>(m_Monsters[i]);
@@ -854,88 +854,7 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 	{
 	case WM_LBUTTONDOWN:
 	{
-		if (!isShop) {
-			int index = m_pPlayer->m_nSelectedInventoryIndex;
-
-			// 손에 든 아이템 인덱스 유효성 검사
-			if (index < 0 || index >= 4) break;
-
-			CGameObject* pHeldItem = m_pPlayer->m_pHeldItems[index];
-			if (!pHeldItem) break;
-
-			char* frameName = pHeldItem->GetFrameName();
-
-			if (!strcmp(frameName, "FlashLight"))
-			{
-				m_pPlayer->bflashlight = !m_pPlayer->bflashlight;
-				BuildDefaultLightsAndMaterials(m_pPlayer->bflashlight);
-				// server 로 켯다는거 보내주기
-
-			}
-			else if (!strcmp(frameName, "Shovel"))
-			{
-				dynamic_cast<CTerrainPlayer*>(m_pPlayer)->m_currentAnim = AnimationState::SWING;
-
-				m_pEffect->Activate(m_pPlayer->m_pHeldItems[m_pPlayer->m_nSelectedInventoryIndex]->GetPosition());
-
-
-				if (m_pPlayer->m_isMonsterHit)
-				{
-					// server 로 공격 데미지 값 보내주기 - 몬스터 hp 깎여야함
-				}
-				break;
-			}
-		}
-		else {
-			// 상점 판매 버튼 클릭
-			const RECT rt[4] =
-			{
-				{450, 240, 550, 265},
-				{450, 310, 550, 335},
-				{450, 370, 550, 395},
-				{450, 440, 550, 465}
-			};
-
-			for (int i = 0; i < 4; ++i) {
-				if (PtInRect(&rt[i], m_ptPos)) {
-					Item* pItem = dynamic_cast<Item*>(m_pPlayer->m_pHeldItems[i]);
-					if (pItem && pItem->IsExist() && pItem->GetPrice() > 0) {
-						dynamic_cast<CTerrainPlayer*>(m_pPlayer)->debt -= pItem->GetPrice();
-						long long itemID = pItem->GetUniqueID();
-
-						auto it = g_items.find(itemID);
-						if (it != g_items.end()) {					
-							it->second->ChangeExistState(false);						
-							m_pPlayer->m_pHeldItems[i] = nullptr;
-						
-							for (auto* obj : m_GameObjects) {
-								Item* pGameObjectItem = dynamic_cast<Item*>(obj);
-								if (pGameObjectItem && pGameObjectItem->GetUniqueID() == itemID) {
-									// 같은 id 아이템 삭제
-									break;
-								}
-							}
-						}
-						auto texIt = m_textureMap.find("inven");
-						if (texIt != m_textureMap.end())
-						{
-							if (i < static_cast<int>(m_Shaders.size()) &&
-								i + 6 < static_cast<int>(m_Shaders.size()) &&
-								5 < static_cast<int>(m_Shaders.size()))
-							{
-								auto* pShader = dynamic_cast<CTextureToScreenShader*>(m_Shaders[i]);
-								auto* pShader1 = dynamic_cast<CTextureToScreenShader*>(m_Shaders[i + 6]);
-								auto* pShop = dynamic_cast<CShopShader*>(m_Shaders[5]);
-
-								if (pShader)pShader->SetTexture(texIt->second);						
-								if (pShader1)pShader1->SetTexture(texIt->second);
-								if (pShop)pShop->price[i] = L"0";							
-							}
-						}
-					}
-				}
-			}
-		}
+		dynamic_cast<CTerrainPlayer*>(m_pPlayer)->m_currentAnim = AnimationState::SWING;
 	}
 	break;
 	}
@@ -948,112 +867,10 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 	case WM_KEYDOWN:
 		switch (wParam)
 		{
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		{
-			int slotIndex = wParam - '1';
-			m_pPlayer->m_nSelectedInventoryIndex = slotIndex;
-
-			// 슬롯에 따라 visible 갱신
-			for (int i = 0; i < 4; ++i)
-			{
-				CGameObject* item = NULL;
-				if (m_pPlayer->m_pHeldItems[i]) {
-					item = m_pPlayer->m_pHeldItems[i];
-					item->SetVisible(i == slotIndex); // 선택된 슬롯만 true
-				}
-			}
-		}
-			break;
-		case 'F':
-		case 'f':
-		{
-			bool bPickedUp = false;
-
-			for(auto* obj : m_GameObjects)
-			{
-				CGameObject* pObj = obj;
-				if (!pObj) continue;
-
-				Item* pItem = dynamic_cast<Item*>(pObj);
-				if (!pItem) continue;
-				
-
-				XMFLOAT3 playerPos = m_pPlayer->GetPosition();
-				XMFLOAT3 itemPos = pItem->GetPosition();
-				float distance = Vector3::Length(Vector3::Subtract(playerPos, itemPos));
-				if (distance > 0.5f) continue;
-				if (m_pPlayer->TryPickUpItem(pItem))
-
-				{
-					std::string frameName = pItem->m_pstrFrameName;
-					auto it = m_textureMap.find(frameName);
-					if (it != m_textureMap.end())
-					{
-						int newIndex = -1;
-						for (int i = 0; i < 4; ++i)
-							if (!m_pPlayer->m_pHeldItems[i]) {
-								newIndex = i - 1;
-								break;
-							}
-							else continue;
-						if (newIndex < 4 && newIndex > -1)
-						{
-							auto* pShader = dynamic_cast<CTextureToScreenShader*>(m_Shaders[newIndex]);
-							auto* pShader1 = dynamic_cast<CTextureToScreenShader*>(m_Shaders[newIndex + 6]);
-							if (pShader) pShader->SetTexture(it->second);
-							if (pShader1)
-							{
-								pShader1->SetTexture(it->second);
-								dynamic_cast<CShopShader*>(m_Shaders[5])->price[newIndex] = std::to_wstring(pItem->GetPrice());
-							}
-						}
-					}
-					bPickedUp = true;
-					break;
-				}
-			}
-
-			if (!bPickedUp)
-			{
-				int index = m_pPlayer->m_nSelectedInventoryIndex;
-				if (m_pPlayer->DropItem(index))
-				{
-					auto it = m_textureMap.find("inven");
-					if (it != m_textureMap.end())
-					{
-						auto* pShader = dynamic_cast<CTextureToScreenShader*>(m_Shaders[index]);
-						auto* pShader1 = dynamic_cast<CTextureToScreenShader*>(m_Shaders[index + 6]);
-						if (pShader) pShader->SetTexture(it->second);
-						if (pShader1)
-						{
-							pShader1->SetTexture(it->second);
-							dynamic_cast<CShopShader*>(m_Shaders[5])->price[index] = L"0";
-						}
-					}
-				}
-			}
-
-			break;
-		}
-		case VK_TAB:		
-			isShop = !isShop;
-			for (int i = 5; i < 10 && i < static_cast<int>(m_Shaders.size()); ++i)
-			{
-				if (auto* texShader = dynamic_cast<CTextureToScreenShader*>(m_Shaders[i]))
-				{
-					texShader->visible = isShop;
-				}
-			}
-			break;
-		case VK_UP:
-			dynamic_cast<CTerrainPlayer*>(m_pPlayer)->debt -= 1000;
+		default:
 			break;
 		}
 		break;
-		
 	default:
 		break;
 	}
@@ -1068,33 +885,9 @@ void CScene::AnimateObjects(float fTimeElapsed)
 {
 	for (auto* obj : m_GameObjects) if (obj) {
 		obj->Animate(fTimeElapsed);
-		if (obj->isFalling) {
-			XMFLOAT3 pos = obj->GetPosition();
-			if (pos.y > 0.1f)
-			{
-				pos.y -= 0.1f;
-				obj->SetPosition(pos);
-				Item* itemObj = dynamic_cast<Item*>(obj);
-				if (itemObj) {
-					//SendItemMove(itemObj->GetUniqueID(), pos, obj->GetLook(), obj->GetRight());
-				}
-			}
-			else obj->isFalling = false;
-
-		}
 	}
 
 	for(auto* shader : m_Shaders) if(shader) shader->AnimateObjects(fTimeElapsed);
-
-	//// 손전등
-	//if (m_pLights && m_GameObjects[0])
-	//{	
-	//	m_pLights[0].m_xmf3Position = m_GameObjects[0]->GetPosition();
-	//	m_pLights[0].m_xmf3Direction = m_GameObjects[0]->GetLook();
-	//}
-
-	//// 삽
-	//if (m_pEffect&& m_GameObjects[1]) m_pEffect->Animate(fTimeElapsed, m_GameObjects[1]->GetPosition());
 }
 
 void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)

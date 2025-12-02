@@ -1520,6 +1520,8 @@ void CAngrybotAnimationController::OnRootMotion(CGameObject* pRootGameObject)
 
 CSpider::CSpider(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, CLoadedModelInfo *pModel, int nAnimationTracks) : CGameObject(1)
 {
+	SetFrameName("SalamanderPA");
+
 	CLoadedModelInfo *pSpiderModel = pModel;
 	if (!pSpiderModel) pSpiderModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, "Model/SalamanderPA.bin", NULL);
 
