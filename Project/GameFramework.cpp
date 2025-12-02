@@ -372,60 +372,6 @@ LRESULT CALLBACK CGameFramework::OnProcessingWindowMessage(HWND hWnd, UINT nMess
 // -------------------------------------------------------------------------------------------
 
 
-//void CGameFramework::ItemToHand(int objectIndex)
-//{
-//	CGameObject* pItem = m_pScene->m_ppHierarchicalGameObjects[objectIndex];
-//	CGameObject* pRightHand = m_pPlayer->FindFrame("hand_r");
-//
-//	// 이미 붙어있나 확인
-//	CGameObject* pCurr = pRightHand->GetChild();
-//	CGameObject* pPrev = nullptr;
-//	bool alreadyHeld = false;
-//
-//	while (pCurr) {
-//		if (pCurr == pItem) {
-//			alreadyHeld = true;
-//			break;
-//		}
-//		pPrev = pCurr;
-//		pCurr = pCurr->GetSibling();
-//	}
-//
-//	if (!alreadyHeld) {
-//		// 들기
-//		if (pRightHand->GetChild() == nullptr) {
-//			pRightHand->SetChild(pItem);
-//		}
-//		else {
-//			CGameObject* last = pRightHand->GetChild();
-//			while (last->GetSibling()) last = last->GetSibling();
-//			last->m_pSibling = pItem;
-//		}
-//		pItem->m_pParent = pRightHand;
-//		pItem->m_pSibling = nullptr;
-//
-//		if (objectIndex == 2) {
-//			pItem->SetPosition(0.05f, -0.05f, 1.f); 
-//		}
-//		else { 
-//			pItem->SetPosition(0.05f, -0.05f, 0.1f); 
-//		}
-//
-//		m_pPlayer->UpdateTransform(nullptr);
-//	}
-//	else {
-//		// 놓기
-//		if (pPrev) {
-//			pPrev->m_pSibling = pItem->GetSibling();
-//		}
-//		else {
-//			pRightHand->SetChild(pItem->GetSibling());
-//		}
-//		pItem->m_pParent = nullptr;
-//		pItem->m_pSibling = nullptr;
-//	}
-//}
-
 void CGameFramework::OnDestroy()
 {
     ReleaseObjects();
@@ -465,7 +411,7 @@ void CGameFramework::BuildObjects()
 
 	m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
 
-	m_nScenes = 3; // 총 Scene 개수
+	m_nScenes = 3; // 총 Scene 개수   <- 이게 플레이어 3명까지 가능하다는 소리인건가???
 	m_ppScenes = new CScene * [m_nScenes];
 	bool b = false;
 	if (m_nCurrentScene == 0) {
