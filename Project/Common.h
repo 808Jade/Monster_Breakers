@@ -98,7 +98,11 @@ struct sc_packet_user_info {
 	XMFLOAT3		right;
 	uint8_t			animState;
 	short			hp;
+<<<<<<< Updated upstream
 	short			cash;
+=======
+	//uint8_t			job;
+>>>>>>> Stashed changes
 };
 
 struct sc_packet_move {
@@ -120,7 +124,11 @@ struct sc_packet_enter {
 	XMFLOAT3			right;
 	uint8_t				animState;
 	short				hp;
+<<<<<<< Updated upstream
 	short				cash;
+=======
+	//uint8_t			job;
+>>>>>>> Stashed changes
 };
 
 struct sc_packet_leave {
