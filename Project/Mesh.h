@@ -68,35 +68,34 @@ public:
 	char							m_pstrMeshName[64] = { 0 };
 
 protected:
+	// TYPE
 	UINT							m_nType = 0x00;
+	D3D12_PRIMITIVE_TOPOLOGY		m_d3dPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
+	// 정점 버퍼 관련 정보
+	UINT							m_nSlot = 0;		// input slot 번호
+	UINT							m_nOffset = 0;		// 정점 배열 시작 위치
+	UINT							m_nStride = 0;		// 정점 하나의 크기
+	int								m_nVertices = 0;	// 정점 개수
+
+	// 정점 데이터
+	XMFLOAT3						*m_pxmf3Positions = NULL;			// CPU 메모리에 존재하는 정점 좌표 배열
+	ID3D12Resource					*m_pd3dPositionBuffer = NULL;		// GPU 메모리에 존재하는 정점 좌표 버퍼
+	ID3D12Resource					*m_pd3dPositionUploadBuffer = NULL; // 정점 좌표 업로드 버퍼, 초기 업로드 시만 사용하는 Upload Heap
+	D3D12_VERTEX_BUFFER_VIEW		m_d3dPositionBufferView;			// IA(Input Assembler)에 연결하기 위한 뷰 구조체
+
+	// SubMesh 관련 변수들
+	int								m_nSubMeshes = 0;
+	int								*m_pnSubSetIndices = NULL;					// SubMesh 별 인덱스 개수
+	UINT							**m_ppnSubSetIndices = NULL;				// 실제 인덱스 배열	(m_ppnSubSetIndices[0] = SubMesh0 인덱스 배열..)
+	ID3D12Resource					**m_ppd3dSubSetIndexBuffers = NULL;			// GPU 메모리에 존재하는 인덱스 버퍼
+	ID3D12Resource					**m_ppd3dSubSetIndexUploadBuffers = NULL;	// 인덱스 업로드 버퍼, 초기 업로드 시만 사용하는 Upload Heap
+	D3D12_INDEX_BUFFER_VIEW			*m_pd3dSubSetIndexBufferViews = NULL;		// IA(Input Assembler)에 연결하기 위한 뷰 구조체 배열
+
+	// BOUNDINGBOX
+	BoundingBox						m_BoundingBox = { XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) };
 	XMFLOAT3						m_xmf3AABBCenter = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	XMFLOAT3						m_xmf3AABBExtents = XMFLOAT3(0.0f, 0.0f, 0.0f);
-
-	D3D12_PRIMITIVE_TOPOLOGY		m_d3dPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-	UINT							m_nSlot = 0;
-	UINT							m_nOffset = 0;
-	UINT							m_nStride = 0; // 정점배열 건뛰 접근
-
-	BoundingBox						m_BoundingBox = { XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) };
-
-protected:
-	int								m_nVertices = 0;
-
-	XMFLOAT3						*m_pxmf3Positions = NULL;
-
-	ID3D12Resource					*m_pd3dPositionBuffer = NULL;
-	ID3D12Resource					*m_pd3dPositionUploadBuffer = NULL;
-	D3D12_VERTEX_BUFFER_VIEW		m_d3dPositionBufferView;
-
-	int								m_nSubMeshes = 0;
-	int								*m_pnSubSetIndices = NULL;
-	UINT							**m_ppnSubSetIndices = NULL;
-
-	ID3D12Resource					**m_ppd3dSubSetIndexBuffers = NULL;
-	ID3D12Resource					**m_ppd3dSubSetIndexUploadBuffers = NULL;
-	D3D12_INDEX_BUFFER_VIEW			*m_pd3dSubSetIndexBufferViews = NULL;
-
 
 public:
 	UINT GetType() { return(m_nType); }
@@ -110,6 +109,7 @@ public:
 
 	virtual void OnPreRender(ID3D12GraphicsCommandList *pd3dCommandList, void *pContext);
 	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, int nSubSet);
+	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, int nSubSet, UINT nInstances, D3D12_VERTEX_BUFFER_VIEW d3dInstancingBufferView);
 	virtual void OnPostRender(ID3D12GraphicsCommandList *pd3dCommandList, void *pContext);
 	
 	int GetVertice() { return m_nVertices; }

@@ -61,17 +61,6 @@ extern std::mutex g_monster_mutex;
 void SendHitSpider(long long monsterID);
 
 
-// Shop
-void SendShopBuyRequest(int item_type);
-void SendShopSellRequest(int item_type);
-
-// Item
-void SendItemMove(long long item_id, const XMFLOAT3& position, const XMFLOAT3& look, const XMFLOAT3& right);
-
-//Particle
-void SendFlashlightChange(bool flashlight_on);
-void SendParticleImpact(const XMFLOAT3& impact_pos);
-
 void ProcessPacket(char* ptr);
 //void process_data(char* net_buf, size_t io_byte); // ???
 void send_packet(void* packet);

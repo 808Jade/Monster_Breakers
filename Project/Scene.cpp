@@ -27,6 +27,7 @@ CScene::CScene()
 CScene::~CScene()
 {
 }
+
 void CScene::BuildDefaultLightsAndMaterials(bool toggle)
 {
 	m_nLights = 1;
@@ -142,7 +143,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 {
 	m_pd3dGraphicsRootSignature = CreateGraphicsRootSignature(pd3dDevice);
 
-	CreateCbvSrvDescriptorHeaps(pd3dDevice, 100, 400);
+	CreateCbvSrvDescriptorHeaps(pd3dDevice, 100, 1000);
 
 	CMaterial::PrepareShaders(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature); 
 
@@ -155,340 +156,347 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 
 	m_pMap = new Map(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 
-	m_pEffect = new CParticle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-
-	m_Monsters.clear();
-	m_Monsters.resize(4);
-	int monsterIDs[4] = { 10001,10002,10003,10004 };
-
-	CLoadedModelInfo* pSpiderModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/spider_myOldOne.bin", NULL);
-	XMFLOAT3 monsterPos[4] = {
-		{27, 0, -2},
-		{-54, 0, -90},
-		{4, 0, -50},
-		{-46, 0,-42}
-	};
-	for (int i = 0; i < static_cast<int>(m_Monsters.size()); ++i)
-	{
-		m_Monsters[i] = new CSpider(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pSpiderModel, 5);
-		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); //idle
-		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(1, 1); //walk
-		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(2, 2); //run
-		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); //attack
-		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(4, 4); //death
-		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(1, false);
-		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(2, false);
-		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(3, false);
-		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(4, false);
-
-		m_Monsters[i]->SetPosition(monsterPos[i]);
-		m_Monsters[i]->Rotate(0, 0, 0);
-		m_Monsters[i]->SetScale(3, 3, 3);
-
-		std::string spiderName = "Spider" + std::to_string(i);
-		m_Monsters[i]->SetFrameName(spiderName.c_str());
-
-		static_cast<CSpider*>(m_Monsters[i])->SetMonsterID(monsterIDs[i]);
-		g_monsters[monsterIDs[i]] = static_cast<CSpider*>(m_Monsters[i]);
-
-	}
-
-	if (pSpiderModel) delete pSpiderModel;
-
-	m_GameObjects.clear();
-	m_GameObjects.resize(8);
-
-	long long itemIDs[8] = { 20000, 20001, 20002,
-							 30000, 30001, 30002, 30003, 30004};
-
-	float itemPrices[8] = { 80, 150, 80, 10, 20, 30, 40, 50 };
-
-	XMFLOAT3 positions[8] = {
-		{-2, 0, 19},
-		{-2, 0, 22},
-		{-2, 0, 25},
-		{-2, 0, 28},
-		{-2, 0, 31},
-		{-2, 0, 34},
-		{-2, 0, 37},
-		{-2, 0, 13}
-	};
-
-	CLoadedModelInfo* pFlashlightModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Flashlightgold.bin", NULL);
-	m_GameObjects[0] = new FlashLight(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pFlashlightModel);
-	m_GameObjects[0]->SetScale(3, 3, 3);
-	m_GameObjects[0]->Rotate(-90, 180, 0);
-	m_GameObjects[0]->SetFrameName("FlashLight");
-	m_GameObjects[0]->SetPosition(positions[0]);
-
-	static_cast<Item*>(m_GameObjects[0])->SetUniqueID(itemIDs[0]);
-	static_cast<Item*>(m_GameObjects[0])->SetPrice(itemPrices[0]);
-	g_items[itemIDs[0]] = static_cast<Item*>(m_GameObjects[0]);
-
-	if (pFlashlightModel) delete pFlashlightModel;
-
-	// ============================================================================================================
-
-	CLoadedModelInfo* pShovelModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Shovel.bin", NULL);
-	m_GameObjects[1] = new Shovel(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pShovelModel);
-	m_GameObjects[1]->SetScale(1, 1, 1);
-	m_GameObjects[1]->Rotate(0, -90, 160);
-	m_GameObjects[1]->SetFrameName("Shovel");
-	m_GameObjects[1]->SetPosition(positions[1]);
-
-	static_cast<Item*>(m_GameObjects[1])->SetUniqueID(itemIDs[1]);
-	static_cast<Item*>(m_GameObjects[1])->SetPrice(itemPrices[1]);
-	g_items[itemIDs[1]] = static_cast<Item*>(m_GameObjects[1]);
-
-	if (pShovelModel) delete pShovelModel;
-
-	// ============================================================================================================
-
-
-	CLoadedModelInfo* pWhistleModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Whistle.bin", NULL);
-	m_GameObjects[2] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pWhistleModel);
-	m_GameObjects[2]->SetScale(1, 1, 1);
-	m_GameObjects[2]->SetFrameName("Whistle");
-	m_GameObjects[2]->SetPosition(positions[2]);
-
-	static_cast<Item*>(m_GameObjects[2])->SetUniqueID(itemIDs[2]);
-	static_cast<Item*>(m_GameObjects[2])->SetPrice(itemPrices[2]);
-	g_items[itemIDs[2]] = static_cast<Item*>(m_GameObjects[2]);
-
-	if (pWhistleModel) delete pWhistleModel;
-
-	// ============================================================================================================
-	// ============================================================================================================
-
-
-	CLoadedModelInfo* pGoldbarModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Goldbar.bin", NULL);
-	m_GameObjects[3] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pGoldbarModel);
-	m_GameObjects[3]->SetScale(1, 1, 1);
-	m_GameObjects[3]->SetFrameName("Goldbar");
-	m_GameObjects[3]->SetPosition(positions[3]);
-
-	static_cast<Item*>(m_GameObjects[3])->SetUniqueID(itemIDs[3]);
-	static_cast<Item*>(m_GameObjects[3])->SetPrice(itemPrices[3]);
-	g_items[itemIDs[3]] = static_cast<Item*>(m_GameObjects[3]);
-
-	if (pGoldbarModel) delete pGoldbarModel;
-
-	// ============================================================================================================
-
-
-	CLoadedModelInfo* pCoinModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Coin.bin", NULL);
-	m_GameObjects[4] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pCoinModel);
-	m_GameObjects[4]->SetScale(2, 2, 2);
-	m_GameObjects[4]->SetFrameName("Coin");
-	m_GameObjects[4]->SetPosition(positions[4]);
-
-	static_cast<Item*>(m_GameObjects[4])->SetUniqueID(itemIDs[4]);
-	static_cast<Item*>(m_GameObjects[4])->SetPrice(itemPrices[4]);
-	g_items[itemIDs[4]] = static_cast<Item*>(m_GameObjects[4]);
-
-	if (pCoinModel) delete pCoinModel;
-
-	// ============================================================================================================
-
-
-	CLoadedModelInfo* pCanister1Model = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Canisters_01.bin", NULL);
-	m_GameObjects[5] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pCanister1Model);
-	m_GameObjects[5]->SetScale(1, 1, 1);
-	m_GameObjects[5]->SetFrameName("Canisters_01");
-	m_GameObjects[5]->SetPosition(positions[5]);
-
-	static_cast<Item*>(m_GameObjects[5])->SetUniqueID(itemIDs[5]);
-	static_cast<Item*>(m_GameObjects[5])->SetPrice(itemPrices[5]);
-	g_items[itemIDs[5]] = static_cast<Item*>(m_GameObjects[5]);
-
-	if (pCanister1Model) delete pCanister1Model;
-
-	// ============================================================================================================
-
-
-	CLoadedModelInfo* pCanister2Model = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Canisters_02.bin", NULL);
-	m_GameObjects[6] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pCanister2Model);
-	m_GameObjects[6]->SetScale(1, 1, 1);
-	m_GameObjects[6]->SetFrameName("Canisters_02");
-	m_GameObjects[6]->SetPosition(positions[6]);
-
-	static_cast<Item*>(m_GameObjects[6])->SetUniqueID(itemIDs[6]);
-	static_cast<Item*>(m_GameObjects[6])->SetPrice(itemPrices[6]);
-	g_items[itemIDs[6]] = static_cast<Item*>(m_GameObjects[6]);
-
-	if (pCanister2Model) delete pCanister2Model;
-
-	// ============================================================================================================
-
-
-	CLoadedModelInfo* pCanister3Model = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Canisters_03.bin", NULL);
-	m_GameObjects[7] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pCanister3Model);
-	m_GameObjects[7]->SetScale(1, 1, 1);
-	m_GameObjects[7]->SetFrameName("Canisters_03");
-	m_GameObjects[7]->SetPosition(positions[7]);
-
-	static_cast<Item*>(m_GameObjects[7])->SetUniqueID(itemIDs[7]);
-	static_cast<Item*>(m_GameObjects[7])->SetPrice(itemPrices[7]);
-	g_items[itemIDs[7]] = static_cast<Item*>(m_GameObjects[7]);
-
-	if (pCanister3Model) delete pCanister3Model;
-
-	m_nOtherPlayers = 1;
-	m_ppOtherPlayers = new OtherPlayer * [m_nOtherPlayers];
-	CLoadedModelInfo* pOtherPlayerModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Player.bin", NULL);
-	m_ppOtherPlayers[0] = new OtherPlayer(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pOtherPlayerModel);
-	m_ppOtherPlayers[0]->SetPosition(-1000, -1000, -1000);
-	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackEnable(0, true);
-	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackEnable(1, false);
-	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackEnable(2, false);
-	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackEnable(3, false);
-	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackEnable(4, false);
-	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackEnable(5, false);
-	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackEnable(6, false);
-
-	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackPosition(1, 0.0f);
-	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackPosition(2, 0.0f);
-	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackPosition(3, 0.0f);
-	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackPosition(4, 0.0f);
-	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackPosition(5, 0.0f);
-	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackPosition(6, 0.0f);
-
-	if (pOtherPlayerModel) delete pOtherPlayerModel;
-
-	// 인벤토리 UI 및 상점
-	m_Shaders.clear();
-	m_Shaders.resize(10);
-
-	CTexture* pTextureinven = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
-	pTextureinven->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/inven.dds", RESOURCE_TEXTURE2D, 0);
-	CreateShaderResourceViews(pd3dDevice, pTextureinven, 0, 15);
-	m_textureMap["inven"] = pTextureinven;
-
-	CTexture* pTextureItem1 = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
-	pTextureItem1->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Shovel.dds", RESOURCE_TEXTURE2D, 0);
-	CreateShaderResourceViews(pd3dDevice, pTextureItem1, 0, 15);
-	m_textureMap["Shovel"] = pTextureItem1;
-
-	CTexture* pTextureItem2 = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
-	pTextureItem2->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/FlashLight.dds", RESOURCE_TEXTURE2D, 0);
-	CreateShaderResourceViews(pd3dDevice, pTextureItem2, 0, 15);
-	m_textureMap["FlashLight"] = pTextureItem2;
-
-	CTexture* pTextureItem3 = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
-	pTextureItem3->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Whistle.dds", RESOURCE_TEXTURE2D, 0);
-	CreateShaderResourceViews(pd3dDevice, pTextureItem3, 0, 15);
-	m_textureMap["Whistle"] = pTextureItem3;
-
-	CTexture* pTextureItem4 = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
-	pTextureItem4->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Goldbar.dds", RESOURCE_TEXTURE2D, 0);
-	CreateShaderResourceViews(pd3dDevice, pTextureItem4, 0, 15);
-	m_textureMap["Goldbar"] = pTextureItem4;
-
-	CTexture* pTextureItem5 = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
-	pTextureItem5->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Coin.dds", RESOURCE_TEXTURE2D, 0);
-	CreateShaderResourceViews(pd3dDevice, pTextureItem5, 0, 15);
-	m_textureMap["Coin"] = pTextureItem5;
-
-	CTexture* pTextureItem6 = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
-	pTextureItem6->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Canisters_01.dds", RESOURCE_TEXTURE2D, 0);
-	CreateShaderResourceViews(pd3dDevice, pTextureItem6, 0, 15);
-	m_textureMap["Canisters_01"] = pTextureItem6;
-
-	CTexture* pTextureItem7 = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
-	pTextureItem7->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Canisters_02.dds", RESOURCE_TEXTURE2D, 0);
-	CreateShaderResourceViews(pd3dDevice, pTextureItem7, 0, 15);
-	m_textureMap["Canisters_02"] = pTextureItem7;
-
-	CTexture* pTextureItem8 = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
-	pTextureItem8->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Canisters_03.dds", RESOURCE_TEXTURE2D, 0);
-	CreateShaderResourceViews(pd3dDevice, pTextureItem8, 0, 15);
-	m_textureMap["Canisters_03"] = pTextureItem8;
-
-	CTextureToScreenShader* pTextureItem1Shader = new CTextureToScreenShader(1);
-	pTextureItem1Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-	CScreenRectMeshTextured* pMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.02f, 0.225f * 0.5f, -0.65f, 0.4f * 0.5f);
-	pTextureItem1Shader->SetMesh(0, pMesh);
-	pTextureItem1Shader->SetTexture(pTextureinven);
-	m_Shaders[0] = pTextureItem1Shader;
-
-	CTextureToScreenShader* pTextureItem2Shader = new CTextureToScreenShader(1);
-	pTextureItem2Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-	CScreenRectMeshTextured* pMesh1 = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.02f + 0.125f, 0.225f * 0.5f, -0.65f, 0.4f * 0.5f);
-	pTextureItem2Shader->SetMesh(0, pMesh1);
-	pTextureItem2Shader->SetTexture(pTextureinven);
-	m_Shaders[1] = pTextureItem2Shader;
-
-	CTextureToScreenShader* pTextureItem3Shader = new CTextureToScreenShader(1);
-	pTextureItem3Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-	CScreenRectMeshTextured* pMesh2 = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.02f + 0.25f, 0.225f * 0.5f, -0.65f, 0.4f * 0.5f);
-	pTextureItem3Shader->SetMesh(0, pMesh2);
-	pTextureItem3Shader->SetTexture(pTextureinven);
-	m_Shaders[2] = pTextureItem3Shader;
-
-	CTextureToScreenShader* pTextureItem4Shader = new CTextureToScreenShader(1);
-	pTextureItem4Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-	CScreenRectMeshTextured* pMesh3 = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.02f + 0.375f, 0.225f * 0.5f, -0.65f, 0.4f * 0.5f);
-	pTextureItem4Shader->SetMesh(0, pMesh3);
-	pTextureItem4Shader->SetTexture(pTextureinven);
-	m_Shaders[3] = pTextureItem4Shader;
-
-	CTextureToScreenShader* pInventoryShader = new CTextureToScreenShader(1);
-	pInventoryShader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-	CTexture* pTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
-	pTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Inventory.dds", RESOURCE_TEXTURE2D, 0);
-	CreateShaderResourceViews(pd3dDevice, pTexture, 0, 15);
-	CScreenRectMeshTextured* pInventoryMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, -0.5f + 0.5f, 1.0f * 0.5f, -0.6f, 0.5f * 0.5f);
-	pInventoryShader->SetMesh(0, pInventoryMesh);
-	pInventoryShader->SetTexture(pTexture);
-	m_Shaders[4] = pInventoryShader;
-
-	//상점
-	CShopShader* pShopShader = new CShopShader(1);
-	pShopShader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-	pShopShader->BuildObjects(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, NULL, NULL);
-
-	CTexture* pShopTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
-	pShopTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/shop.dds", RESOURCE_TEXTURE2D, 0);
-	CreateShaderResourceViews(pd3dDevice, pShopTexture, 0, 15);
-	CScreenRectMeshTextured* pShopMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, -0.9f, 0.5f, 0.8f, 0.7f);
-	pShopShader->SetMesh(0, pShopMesh);
-	pShopShader->SetTexture(pShopTexture);
-	pShopShader->SetVisible(false);
-
-	m_Shaders[5] = pShopShader;
-
-	//상점 4칸
-	CTextureToScreenShader* pShopSpace1Shader = new CTextureToScreenShader(1);
-	pShopSpace1Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-	CScreenRectMeshTextured* pShopMesh1 = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, -0.825f, 0.08f, 0.625f, 0.09f);
-	pShopSpace1Shader->SetMesh(0, pShopMesh1);
-	pShopSpace1Shader->SetTexture(pTextureinven);
-	pShopSpace1Shader->SetVisible(false);
-	m_Shaders[6] = pShopSpace1Shader;
-
-	CTextureToScreenShader* pShopSpace2Shader = new CTextureToScreenShader(1);
-	pShopSpace2Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-	CScreenRectMeshTextured* pShopMesh2 = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, -0.825f, 0.08f, 0.505f, 0.09f);
-	pShopSpace2Shader->SetMesh(0, pShopMesh2);
-	pShopSpace2Shader->SetTexture(pTextureinven);
-	pShopSpace2Shader->SetVisible(false);
-	m_Shaders[7] = pShopSpace2Shader;
-
-	CTextureToScreenShader* pShopSpace3Shader = new CTextureToScreenShader(1);
-	pShopSpace3Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-	CScreenRectMeshTextured* pShopMesh3 = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, -0.825f, 0.08f, 0.385f, 0.09f);
-	pShopSpace3Shader->SetMesh(0, pShopMesh3);
-	pShopSpace3Shader->SetTexture(pTextureinven);
-	pShopSpace3Shader->SetVisible(false);
-	m_Shaders[8] = pShopSpace3Shader;
-
-	CTextureToScreenShader* pShopSpace4Shader = new CTextureToScreenShader(1);
-	pShopSpace4Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-	CScreenRectMeshTextured* pShopMesh4 = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, -0.825f, 0.08f, 0.265f, 0.09f);
-	pShopSpace4Shader->SetMesh(0, pShopMesh4);
-	pShopSpace4Shader->SetTexture(pTextureinven);
-	pShopSpace4Shader->SetVisible(false);
-	m_Shaders[9] = pShopSpace4Shader;
+//	m_pEffect = new CParticle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+//
+//#pragma region Monsters
+//
+//	m_Monsters.clear();
+//	m_Monsters.resize(4);
+//	int monsterIDs[4] = { 10001,10002,10003,10004 };
+//
+//	CLoadedModelInfo* pSpiderModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/spider_myOldOne.bin", NULL);
+//	XMFLOAT3 monsterPos[4] = {
+//		{27, 0, -2},
+//		{-54, 0, -90},
+//		{4, 0, -50},
+//		{-46, 0,-42}
+//	};
+//	for (int i = 0; i < static_cast<int>(m_Monsters.size()); ++i)
+//	{
+//		m_Monsters[i] = new CSpider(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pSpiderModel, 5);
+//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); //idle
+//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(1, 1); //walk
+//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(2, 2); //run
+//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); //attack
+//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(4, 4); //death
+//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(1, false);
+//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(2, false);
+//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(3, false);
+//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(4, false);
+//
+//		m_Monsters[i]->SetPosition(monsterPos[i]);
+//		m_Monsters[i]->Rotate(0, 0, 0);
+//		m_Monsters[i]->SetScale(3, 3, 3);
+//
+//		std::string spiderName = "Spider" + std::to_string(i);
+//		m_Monsters[i]->SetFrameName(spiderName.c_str());
+//
+//		static_cast<CSpider*>(m_Monsters[i])->SetMonsterID(monsterIDs[i]);
+//		g_monsters[monsterIDs[i]] = static_cast<CSpider*>(m_Monsters[i]);
+//
+//	}
+//
+//	if (pSpiderModel) delete pSpiderModel;
+//
+//	m_GameObjects.clear();
+//	m_GameObjects.resize(8);
+//#pragma endregion
+//
+//#pragma region Items
+//	long long itemIDs[8] = { 20000, 20001, 20002,
+//							 30000, 30001, 30002, 30003, 30004};
+//
+//	float itemPrices[8] = { 80, 150, 80, 10, 20, 30, 40, 50 };
+//
+//	XMFLOAT3 positions[8] = {
+//		{-2, 0, 19},
+//		{-2, 0, 22},
+//		{-2, 0, 25},
+//		{-2, 0, 28},
+//		{-2, 0, 31},
+//		{-2, 0, 34},
+//		{-2, 0, 37},
+//		{-2, 0, 13}
+//	};
+//
+//	CLoadedModelInfo* pFlashlightModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Flashlightgold.bin", NULL);
+//	m_GameObjects[0] = new FlashLight(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pFlashlightModel);
+//	m_GameObjects[0]->SetScale(3, 3, 3);
+//	m_GameObjects[0]->Rotate(-90, 180, 0);
+//	m_GameObjects[0]->SetFrameName("FlashLight");
+//	m_GameObjects[0]->SetPosition(positions[0]);
+//
+//	static_cast<Item*>(m_GameObjects[0])->SetUniqueID(itemIDs[0]);
+//	static_cast<Item*>(m_GameObjects[0])->SetPrice(itemPrices[0]);
+//	g_items[itemIDs[0]] = static_cast<Item*>(m_GameObjects[0]);
+//
+//	if (pFlashlightModel) delete pFlashlightModel;
+//
+//	// ============================================================================================================
+//
+//	CLoadedModelInfo* pShovelModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Shovel.bin", NULL);
+//	m_GameObjects[1] = new Shovel(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pShovelModel);
+//	m_GameObjects[1]->SetScale(1, 1, 1);
+//	m_GameObjects[1]->Rotate(0, -90, 160);
+//	m_GameObjects[1]->SetFrameName("Shovel");
+//	m_GameObjects[1]->SetPosition(positions[1]);
+//
+//	static_cast<Item*>(m_GameObjects[1])->SetUniqueID(itemIDs[1]);
+//	static_cast<Item*>(m_GameObjects[1])->SetPrice(itemPrices[1]);
+//	g_items[itemIDs[1]] = static_cast<Item*>(m_GameObjects[1]);
+//
+//	if (pShovelModel) delete pShovelModel;
+//
+//	// ============================================================================================================
+//
+//
+//	CLoadedModelInfo* pWhistleModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Whistle.bin", NULL);
+//	m_GameObjects[2] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pWhistleModel);
+//	m_GameObjects[2]->SetScale(1, 1, 1);
+//	m_GameObjects[2]->SetFrameName("Whistle");
+//	m_GameObjects[2]->SetPosition(positions[2]);
+//
+//	static_cast<Item*>(m_GameObjects[2])->SetUniqueID(itemIDs[2]);
+//	static_cast<Item*>(m_GameObjects[2])->SetPrice(itemPrices[2]);
+//	g_items[itemIDs[2]] = static_cast<Item*>(m_GameObjects[2]);
+//
+//	if (pWhistleModel) delete pWhistleModel;
+//
+//	// ============================================================================================================
+//	// ============================================================================================================
+//
+//
+//	CLoadedModelInfo* pGoldbarModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Goldbar.bin", NULL);
+//	m_GameObjects[3] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pGoldbarModel);
+//	m_GameObjects[3]->SetScale(1, 1, 1);
+//	m_GameObjects[3]->SetFrameName("Goldbar");
+//	m_GameObjects[3]->SetPosition(positions[3]);
+//
+//	static_cast<Item*>(m_GameObjects[3])->SetUniqueID(itemIDs[3]);
+//	static_cast<Item*>(m_GameObjects[3])->SetPrice(itemPrices[3]);
+//	g_items[itemIDs[3]] = static_cast<Item*>(m_GameObjects[3]);
+//
+//	if (pGoldbarModel) delete pGoldbarModel;
+//
+//	// ============================================================================================================
+//
+//
+//	CLoadedModelInfo* pCoinModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Coin.bin", NULL);
+//	m_GameObjects[4] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pCoinModel);
+//	m_GameObjects[4]->SetScale(2, 2, 2);
+//	m_GameObjects[4]->SetFrameName("Coin");
+//	m_GameObjects[4]->SetPosition(positions[4]);
+//
+//	static_cast<Item*>(m_GameObjects[4])->SetUniqueID(itemIDs[4]);
+//	static_cast<Item*>(m_GameObjects[4])->SetPrice(itemPrices[4]);
+//	g_items[itemIDs[4]] = static_cast<Item*>(m_GameObjects[4]);
+//
+//	if (pCoinModel) delete pCoinModel;
+//
+//	// ============================================================================================================
+//
+//
+//	CLoadedModelInfo* pCanister1Model = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Canisters_01.bin", NULL);
+//	m_GameObjects[5] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pCanister1Model);
+//	m_GameObjects[5]->SetScale(1, 1, 1);
+//	m_GameObjects[5]->SetFrameName("Canisters_01");
+//	m_GameObjects[5]->SetPosition(positions[5]);
+//
+//	static_cast<Item*>(m_GameObjects[5])->SetUniqueID(itemIDs[5]);
+//	static_cast<Item*>(m_GameObjects[5])->SetPrice(itemPrices[5]);
+//	g_items[itemIDs[5]] = static_cast<Item*>(m_GameObjects[5]);
+//
+//	if (pCanister1Model) delete pCanister1Model;
+//
+//	// ============================================================================================================
+//
+//
+//	CLoadedModelInfo* pCanister2Model = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Canisters_02.bin", NULL);
+//	m_GameObjects[6] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pCanister2Model);
+//	m_GameObjects[6]->SetScale(1, 1, 1);
+//	m_GameObjects[6]->SetFrameName("Canisters_02");
+//	m_GameObjects[6]->SetPosition(positions[6]);
+//
+//	static_cast<Item*>(m_GameObjects[6])->SetUniqueID(itemIDs[6]);
+//	static_cast<Item*>(m_GameObjects[6])->SetPrice(itemPrices[6]);
+//	g_items[itemIDs[6]] = static_cast<Item*>(m_GameObjects[6]);
+//
+//	if (pCanister2Model) delete pCanister2Model;
+//
+//	// ============================================================================================================
+//
+//
+//	CLoadedModelInfo* pCanister3Model = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Canisters_03.bin", NULL);
+//	m_GameObjects[7] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pCanister3Model);
+//	m_GameObjects[7]->SetScale(1, 1, 1);
+//	m_GameObjects[7]->SetFrameName("Canisters_03");
+//	m_GameObjects[7]->SetPosition(positions[7]);
+//
+//	static_cast<Item*>(m_GameObjects[7])->SetUniqueID(itemIDs[7]);
+//	static_cast<Item*>(m_GameObjects[7])->SetPrice(itemPrices[7]);
+//	g_items[itemIDs[7]] = static_cast<Item*>(m_GameObjects[7]);
+//
+//	if (pCanister3Model) delete pCanister3Model;
+//
+//	m_nOtherPlayers = 1;
+//	m_ppOtherPlayers = new OtherPlayer * [m_nOtherPlayers];
+//	CLoadedModelInfo* pOtherPlayerModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Player.bin", NULL);
+//	m_ppOtherPlayers[0] = new OtherPlayer(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pOtherPlayerModel);
+//	m_ppOtherPlayers[0]->SetPosition(-1000, -1000, -1000);
+//	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackEnable(0, true);
+//	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackEnable(1, false);
+//	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackEnable(2, false);
+//	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackEnable(3, false);
+//	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackEnable(4, false);
+//	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackEnable(5, false);
+//	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackEnable(6, false);
+//
+//	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackPosition(1, 0.0f);
+//	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackPosition(2, 0.0f);
+//	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackPosition(3, 0.0f);
+//	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackPosition(4, 0.0f);
+//	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackPosition(5, 0.0f);
+//	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackPosition(6, 0.0f);
+//
+//	if (pOtherPlayerModel) delete pOtherPlayerModel;
+//#pragma endregion
+//
+//#pragma region InventoryUIandShop
+//	// 인벤토리 UI 및 상점
+//	m_Shaders.clear();
+//	m_Shaders.resize(10);
+//
+//	CTexture* pTextureinven = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+//	pTextureinven->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/inven.dds", RESOURCE_TEXTURE2D, 0);
+//	CreateShaderResourceViews(pd3dDevice, pTextureinven, 0, 15);
+//	m_textureMap["inven"] = pTextureinven;
+//
+//	CTexture* pTextureItem1 = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+//	pTextureItem1->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Shovel.dds", RESOURCE_TEXTURE2D, 0);
+//	CreateShaderResourceViews(pd3dDevice, pTextureItem1, 0, 15);
+//	m_textureMap["Shovel"] = pTextureItem1;
+//
+//	CTexture* pTextureItem2 = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+//	pTextureItem2->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/FlashLight.dds", RESOURCE_TEXTURE2D, 0);
+//	CreateShaderResourceViews(pd3dDevice, pTextureItem2, 0, 15);
+//	m_textureMap["FlashLight"] = pTextureItem2;
+//
+//	CTexture* pTextureItem3 = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+//	pTextureItem3->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Whistle.dds", RESOURCE_TEXTURE2D, 0);
+//	CreateShaderResourceViews(pd3dDevice, pTextureItem3, 0, 15);
+//	m_textureMap["Whistle"] = pTextureItem3;
+//
+//	CTexture* pTextureItem4 = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+//	pTextureItem4->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Goldbar.dds", RESOURCE_TEXTURE2D, 0);
+//	CreateShaderResourceViews(pd3dDevice, pTextureItem4, 0, 15);
+//	m_textureMap["Goldbar"] = pTextureItem4;
+//
+//	CTexture* pTextureItem5 = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+//	pTextureItem5->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Coin.dds", RESOURCE_TEXTURE2D, 0);
+//	CreateShaderResourceViews(pd3dDevice, pTextureItem5, 0, 15);
+//	m_textureMap["Coin"] = pTextureItem5;
+//
+//	CTexture* pTextureItem6 = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+//	pTextureItem6->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Canisters_01.dds", RESOURCE_TEXTURE2D, 0);
+//	CreateShaderResourceViews(pd3dDevice, pTextureItem6, 0, 15);
+//	m_textureMap["Canisters_01"] = pTextureItem6;
+//
+//	CTexture* pTextureItem7 = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+//	pTextureItem7->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Canisters_02.dds", RESOURCE_TEXTURE2D, 0);
+//	CreateShaderResourceViews(pd3dDevice, pTextureItem7, 0, 15);
+//	m_textureMap["Canisters_02"] = pTextureItem7;
+//
+//	CTexture* pTextureItem8 = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+//	pTextureItem8->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Canisters_03.dds", RESOURCE_TEXTURE2D, 0);
+//	CreateShaderResourceViews(pd3dDevice, pTextureItem8, 0, 15);
+//	m_textureMap["Canisters_03"] = pTextureItem8;
+//
+//	CTextureToScreenShader* pTextureItem1Shader = new CTextureToScreenShader(1);
+//	pTextureItem1Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+//	CScreenRectMeshTextured* pMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.02f, 0.225f * 0.5f, -0.65f, 0.4f * 0.5f);
+//	pTextureItem1Shader->SetMesh(0, pMesh);
+//	pTextureItem1Shader->SetTexture(pTextureinven);
+//	m_Shaders[0] = pTextureItem1Shader;
+//
+//	CTextureToScreenShader* pTextureItem2Shader = new CTextureToScreenShader(1);
+//	pTextureItem2Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+//	CScreenRectMeshTextured* pMesh1 = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.02f + 0.125f, 0.225f * 0.5f, -0.65f, 0.4f * 0.5f);
+//	pTextureItem2Shader->SetMesh(0, pMesh1);
+//	pTextureItem2Shader->SetTexture(pTextureinven);
+//	m_Shaders[1] = pTextureItem2Shader;
+//
+//	CTextureToScreenShader* pTextureItem3Shader = new CTextureToScreenShader(1);
+//	pTextureItem3Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+//	CScreenRectMeshTextured* pMesh2 = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.02f + 0.25f, 0.225f * 0.5f, -0.65f, 0.4f * 0.5f);
+//	pTextureItem3Shader->SetMesh(0, pMesh2);
+//	pTextureItem3Shader->SetTexture(pTextureinven);
+//	m_Shaders[2] = pTextureItem3Shader;
+//
+//	CTextureToScreenShader* pTextureItem4Shader = new CTextureToScreenShader(1);
+//	pTextureItem4Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+//	CScreenRectMeshTextured* pMesh3 = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.02f + 0.375f, 0.225f * 0.5f, -0.65f, 0.4f * 0.5f);
+//	pTextureItem4Shader->SetMesh(0, pMesh3);
+//	pTextureItem4Shader->SetTexture(pTextureinven);
+//	m_Shaders[3] = pTextureItem4Shader;
+//
+//	CTextureToScreenShader* pInventoryShader = new CTextureToScreenShader(1);
+//	pInventoryShader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+//	CTexture* pTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+//	pTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Inventory.dds", RESOURCE_TEXTURE2D, 0);
+//	CreateShaderResourceViews(pd3dDevice, pTexture, 0, 15);
+//	CScreenRectMeshTextured* pInventoryMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, -0.5f + 0.5f, 1.0f * 0.5f, -0.6f, 0.5f * 0.5f);
+//	pInventoryShader->SetMesh(0, pInventoryMesh);
+//	pInventoryShader->SetTexture(pTexture);
+//	m_Shaders[4] = pInventoryShader;
+//
+//	//상점
+//	CShopShader* pShopShader = new CShopShader(1);
+//	pShopShader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+//	pShopShader->BuildObjects(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, NULL, NULL);
+//
+//	CTexture* pShopTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+//	pShopTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/shop.dds", RESOURCE_TEXTURE2D, 0);
+//	CreateShaderResourceViews(pd3dDevice, pShopTexture, 0, 15);
+//	CScreenRectMeshTextured* pShopMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, -0.9f, 0.5f, 0.8f, 0.7f);
+//	pShopShader->SetMesh(0, pShopMesh);
+//	pShopShader->SetTexture(pShopTexture);
+//	pShopShader->SetVisible(false);
+//
+//	m_Shaders[5] = pShopShader;
+//
+//	//상점 4칸
+//	CTextureToScreenShader* pShopSpace1Shader = new CTextureToScreenShader(1);
+//	pShopSpace1Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+//	CScreenRectMeshTextured* pShopMesh1 = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, -0.825f, 0.08f, 0.625f, 0.09f);
+//	pShopSpace1Shader->SetMesh(0, pShopMesh1);
+//	pShopSpace1Shader->SetTexture(pTextureinven);
+//	pShopSpace1Shader->SetVisible(false);
+//	m_Shaders[6] = pShopSpace1Shader;
+//
+//	CTextureToScreenShader* pShopSpace2Shader = new CTextureToScreenShader(1);
+//	pShopSpace2Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+//	CScreenRectMeshTextured* pShopMesh2 = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, -0.825f, 0.08f, 0.505f, 0.09f);
+//	pShopSpace2Shader->SetMesh(0, pShopMesh2);
+//	pShopSpace2Shader->SetTexture(pTextureinven);
+//	pShopSpace2Shader->SetVisible(false);
+//	m_Shaders[7] = pShopSpace2Shader;
+//
+//	CTextureToScreenShader* pShopSpace3Shader = new CTextureToScreenShader(1);
+//	pShopSpace3Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+//	CScreenRectMeshTextured* pShopMesh3 = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, -0.825f, 0.08f, 0.385f, 0.09f);
+//	pShopSpace3Shader->SetMesh(0, pShopMesh3);
+//	pShopSpace3Shader->SetTexture(pTextureinven);
+//	pShopSpace3Shader->SetVisible(false);
+//	m_Shaders[8] = pShopSpace3Shader;
+//
+//	CTextureToScreenShader* pShopSpace4Shader = new CTextureToScreenShader(1);
+//	pShopSpace4Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+//	CScreenRectMeshTextured* pShopMesh4 = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, -0.825f, 0.08f, 0.265f, 0.09f);
+//	pShopSpace4Shader->SetMesh(0, pShopMesh4);
+//	pShopSpace4Shader->SetTexture(pTextureinven);
+//	pShopSpace4Shader->SetVisible(false);
+//	m_Shaders[9] = pShopSpace4Shader;
+//#pragma endregion
 
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }
@@ -862,7 +870,7 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 				m_pPlayer->bflashlight = !m_pPlayer->bflashlight;
 				BuildDefaultLightsAndMaterials(m_pPlayer->bflashlight);
 				// server 로 켯다는거 보내주기
-				SendFlashlightChange(m_pPlayer->bflashlight);
+
 			}
 			else if (!strcmp(frameName, "Shovel"))
 			{
@@ -870,7 +878,6 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 
 				m_pEffect->Activate(m_pPlayer->m_pHeldItems[m_pPlayer->m_nSelectedInventoryIndex]->GetPosition());
 
-				SendParticleImpact(m_pPlayer->GetPosition());
 
 				if (m_pPlayer->m_isMonsterHit)
 				{
@@ -1069,7 +1076,7 @@ void CScene::AnimateObjects(float fTimeElapsed)
 				obj->SetPosition(pos);
 				Item* itemObj = dynamic_cast<Item*>(obj);
 				if (itemObj) {
-					SendItemMove(itemObj->GetUniqueID(), pos, obj->GetLook(), obj->GetRight());
+					//SendItemMove(itemObj->GetUniqueID(), pos, obj->GetLook(), obj->GetRight());
 				}
 			}
 			else obj->isFalling = false;
@@ -1079,15 +1086,15 @@ void CScene::AnimateObjects(float fTimeElapsed)
 
 	for(auto* shader : m_Shaders) if(shader) shader->AnimateObjects(fTimeElapsed);
 
-	// 손전등
-	if (m_pLights && m_GameObjects[0])
-	{	
-		m_pLights[0].m_xmf3Position = m_GameObjects[0]->GetPosition();
-		m_pLights[0].m_xmf3Direction = m_GameObjects[0]->GetLook();
-	}
+	//// 손전등
+	//if (m_pLights && m_GameObjects[0])
+	//{	
+	//	m_pLights[0].m_xmf3Position = m_GameObjects[0]->GetPosition();
+	//	m_pLights[0].m_xmf3Direction = m_GameObjects[0]->GetLook();
+	//}
 
-	// 삽
-	if (m_pEffect&& m_GameObjects[1]) m_pEffect->Animate(fTimeElapsed, m_GameObjects[1]->GetPosition());
+	//// 삽
+	//if (m_pEffect&& m_GameObjects[1]) m_pEffect->Animate(fTimeElapsed, m_GameObjects[1]->GetPosition());
 }
 
 void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
@@ -1141,44 +1148,10 @@ void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera
 	}
 }
 
-// 아이템 생성 server(민상.ver AddItem)
 
-void CScene::AddItem(long long id, ITEM_TYPE type, const XMFLOAT3& position) {
-	CLoadedModelInfo* pModel = nullptr;
-	Item* pNewItem = nullptr;
-
-	switch (type)
-	{
-	case ITEM_TYPE_SHOVEL:
-		dynamic_cast<Shovel*>(m_GameObjects[1])->ChangeExistState(true);
-		dynamic_cast<Shovel*>(m_GameObjects[1])->SetPosition(position);
-		break;
-	case ITEM_TYPE_HANDMAP:
-		break;
-	case ITEM_TYPE_FLASHLIGHT:
-		dynamic_cast<FlashLight*>(m_GameObjects[0])->ChangeExistState(true);
-		dynamic_cast<FlashLight*>(m_GameObjects[0])->SetPosition(position);
-		break;
-	case ITEM_TYPE_WHISTLE:
-		dynamic_cast<Whistle*>(m_GameObjects[2])->ChangeExistState(true);
-		dynamic_cast<Whistle*>(m_GameObjects[2])->SetPosition(position);
-		break;
-	default:
-		std::cerr << "[Error] Unknown item type: " << static_cast<int>(type) << std::endl;
-		return;
-	}
-
-	if (pModel && pNewItem) {
-		pNewItem->SetPosition(position);
-		pNewItem->SetScale(1.0f, 1.0f, 1.0f); // 기본 스케일 설정
-
-		std::lock_guard<std::mutex> lock(g_item_mutex);
-		g_items[id] = pNewItem;
-		delete pModel; // 모델 데이터는 복제되었으므로 삭제
-	}
-}
-
-
+// ==========================================================================================================
+// StartScene
+// ==========================================================================================================
 void CStartScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
 {
 	m_pd3dGraphicsRootSignature = CreateGraphicsRootSignature(pd3dDevice);
@@ -1208,10 +1181,10 @@ void CStartScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLi
 	m_GameObjects.clear();
 	m_GameObjects.resize(2);
 
-	m_pFontID = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"Enter ID : ", -0.5f, -0.25f);
+	m_pFontID = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"Enter ID : ", 0.75f, -0.55f);
 	m_GameObjects[0] = m_pFontID;
 
-	m_pFontIP = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"Enter IP : ", -0.5f, -0.55f);
+	m_pFontIP = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"Enter IP : ", 0.75f, -0.75f);
 	m_GameObjects[1] = m_pFontIP;
 
 
@@ -1323,7 +1296,9 @@ void CStartScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM
 	}
 }
 
-
+// ==========================================================================================================
+// EndScene
+// ==========================================================================================================
 void CEndScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
 {
 	m_pd3dGraphicsRootSignature = CreateGraphicsRootSignature(pd3dDevice);

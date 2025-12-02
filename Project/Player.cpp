@@ -336,7 +336,7 @@ bool CPlayer::TryPickUpItem(CGameObject* pItem)
 				XMFLOAT3 curPos = pickedItem->GetPosition();
 				XMFLOAT3 look = GetLook();
 				XMFLOAT3 right = GetRight();
-				SendItemMove(pickedItem->GetUniqueID(), curPos, look, right);
+				//SendItemMove(pickedItem->GetUniqueID(), curPos, look, right);
 			}
 
 			return true;
@@ -440,7 +440,7 @@ void CPlayer::UpdateItem()
 			obj->m_xmf4x4ToParent._41 = targetPos.x; obj->m_xmf4x4ToParent._42 = targetPos.y; obj->m_xmf4x4ToParent._43 = targetPos.z;
 			obj->UpdateTransform(nullptr);
 
-			SendItemMove(dynamic_cast<Item*>(it)->GetUniqueID(), targetPos, fL, fR);
+			//SendItemMove(dynamic_cast<Item*>(it)->GetUniqueID(), targetPos, fL, fR);
 		}
 		else
 		{
@@ -473,23 +473,19 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 {
 	m_pCamera = ChangeCamera(THIRD_PERSON_CAMERA, 0.0f);
 
-	CLoadedModelInfo *pPlayerModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, "Model/Player.bin", NULL);
+	CLoadedModelInfo *pPlayerModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, "Model/Knight.bin", NULL);
 	SetChild(pPlayerModel->m_pModelRootObject, true);
 
-	m_pSkinnedAnimationController = new CAnimationController(pd3dDevice, pd3dCommandList, 7, pPlayerModel);
+	m_pSkinnedAnimationController = new CAnimationController(pd3dDevice, pd3dCommandList, 5, pPlayerModel);
 	m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); // 기본
 	m_pSkinnedAnimationController->SetTrackAnimationSet(1, 1); // 걷기
 	m_pSkinnedAnimationController->SetTrackAnimationSet(2, 2); // 뛰기
 	m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); // 점프
 	m_pSkinnedAnimationController->SetTrackAnimationSet(4, 4); // 휘두르기
-	m_pSkinnedAnimationController->SetTrackAnimationSet(5, 5); // 웅크리기
-	m_pSkinnedAnimationController->SetTrackAnimationSet(6, 6); // 웅크리고 걷기
 	m_pSkinnedAnimationController->SetTrackEnable(1, false); 
 	m_pSkinnedAnimationController->SetTrackEnable(2, false); 
 	m_pSkinnedAnimationController->SetTrackEnable(3, false); 
 	m_pSkinnedAnimationController->SetTrackEnable(4, false); 
-	m_pSkinnedAnimationController->SetTrackEnable(5, false); 
-	m_pSkinnedAnimationController->SetTrackEnable(6, false); 
 	m_pSkinnedAnimationController->SetTrackType(3, 0);
 	m_pSkinnedAnimationController->SetTrackType(4, 0);
 
@@ -640,10 +636,6 @@ void CTerrainPlayer::Move(DWORD dwDirection, float fDistance, bool bUpdateVeloci
 
 	if (isJumping)
 		m_currentAnim = AnimationState::JUMP;
-	else if (isCrouching && isMoving)
-		m_currentAnim = AnimationState::CROUCH_WALK;
-	else if (isCrouching)
-		m_currentAnim = AnimationState::CROUCH;
 	else if (isRunning && isMoving)
 		m_currentAnim = AnimationState::RUN;
 	else if (isMoving)
@@ -703,12 +695,6 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 				m_pSkinnedAnimationController->SetTrackPosition(4, 0.0f);
 				m_currentAnim = AnimationState::IDLE;
 			}
-			break;
-		case AnimationState::CROUCH:
-			PlayAnimationTrack(5);
-			break;
-		case AnimationState::CROUCH_WALK:
-			PlayAnimationTrack(6);
 			break;
 		case AnimationState::RUN:
 			PlayAnimationTrack(2);
@@ -832,7 +818,7 @@ void CTerrainPlayer::StartAnimationBlend(int fromTrack, int toTrack, float blend
 	m_animBlend.elapsed = 0.0f;
 	m_animBlend.active = true;
 
-	for (int i = 0; i < 7; ++i)
+	for (int i = 0; i < 5; ++i)
 		m_pSkinnedAnimationController->SetTrackEnable(i, i == fromTrack || i == toTrack);
 
 	m_pSkinnedAnimationController->SetTrackWeight(fromTrack, 1.0f);

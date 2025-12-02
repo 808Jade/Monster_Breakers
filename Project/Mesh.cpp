@@ -18,9 +18,13 @@ CMesh::~CMesh()
 	{
 		for (int i = 0; i < m_nSubMeshes; i++)
 		{
-			if (m_ppd3dSubSetIndexBuffers[i]) m_ppd3dSubSetIndexBuffers[i]->Release();
-			if (m_ppnSubSetIndices[i]) delete[] m_ppnSubSetIndices[i];
+			if (m_ppd3dSubSetIndexBuffers && m_ppd3dSubSetIndexBuffers[i])
+				m_ppd3dSubSetIndexBuffers[i]->Release();
+
+			if (m_ppnSubSetIndices && m_ppnSubSetIndices[i])
+				delete[] m_ppnSubSetIndices[i];
 		}
+
 		if (m_ppd3dSubSetIndexBuffers) delete[] m_ppd3dSubSetIndexBuffers;
 		if (m_pd3dSubSetIndexBufferViews) delete[] m_pd3dSubSetIndexBufferViews;
 
@@ -36,13 +40,18 @@ void CMesh::ReleaseUploadBuffers()
 	if (m_pd3dPositionUploadBuffer) m_pd3dPositionUploadBuffer->Release();
 	m_pd3dPositionUploadBuffer = NULL;
 
+
 	if ((m_nSubMeshes > 0) && m_ppd3dSubSetIndexUploadBuffers)
 	{
 		for (int i = 0; i < m_nSubMeshes; i++)
 		{
-			if (m_ppd3dSubSetIndexUploadBuffers[i]) m_ppd3dSubSetIndexUploadBuffers[i]->Release();
+			if (m_ppd3dSubSetIndexUploadBuffers[i])
+			{
+				m_ppd3dSubSetIndexUploadBuffers[i]->Release();
+				m_ppd3dSubSetIndexUploadBuffers[i] = NULL;
+			}
 		}
-		if (m_ppd3dSubSetIndexUploadBuffers) delete[] m_ppd3dSubSetIndexUploadBuffers;
+		delete[] m_ppd3dSubSetIndexUploadBuffers;
 		m_ppd3dSubSetIndexUploadBuffers = NULL;
 	}
 }
@@ -61,6 +70,25 @@ void CMesh::Render(ID3D12GraphicsCommandList *pd3dCommandList, int nSubSet)
 	pd3dCommandList->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
 
 	if((m_nSubMeshes > 0) && (nSubSet < m_nSubMeshes))
+	{
+		pd3dCommandList->IASetIndexBuffer(&(m_pd3dSubSetIndexBufferViews[nSubSet]));
+		pd3dCommandList->DrawIndexedInstanced(m_pnSubSetIndices[nSubSet], 1, 0, 0, 0);
+	}
+	else
+	{
+		pd3dCommandList->DrawInstanced(m_nVertices, 1, m_nOffset, 0);
+	}
+}
+
+void CMesh::Render(ID3D12GraphicsCommandList* pd3dCommandList, int nSubSet, UINT nInstances, D3D12_VERTEX_BUFFER_VIEW d3dInstancingBufferView)
+{
+	UpdateShaderVariables(pd3dCommandList);
+
+	OnPreRender(pd3dCommandList, NULL);
+
+	pd3dCommandList->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
+
+	if ((m_nSubMeshes > 0) && (nSubSet < m_nSubMeshes))
 	{
 		pd3dCommandList->IASetIndexBuffer(&(m_pd3dSubSetIndexBufferViews[nSubSet]));
 		pd3dCommandList->DrawIndexedInstanced(m_pnSubSetIndices[nSubSet], 1, 0, 0, 0);
@@ -551,12 +579,12 @@ void CStandardMesh::LoadMeshFromFile(ID3D12Device *pd3dDevice, ID3D12GraphicsCom
 			nReads = (UINT)::fread(&(m_nSubMeshes), sizeof(int), 1, pInFile);
 			if (m_nSubMeshes > 0)
 			{
-				m_pnSubSetIndices = new int[m_nSubMeshes];
-				m_ppnSubSetIndices = new UINT*[m_nSubMeshes];
+				m_pnSubSetIndices = new int[m_nSubMeshes]();
+				m_ppnSubSetIndices = new UINT*[m_nSubMeshes]();
 
-				m_ppd3dSubSetIndexBuffers = new ID3D12Resource*[m_nSubMeshes];
-				m_ppd3dSubSetIndexUploadBuffers = new ID3D12Resource*[m_nSubMeshes];
-				m_pd3dSubSetIndexBufferViews = new D3D12_INDEX_BUFFER_VIEW[m_nSubMeshes];
+				m_ppd3dSubSetIndexBuffers = new ID3D12Resource*[m_nSubMeshes]();
+				m_ppd3dSubSetIndexUploadBuffers = new ID3D12Resource*[m_nSubMeshes]();
+				m_pd3dSubSetIndexBufferViews = new D3D12_INDEX_BUFFER_VIEW[m_nSubMeshes]();
 
 				for (int i = 0; i < m_nSubMeshes; i++)
 				{
@@ -571,7 +599,10 @@ void CStandardMesh::LoadMeshFromFile(ID3D12Device *pd3dDevice, ID3D12GraphicsCom
 							m_ppnSubSetIndices[i] = new UINT[m_pnSubSetIndices[i]];
 							nReads = (UINT)::fread(m_ppnSubSetIndices[i], sizeof(UINT), m_pnSubSetIndices[i], pInFile);
 
-							m_ppd3dSubSetIndexBuffers[i] = ::CreateBufferResource(pd3dDevice, pd3dCommandList, m_ppnSubSetIndices[i], sizeof(UINT) * m_pnSubSetIndices[i], D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, &m_ppd3dSubSetIndexUploadBuffers[i]);
+							m_ppd3dSubSetIndexBuffers[i] = ::CreateBufferResource(pd3dDevice, pd3dCommandList, 
+								m_ppnSubSetIndices[i], sizeof(UINT) * m_pnSubSetIndices[i], 
+								D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, 
+								&m_ppd3dSubSetIndexUploadBuffers[i]);
 
 							m_pd3dSubSetIndexBufferViews[i].BufferLocation = m_ppd3dSubSetIndexBuffers[i]->GetGPUVirtualAddress();
 							m_pd3dSubSetIndexBufferViews[i].Format = DXGI_FORMAT_R32_UINT;

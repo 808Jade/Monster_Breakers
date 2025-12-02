@@ -43,76 +43,31 @@ std::mutex g_monster_mutex;
 
 
 // 몬스터 hp 줄어듬
-void SendHitSpider(long long monsterID)
-{
-    cs_packet_shovel_damage psd;
-    psd.size = sizeof(psd);
-    psd.type = CS_P_SHOVEL_DAMAGE;
-    psd.monsterID = monsterID;
-    psd.damage = 10;
-    send_packet(&psd);
-}
+//void SendHitMonster(long long monsterID)
+//{
+//    cs_packet_shovel_damage psd;
+//    psd.size = sizeof(psd);
+//    psd.type = CS_P_SHOVEL_DAMAGE;
+//    psd.monsterID = monsterID;
+//    psd.damage = 10;
+//    send_packet(&psd);
+//}
 
 
 // =================================================================
 //                           상점 관리
 // =================================================================
 
-void SendShopBuyRequest(int item_type)
-{
-    cs_packet_shop_buy pkt{};
-    pkt.size = sizeof(pkt);
-    pkt.type = CS_P_SHOP_BUY;
-    pkt.item_type = item_type;
-    send_packet(&pkt);
-}
-
-void SendShopSellRequest(int item_type)
-{
-    cs_packet_shop_sell pkt{};
-    pkt.size = sizeof(pkt);
-    pkt.type = CS_P_SHOP_SELL;
-    pkt.item_type = item_type;
-    send_packet(&pkt);
-}
 
 // =================================================================
 //                          아이템 관리
 // =================================================================
 
-void SendItemMove(long long item_id, const XMFLOAT3& position, const XMFLOAT3& look, const XMFLOAT3& right)
-{
-    cs_packet_item_move itm;
-    itm.size = sizeof(itm);
-    itm.type = CS_P_ITEM_MOVE;
-    itm.item_id = item_id;
-    itm.position = position;
-    itm.look = look;
-    itm.right = right;
-    send_packet(&itm);
-}
 
 // =================================================================
 //                          파티클 관리
 // =================================================================
 
-void SendFlashlightChange(bool flashlight_on) {
-    cs_packet_flashlight pkt{};
-    pkt.size = sizeof(pkt);
-    pkt.type = CS_P_FLASHLIGHT;
-    pkt.player_id = g_myid;
-    pkt.flashlight_on = flashlight_on;
-    send_packet(&pkt);
-}
-
-void SendParticleImpact(const XMFLOAT3& impact_pos) {
-    cs_packet_particle_impact pkt{};
-    pkt.size = sizeof(pkt);
-    pkt.type = CS_P_PARTICLE_IMPACT;
-    pkt.player_id = g_myid;
-    pkt.impact_pos = impact_pos;
-    send_packet(&pkt);
-}
 
 // =================================================================
 //                      네트워크 코어 로직
@@ -231,9 +186,9 @@ void InitializeNetwork(char serverIP[]) {
     
     WSAStartup(MAKEWORD(2, 2), &wsaData);
 
-    //char serverIP[16];
-    //std::cout << "server IP : ";
-    //std::cin >> serverIP;
+ /*   char serverIP[16];
+    std::cout << "server IP : ";
+    std::cin >> serverIP;*/
    
 
     ConnectSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, nullptr, 0, WSA_FLAG_OVERLAPPED);
@@ -293,13 +248,13 @@ void ProcessPacket(char* ptr)
         //g_pScene->m_pPlayer->currentHP = packet->hp;
         
 
-        std::cout << "[Client] My Player : " << packet->id << std::endl;
+        /*std::cout << "[Client] My Player : " << packet->id << std::endl;
         std::cout << "[Client] My Player Information ID:" << packet->id
             << " Positino(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")"
             << " Look(" << packet->look.x << "," << packet->look.y << "," << packet->look.z << ")"
             << " Right(" << packet->right.x << "," << packet->right.y << "," << packet->right.z << ")"
             << "Animation : " << static_cast<int>(packet->animState) << ", HP : " << packet->hp
-            << std::endl;
+            << std::endl;*/
         break;
     }
     
@@ -310,13 +265,13 @@ void ProcessPacket(char* ptr)
 
         if (id == g_myid) break;
 
-        std::cout << "[Client] New Player " << id << "Connect " << "\n";
+       /* std::cout << "[Client] New Player " << id << "Connect " << "\n";
         std::cout << "[Client] New Player Information Recv "
             << " Position(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")"
             << " Look(" << packet->look.x << "," << packet->look.y << "," << packet->look.z << ")"
             << " Right(" << packet->right.x << "," << packet->right.y << "," << packet->right.z << ")"
             << "Animation : " << static_cast<int>(packet->animState) << "HP : " << packet->hp
-            << std::endl;
+            << std::endl;*/
 
         // 씬에 OtherPlayer가 딱 나타난다
         gGameFramework.OnOtherClientConnected();
@@ -335,16 +290,16 @@ void ProcessPacket(char* ptr)
         if (!gGameFramework.isLoading && !gGameFramework.isStartScene) {
             gGameFramework.UpdateOtherPlayerPosition(0, packet->position);
             gGameFramework.UpdateOtherPlayerLook(0, packet->look, packet->right);
-            gGameFramework.UpdateOtherPlayerAnimation(0, packet->animState);
+            //gGameFramework.UpdateOtherPlayerAnimation(0, packet->animState);
             gGameFramework.UpdateOtherPlayerRotate(0, packet->right, packet->look);
         }
 
-        std::cout << "[Client] New Player Information Recv "
+        /*std::cout << "[Client] New Player Information Recv "
             << " Position(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")"
             << " Look(" << packet->look.x << "," << packet->look.y << "," << packet->look.z << ")"
             << " Right(" << packet->right.x << "," << packet->right.y << "," << packet->right.z << ")"
             << "Animation : " << static_cast<int>(packet->animState)
-            << std::endl;
+            << std::endl;*/
 
         break;
     }
@@ -359,44 +314,7 @@ void ProcessPacket(char* ptr)
         break;
     }
 
-    case SC_P_ITEM_SPAWN:
-    {
-        sc_packet_item_spawn* pkt = reinterpret_cast<sc_packet_item_spawn*>(ptr);
-
-
-        std::cout << "[Client] Item Create - ID: " << pkt->item_id
-            << " Postion(" << pkt->position.x << ", "
-            << pkt->position.y << ", " << pkt->position.z << ")"
-            << " Type: " << pkt->item_type << " Cash: " << pkt->cash << std::endl;
-
-        gGameFramework.ItemSpawned(pkt->item_id, pkt->position, pkt->item_type, pkt->cash);
-
-        break;
-    }
-
-    // 여긴 일단 흠... 사라지는건 update부분에서 해도 되지 않을까...?
-    case SC_P_ITEM_DESPAWN:
-    {
-        sc_packet_item_despawn* pkt = reinterpret_cast<sc_packet_item_despawn*>(ptr);
-        std::cout << "[Client] Item delete - ID: " << pkt->item_id << std::endl;
-        break;
-    }
-
-    case SC_P_ITEM_MOVE:
-    {
-        sc_packet_item_move* pkt = reinterpret_cast<sc_packet_item_move*>(ptr);
-
-        //std::cout << "[Client] Item Move - ID: " << pkt->item_id
-        //    << " Position(" << pkt->position.x << ", "
-        //    << pkt->position.y << ", " << pkt->position.z << ")"
-        //    << std::endl;
-
-        gGameFramework.UpdateItemPosition(pkt->item_id, pkt->position);
-        gGameFramework.UpdateItemRotation(pkt->item_id, pkt->look, pkt->right);
-
-        break;
-    }
-
+    
     case SC_P_MONSTER_SPAWN:
     {
        
@@ -413,71 +331,6 @@ void ProcessPacket(char* ptr)
         
         break;
     }
-
-    case SC_P_FLASHLIGHT:
-    {
-        sc_packet_flashlight* pkt = reinterpret_cast<sc_packet_flashlight*>(ptr);
-
-        long long player_id = pkt->player_id;
-        bool flashlight_on = pkt->flashlight_on;
-
-        auto it = g_other_players.find(player_id);
-        if (it != g_other_players.end())
-        {
-            // it->second->SetFlashlight(flashlight_on); <- 이런식으로 상대 플레이어가 손전등 껐다 켰다 한다는걸 받아야 할듯?
-        }
-
-        break;
-    }
-
-    case SC_P_PARTICLE_IMPACT:
-    {
-        sc_packet_particle_impact* pkt = reinterpret_cast<sc_packet_particle_impact*>(ptr);
-
-        long long player_id = pkt->player_id;
-        XMFLOAT3 impact_pos = pkt->impact_pos;
-
-        //이부분에 파티클 Active 관련 코드? 작성 해야할듯?
-
-        break;
-    }
-
-    case SC_P_SHOP_BUY_ACK:
-    {
-        auto* pkt = reinterpret_cast<sc_packet_shop_buy_ack*>(ptr);
-        if (pkt->success)
-        {
-            std::cout << "[Shop] 구매 성공! 아이템 타입: " << pkt->item_type
-                << " 남은 캐시: " << pkt->left_cash << std::endl;
-
-            //  예시 : gGameFramework.OnItemBought(pkt->item_type, pkt->left_cash);
-        }
-        else
-        {
-            std::cout << "[Shop] 구매 실패! (잔액 부족/보유중 등)" << std::endl;
-            // UI 띄우면 좋음
-        }
-        break;
-    }
-
-    case SC_P_SHOP_SELL_ACK:
-    {
-        auto* pkt = reinterpret_cast<sc_packet_shop_sell_ack*>(ptr);
-        if (pkt->success)
-        {
-            std::cout << "[Shop] 판매 성공! 아이템 타입: " << pkt->item_type
-                << " 남은 캐시: " << pkt->left_cash << std::endl;
-
-            // 예시 : gGameFramework.OnItemSold(pkt->item_type, pkt->left_cash);
-        }
-        else
-        {
-            std::cout << "[Shop] 판매 실패! (보유하지 않은 아이템)" << std::endl;
-            // UI 띄우면 좋음
-        }
-        break;
-    }
-
 
     default:
 
@@ -520,20 +373,11 @@ void send_position_to_server(const XMFLOAT3& position, const XMFLOAT3& look, con
     p.position = position;
     p.look = look;
     p.right = right;
-    p.animState = animState;
+    //p.animState = animState;
     send_packet(&p);
 
 }
 
-void send_item_position_to_server(const XMFLOAT3& position, long long id)
-{
-    cs_packet_item_move ipk;
-    ipk.size = sizeof(ipk);
-    ipk.type = CS_P_ITEM_MOVE;
-    ipk.position = position;
-    ipk.item_id = id;
-    send_packet(&ipk);
-}
 
 void CleanupNetwork() {
     g_running = false;
