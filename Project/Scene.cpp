@@ -870,7 +870,7 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 				m_pPlayer->bflashlight = !m_pPlayer->bflashlight;
 				BuildDefaultLightsAndMaterials(m_pPlayer->bflashlight);
 				// server 로 켯다는거 보내주기
-				SendFlashlightChange(m_pPlayer->bflashlight);
+
 			}
 			else if (!strcmp(frameName, "Shovel"))
 			{
@@ -878,7 +878,6 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 
 				m_pEffect->Activate(m_pPlayer->m_pHeldItems[m_pPlayer->m_nSelectedInventoryIndex]->GetPosition());
 
-				SendParticleImpact(m_pPlayer->GetPosition());
 
 				if (m_pPlayer->m_isMonsterHit)
 				{
@@ -1077,7 +1076,7 @@ void CScene::AnimateObjects(float fTimeElapsed)
 				obj->SetPosition(pos);
 				Item* itemObj = dynamic_cast<Item*>(obj);
 				if (itemObj) {
-					SendItemMove(itemObj->GetUniqueID(), pos, obj->GetLook(), obj->GetRight());
+					//SendItemMove(itemObj->GetUniqueID(), pos, obj->GetLook(), obj->GetRight());
 				}
 			}
 			else obj->isFalling = false;
@@ -1149,42 +1148,6 @@ void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera
 	}
 }
 
-// 아이템 생성 server(민상.ver AddItem)
-
-void CScene::AddItem(long long id, ITEM_TYPE type, const XMFLOAT3& position) {
-	CLoadedModelInfo* pModel = nullptr;
-	Item* pNewItem = nullptr;
-
-	switch (type)
-	{
-	case ITEM_TYPE_SHOVEL:
-		dynamic_cast<Shovel*>(m_GameObjects[1])->ChangeExistState(true);
-		dynamic_cast<Shovel*>(m_GameObjects[1])->SetPosition(position);
-		break;
-	case ITEM_TYPE_HANDMAP:
-		break;
-	case ITEM_TYPE_FLASHLIGHT:
-		dynamic_cast<FlashLight*>(m_GameObjects[0])->ChangeExistState(true);
-		dynamic_cast<FlashLight*>(m_GameObjects[0])->SetPosition(position);
-		break;
-	case ITEM_TYPE_WHISTLE:
-		dynamic_cast<Whistle*>(m_GameObjects[2])->ChangeExistState(true);
-		dynamic_cast<Whistle*>(m_GameObjects[2])->SetPosition(position);
-		break;
-	default:
-		std::cerr << "[Error] Unknown item type: " << static_cast<int>(type) << std::endl;
-		return;
-	}
-
-	if (pModel && pNewItem) {
-		pNewItem->SetPosition(position);
-		pNewItem->SetScale(1.0f, 1.0f, 1.0f); // 기본 스케일 설정
-
-		std::lock_guard<std::mutex> lock(g_item_mutex);
-		g_items[id] = pNewItem;
-		delete pModel; // 모델 데이터는 복제되었으므로 삭제
-	}
-}
 
 // ==========================================================================================================
 // StartScene

@@ -153,8 +153,6 @@ public:
 public:
 
 	//server
-	void AddItem(long long id, ITEM_TYPE type, const XMFLOAT3& position);
-	void UpdateItemPosition(long long id, const XMFLOAT3& position);
 	
 	void OnOtherClientConnedted()
 	{

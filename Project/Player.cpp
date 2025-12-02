@@ -336,7 +336,7 @@ bool CPlayer::TryPickUpItem(CGameObject* pItem)
 				XMFLOAT3 curPos = pickedItem->GetPosition();
 				XMFLOAT3 look = GetLook();
 				XMFLOAT3 right = GetRight();
-				SendItemMove(pickedItem->GetUniqueID(), curPos, look, right);
+				//SendItemMove(pickedItem->GetUniqueID(), curPos, look, right);
 			}
 
 			return true;
@@ -440,7 +440,7 @@ void CPlayer::UpdateItem()
 			obj->m_xmf4x4ToParent._41 = targetPos.x; obj->m_xmf4x4ToParent._42 = targetPos.y; obj->m_xmf4x4ToParent._43 = targetPos.z;
 			obj->UpdateTransform(nullptr);
 
-			SendItemMove(dynamic_cast<Item*>(it)->GetUniqueID(), targetPos, fL, fR);
+			//SendItemMove(dynamic_cast<Item*>(it)->GetUniqueID(), targetPos, fL, fR);
 		}
 		else
 		{
