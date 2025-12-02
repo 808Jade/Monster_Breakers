@@ -186,9 +186,9 @@ void InitializeNetwork(char serverIP[]) {
     
     WSAStartup(MAKEWORD(2, 2), &wsaData);
 
-    //char serverIP[16];
-    //std::cout << "server IP : ";
-    //std::cin >> serverIP;
+ /*   char serverIP[16];
+    std::cout << "server IP : ";
+    std::cin >> serverIP;*/
    
 
     ConnectSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, nullptr, 0, WSA_FLAG_OVERLAPPED);
@@ -249,13 +249,13 @@ void ProcessPacket(char* ptr)
         
         //player.SetPosition(packet->position);
 
-        std::cout << "[Client] My Player : " << packet->id << std::endl;
+        /*std::cout << "[Client] My Player : " << packet->id << std::endl;
         std::cout << "[Client] My Player Information ID:" << packet->id
             << " Positino(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")"
             << " Look(" << packet->look.x << "," << packet->look.y << "," << packet->look.z << ")"
             << " Right(" << packet->right.x << "," << packet->right.y << "," << packet->right.z << ")"
             << "Animation : " << static_cast<int>(packet->animState) << ", HP : " << packet->hp
-            << std::endl;
+            << std::endl;*/
         break;
     }
     
@@ -266,13 +266,13 @@ void ProcessPacket(char* ptr)
 
         if (id == g_myid) break;
 
-        std::cout << "[Client] New Player " << id << "Connect " << "\n";
+       /* std::cout << "[Client] New Player " << id << "Connect " << "\n";
         std::cout << "[Client] New Player Information Recv "
             << " Position(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")"
             << " Look(" << packet->look.x << "," << packet->look.y << "," << packet->look.z << ")"
             << " Right(" << packet->right.x << "," << packet->right.y << "," << packet->right.z << ")"
             << "Animation : " << static_cast<int>(packet->animState) << "HP : " << packet->hp
-            << std::endl;
+            << std::endl;*/
 
         // 씬에 OtherPlayer가 딱 나타난다
         gGameFramework.OnOtherClientConnected();
@@ -291,16 +291,16 @@ void ProcessPacket(char* ptr)
         if (!gGameFramework.isLoading && !gGameFramework.isStartScene) {
             gGameFramework.UpdateOtherPlayerPosition(0, packet->position);
             gGameFramework.UpdateOtherPlayerLook(0, packet->look, packet->right);
-            gGameFramework.UpdateOtherPlayerAnimation(0, packet->animState);
+            //gGameFramework.UpdateOtherPlayerAnimation(0, packet->animState);
             gGameFramework.UpdateOtherPlayerRotate(0, packet->right, packet->look);
         }
 
-        std::cout << "[Client] New Player Information Recv "
+        /*std::cout << "[Client] New Player Information Recv "
             << " Position(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")"
             << " Look(" << packet->look.x << "," << packet->look.y << "," << packet->look.z << ")"
             << " Right(" << packet->right.x << "," << packet->right.y << "," << packet->right.z << ")"
             << "Animation : " << static_cast<int>(packet->animState)
-            << std::endl;
+            << std::endl;*/
 
         break;
     }
@@ -391,7 +391,7 @@ void send_position_to_server(const XMFLOAT3& position, const XMFLOAT3& look, con
     p.position = position;
     p.look = look;
     p.right = right;
-    p.animState = animState;
+    //p.animState = animState;
     send_packet(&p);
 
 }
