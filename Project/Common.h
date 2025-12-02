@@ -21,45 +21,21 @@ constexpr char CS_P_LOGIN = 5;
 constexpr char CS_P_MOVE = 6;
 constexpr char SC_P_LOGIN_FAIL = 7;
 
-
-constexpr float TILE_SIZE = 1.0f;
-constexpr float MAP_ORIGIN_X = -100.0f;
-constexpr float MAP_ORIGIN_Z = -100.0f;
-
-constexpr unsigned short MAP_WIDTH = 200;  // 전에는 8이었음.
-constexpr unsigned short MAP_HEIGHT = 200;
-
-constexpr char SC_P_ITEM_SPAWN = 9;
-constexpr char SC_P_ITEM_DESPAWN = 10;
-constexpr char SC_P_ITEM_MOVE = 11;
-constexpr char CS_P_ITEM_PICKUP = 12;
-constexpr char CS_P_ITEM_MOVE = 13;
-
 constexpr char MAX_ID_LENGTH = 20;
 
-//constexpr char MOVE_UP = 1;
-//constexpr char MOVE_DOWN = 2;
-//constexpr char MOVE_LEFT = 3;
-//constexpr char MOVE_RIGHT = 4;
 
-constexpr char SC_P_MONSTER_SPAWN = 14;
-constexpr char SC_P_MONSTER_MOVE = 15;
-constexpr char SC_P_MONSTER_DIE = 16;
-constexpr char CS_P_SHOVEL_DAMAGE = 26;
+constexpr char SC_P_MONSTER_SPAWN = 8;
+constexpr char SC_P_MONSTER_MOVE = 9;
+constexpr char SC_P_MONSTER_DIE = 10;
+
+// 이건 생각좀 더 해보자
 constexpr char SC_P_UPDATE_MONSTER_HP = 27;
 
-// 상점 관련 패킷
-constexpr char CS_P_SHOP_BUY = 21;
-constexpr char CS_P_SHOP_SELL = 22;
-constexpr char SC_P_SHOP_BUY_ACK = 23;
-constexpr char SC_P_SHOP_SELL_ACK = 24;
+
 
 constexpr char CS_P_LOADING_DONE = 25;
 
-constexpr char CS_P_FLASHLIGHT = 28;
-constexpr char SC_P_FLASHLIGHT = 29;
-constexpr char CS_P_PARTICLE_IMPACT = 30;
-constexpr char SC_P_PARTICLE_IMPACT = 31;
+
 
 
 #pragma pack (push, 1)
@@ -98,8 +74,8 @@ struct sc_packet_user_info {
 	XMFLOAT3		right;
 	uint8_t			animState;
 	short			hp;
-	short			cash;
 };
+
 
 struct sc_packet_move {
 	unsigned char		size;
@@ -111,6 +87,7 @@ struct sc_packet_move {
 	uint8_t				animState;
 };
 
+
 struct sc_packet_enter {
 	unsigned char		size;
 	char				type;
@@ -120,7 +97,6 @@ struct sc_packet_enter {
 	XMFLOAT3			right;
 	uint8_t				animState;
 	short				hp;
-	short				cash;
 };
 
 struct sc_packet_leave {
@@ -129,6 +105,7 @@ struct sc_packet_leave {
 	long long			id;
 };
 
+
 struct cs_packet_login {
 	unsigned char		size;
 	char				type;
@@ -136,6 +113,7 @@ struct cs_packet_login {
 	char				name[MAX_ID_LENGTH];
 
 };
+
 
 struct sc_packet_login_fail {
 	unsigned char		size;
@@ -151,85 +129,7 @@ struct cs_packet_move {
 	uint8_t				animState;
 };
 
-// 아이템
 
-enum ITEM_TYPE : int {
-	ITEM_TYPE_SHOVEL = 1,
-	ITEM_TYPE_HANDMAP = 2,
-	ITEM_TYPE_FLASHLIGHT = 3,
-	ITEM_TYPE_WHISTLE = 4
-};
-
-struct sc_packet_item_spawn {
-	unsigned char		size;
-	char				type;
-	long long			item_id;
-	XMFLOAT3			position;
-	int					item_type;
-	short				cash;
-};
-
-struct sc_packet_item_despawn {
-	unsigned char		size;
-	char				type;
-	long long			item_id;
-};
-
-struct cs_packet_item_pickup {
-	unsigned char		size;
-	char				type;
-	long long			item_id;
-	long long			player_id;
-};
-
-struct cs_packet_item_move {
-	unsigned char		size;
-	char				type;
-	long long			item_id;
-	XMFLOAT3			position;
-	XMFLOAT3			right;    
-	XMFLOAT3			look;
-};
-
-struct sc_packet_item_move {
-	unsigned char		size;
-	char				type;
-	long long			item_id;
-	XMFLOAT3			position;
-	XMFLOAT3			right;
-	XMFLOAT3			look;
-};
-
-// 상점
-struct cs_packet_shop_buy 
-{
-	unsigned char size;
-	unsigned char type; // CS_P_SHOP_BUY
-	int item_type;
-};
-struct cs_packet_shop_sell 
-{
-	unsigned char size;
-	unsigned char type; // CS_P_SHOP_SELL
-	int item_type;
-};
-
-struct sc_packet_shop_buy_ack 
-{
-	unsigned char size;
-	unsigned char type; // SC_P_SHOP_BUY_ACK
-	bool success;
-	int item_type;
-	int left_cash;
-};
-struct sc_packet_shop_sell_ack 
-{
-	unsigned char size;
-	unsigned char type; // SC_P_SHOP_SELL_ACK
-	bool success;
-	int item_type;
-	int left_cash;
-};
 
 // Monster
 enum class MonsterAnimationState : uint8_t
