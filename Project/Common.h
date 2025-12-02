@@ -33,10 +33,15 @@ constexpr char SC_P_UPDATE_MONSTER_HP = 27;
 
 
 
-constexpr char CS_P_LOADING_DONE = 25;
+constexpr char CS_P_LOADING_DONE = 30;
 
 
-
+// =================== 주의!! ========================
+// 
+// 1. 애니메이션 동기화는 클라에서 애니메이션 완료하면 하기
+//		(그전엔 주석처리해둠 : 메모리 크기차이로인한 오류 발생 위험)
+// 
+// ===================================================
 
 #pragma pack (push, 1)
 
@@ -72,7 +77,7 @@ struct sc_packet_user_info {
 	XMFLOAT3		position;
 	XMFLOAT3		look;
 	XMFLOAT3		right;
-	uint8_t			animState;
+	//uint8_t			animState;
 	short			hp;
 };
 
@@ -84,7 +89,7 @@ struct sc_packet_move {
 	XMFLOAT3			position;
 	XMFLOAT3			look;
 	XMFLOAT3			right;
-	uint8_t				animState;
+	//uint8_t				animState;
 };
 
 
@@ -95,7 +100,7 @@ struct sc_packet_enter {
 	XMFLOAT3			position;
 	XMFLOAT3			look;
 	XMFLOAT3			right;
-	uint8_t				animState;
+	//uint8_t				animState;
 	short				hp;
 };
 
@@ -126,7 +131,7 @@ struct cs_packet_move {
 	XMFLOAT3			position;
 	XMFLOAT3			look;
 	XMFLOAT3			right;
-	uint8_t				animState;
+	//uint8_t				animState;
 };
 
 
