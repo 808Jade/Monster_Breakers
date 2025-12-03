@@ -35,7 +35,7 @@ void CScene::BuildDefaultLightsAndMaterials(bool toggle)
 	::ZeroMemory(m_pLights, sizeof(LIGHT) * m_nLights);
 
 	//m_xmf4GlobalAmbient = XMFLOAT4(0.08f, 0.08f, 0.08f, 1.0f);
-	m_xmf4GlobalAmbient = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	m_xmf4GlobalAmbient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
 
 	//m_pLights[0].m_bEnable = true;
 	//m_pLights[0].m_nType = POINT_LIGHT;
@@ -47,17 +47,20 @@ void CScene::BuildDefaultLightsAndMaterials(bool toggle)
 	//m_pLights[0].m_xmf3Attenuation = XMFLOAT3(0.5f, 0.05f, 0.0001f);
 
 	m_pLights[0].m_bEnable = toggle;
-	m_pLights[0].m_nType = SPOT_LIGHT;
-	m_pLights[0].m_fRange = 50.0f;
-	m_pLights[0].m_xmf4Ambient = XMFLOAT4(0.005f, 0.005f, 0.005f, 1.0f);
-	m_pLights[0].m_xmf4Diffuse = XMFLOAT4(0.125f, 0.125f, 0.12f, 1.0f);
-	m_pLights[0].m_xmf4Specular = XMFLOAT4(0.25f, 0.25f, 0.2f, 1.0f);
-	m_pLights[0].m_xmf3Position = XMFLOAT3(-50.0f, 20.0f, -5.0f);
-	m_pLights[0].m_xmf3Direction = XMFLOAT3(0.0f, -1.0f, 1.0f);
-	m_pLights[0].m_xmf3Attenuation = XMFLOAT3(1.0f, 0.05f, 0.001f);
-	m_pLights[0].m_fFalloff = 8.0f;
-	m_pLights[0].m_fPhi = (float)cos(XMConvertToRadians(30.0f));
-	m_pLights[0].m_fTheta = (float)cos(XMConvertToRadians(15.0f));
+	m_pLights[0].m_nType = DIRECTIONAL_LIGHT;
+	m_pLights[0].m_xmf4Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	m_pLights[0].m_xmf4Diffuse = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	m_pLights[0].m_xmf4Specular = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	XMFLOAT3 lightDir = XMFLOAT3(0.5f, -1.0f, 0.5f); // 약간 대각선 아래로
+	XMVECTOR vLightDir = XMLoadFloat3(&lightDir);
+	vLightDir = XMVector3Normalize(vLightDir);
+	XMStoreFloat3(&m_pLights[0].m_xmf3Direction, vLightDir);
+	m_pLights[0].m_xmf3Position = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	m_pLights[0].m_fRange = 0.0f;
+	m_pLights[0].m_xmf3Attenuation = XMFLOAT3(1.0f, 0.0f, 0.0f);
+	m_pLights[0].m_fFalloff = 0.0f;
+	m_pLights[0].m_fPhi = 0.0f;
+	m_pLights[0].m_fTheta = 0.0f;
 
 	//m_pLights[2].m_bEnable = true;
 	//m_pLights[2].m_nType = SPOT_LIGHT;
@@ -147,7 +150,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 
 	CMaterial::PrepareShaders(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature); 
 
-	BuildDefaultLightsAndMaterials(false);
+	BuildDefaultLightsAndMaterials(true);
 
 	Device = pd3dDevice;
 	Commandlist = pd3dCommandList;
