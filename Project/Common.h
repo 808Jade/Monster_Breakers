@@ -33,7 +33,7 @@ constexpr char SC_P_UPDATE_MONSTER_HP = 27;
 
 
 
-constexpr char CS_P_LOADING_DONE = 30;
+constexpr char CS_P_LOADING_DONE = 25;
 
 
 // =================== ¡÷¿«!! ========================
@@ -77,7 +77,11 @@ struct sc_packet_user_info {
 	XMFLOAT3		position;
 	XMFLOAT3		look;
 	XMFLOAT3		right;
+<<<<<<< Updated upstream
 	//uint8_t			animState;
+=======
+	uint8_t		animState;
+>>>>>>> Stashed changes
 	short			hp;
 };
 
@@ -89,7 +93,11 @@ struct sc_packet_move {
 	XMFLOAT3			position;
 	XMFLOAT3			look;
 	XMFLOAT3			right;
+<<<<<<< Updated upstream
 	//uint8_t				animState;
+=======
+	uint8_t				animState;
+>>>>>>> Stashed changes
 };
 
 
@@ -100,7 +108,11 @@ struct sc_packet_enter {
 	XMFLOAT3			position;
 	XMFLOAT3			look;
 	XMFLOAT3			right;
+<<<<<<< Updated upstream
 	//uint8_t				animState;
+=======
+	uint8_t				animState;
+>>>>>>> Stashed changes
 	short				hp;
 };
 
@@ -131,7 +143,11 @@ struct cs_packet_move {
 	XMFLOAT3			position;
 	XMFLOAT3			look;
 	XMFLOAT3			right;
+<<<<<<< Updated upstream
 	//uint8_t				animState;
+=======
+	uint8_t				animState;
+>>>>>>> Stashed changes
 };
 
 
