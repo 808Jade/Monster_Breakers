@@ -265,8 +265,8 @@ void ProcessPacket(char* ptr)
 
         if (id == g_myid) break;
 
-       /* std::cout << "[Client] New Player " << id << "Connect " << "\n";
-        std::cout << "[Client] New Player Information Recv "
+        std::cout << "[Client] New Player " << id << "Connect " << "\n";
+       /* std::cout << "[Client] New Player Information Recv "
             << " Position(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")"
             << " Look(" << packet->look.x << "," << packet->look.y << "," << packet->look.z << ")"
             << " Right(" << packet->right.x << "," << packet->right.y << "," << packet->right.z << ")"
@@ -290,7 +290,7 @@ void ProcessPacket(char* ptr)
         if (!gGameFramework.isLoading && !gGameFramework.isStartScene) {
             gGameFramework.UpdateOtherPlayerPosition(0, packet->position);
             gGameFramework.UpdateOtherPlayerLook(0, packet->look, packet->right);
-            //gGameFramework.UpdateOtherPlayerAnimation(0, packet->animState);
+            gGameFramework.UpdateOtherPlayerAnimation(0, packet->animState);
             gGameFramework.UpdateOtherPlayerRotate(0, packet->right, packet->look);
         }
 
@@ -373,7 +373,7 @@ void send_position_to_server(const XMFLOAT3& position, const XMFLOAT3& look, con
     p.position = position;
     p.look = look;
     p.right = right;
-    //p.animState = animState;
+    p.animState = animState;
     send_packet(&p);
 
 }
