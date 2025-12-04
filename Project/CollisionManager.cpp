@@ -50,31 +50,7 @@ void CCollisionManager::Update(CPlayer* player)
         {
             HandleCollision(player, obj);
         }
-        if (std::string::npos != ObjectFrameName.find("Spider") && obj != player && player->GetShovelAttackBoundingBox().Intersects(obj->GetBoundingBox()))
-        {
-            HandleCollision(player, obj);
-        }
-    }
-}
-
-void CCollisionManager::Update(CPlayer* player, Shovel* shovel)
-{
-    // 플레이어가 속한 노드 탐색
-    QuadTreeNode* playerNode = m_pQuadTree->FindNode(m_pQuadTree->root, player->GetBoundingBox());
-    if (!playerNode) return;
-
-    //if (frameCounter % 60 == 0) // 60 프레임마다 출력
-    //    cout << playerNode->bounds.Center.x << ", " << playerNode->bounds.Center.z << endl;
-
-    // 근처 오브젝트 수집
-    m_collisions.clear();
-    CollectNearbyObjects(playerNode, player->GetBoundingBox(), m_collisions);
-
-    // 충돌 검사 및 처리
-    for (CGameObject* obj : m_collisions)
-    {
-        std::string ObjectFrameName = obj->GetFrameName();
-        if (std::string::npos != ObjectFrameName.find("Spider") && obj != player && shovel->GetattackBoundingBox().Intersects(obj->GetBoundingBox()))
+        if (std::string::npos != ObjectFrameName.find("SalamanderPA") && obj != player && player->GetSwordAttackBoundingBox().Intersects(obj->GetBoundingBox()))
         {
             HandleCollision(player, obj);
         }
@@ -113,9 +89,18 @@ void CCollisionManager::HandleCollision(CPlayer* player, CGameObject* obj)
     //if (frameCounter % 60 == 0)
     //    cout << "ObjectFrameName: " << ObjectFrameName << endl;
 
-    bool isMonster = ObjectFrameName.find("Spider") != std::string::npos;
+    bool isMonster = (dynamic_cast<CSpider*>(obj) != nullptr);
     bool isAttacking = (dynamic_cast<CTerrainPlayer*>(player)->m_currentAnim == AnimationState::SWING);
-    bool isShovelHit = player->GetShovelAttackBoundingBox().Intersects(obj->GetBoundingBox());
+    bool isSwordHit = player->GetSwordAttackBoundingBox().Intersects(obj->GetBoundingBox());
+
+    if (isMonster && isAttacking && isSwordHit)
+    {
+
+        std::cout << "Sword hit ! - " << ObjectFrameName << std::endl;
+
+        // 나중에 HP 깎는 로직도 여기서 넣으면 됨.
+        return;
+    }
 
     if (std::string::npos != ObjectFrameName.find("Map_wall_window")
         || std::string::npos != ObjectFrameName.find("Map_wall_plain")
@@ -275,34 +260,4 @@ void CCollisionManager::HandleCollision(CPlayer* player, CGameObject* obj)
         player->CalculateBoundingBox();
         playerBox = player->GetBoundingBox();
     }
-
-    //if (std::string::npos != ObjectFrameName.starts_with("Spider")) // Find -> starts_with 로 수정
-    //{
-    //    // 몬스터와 충돌 시 처리
-    //}
-
-    //if (dynamic_cast<CTerrainPlayer*>(player)->m_currentAnim == AnimationState::SWING
-    //    && std::string::npos != ObjectFrameName.starts_with("Spider"))
-    //{
-    //    // 몬스터와 플레이어의 공격 충돌 시 처리
-    //    player->m_isMonsterHit = true;
-    //}
-    if (isMonster && isAttacking && isShovelHit)
-    {
-        player->m_isMonsterHit = true;
-
-        CSpider* pSpider = dynamic_cast<CSpider*>(obj);
-        if (pSpider) {
-            pSpider->MonsterHP -= 25.0f;
-            std::cout << "[Hit] Monster HP: " << pSpider->MonsterHP << std::endl;
-        }
-
-        return;
-    }
-
-    // 몬스터와 그냥 부딪힌 경우
-    if (isMonster && !isAttacking)
-    {
-        player->currentHP -= 10.f;
-        return;
-    }}
+}

@@ -247,7 +247,6 @@ void ProcessPacket(char* ptr)
         gGameFramework.UpdatePlayerHP(packet->hp);
         //g_pScene->m_pPlayer->currentHP = packet->hp;
         
-        //player.SetPosition(packet->position);
 
         /*std::cout << "[Client] My Player : " << packet->id << std::endl;
         std::cout << "[Client] My Player Information ID:" << packet->id
@@ -318,35 +317,18 @@ void ProcessPacket(char* ptr)
     
     case SC_P_MONSTER_SPAWN:
     {
-        sc_packet_monster_spawn* pkt = reinterpret_cast<sc_packet_monster_spawn*>(ptr);
-        std::cout << "[Client] Monster Spawn - ID: " << pkt->monsterID
-            << " Position(" << pkt->position.x << ", " << pkt->position.z << ")" << ", HP: " << pkt->hp
-            << " State: " << static_cast<int>(pkt->state) << std::endl;
-
-        gGameFramework.OnMonsterSpawned(pkt->monsterID, pkt->position, pkt->state);
+       
         break;
     }
 
     case SC_P_UPDATE_MONSTER_HP:
     {
-        sc_packet_update_monster_hp* pkt = reinterpret_cast<sc_packet_update_monster_hp*>(ptr);
-
-        std::cout << "[Client] Monster HP Update -> ID : " << pkt->monsterID
-            << ", HP : " << pkt->hp << std::endl;
-
-        // 여긴 체력바 렌더링 하는곳에 보내는 역할의 코드를 작성? 해야하지 않을까?
+       
     }
     
     case SC_P_MONSTER_MOVE:
     {
-        sc_packet_monster_move* pkt = reinterpret_cast<sc_packet_monster_move*>(ptr);
-
-        std::cout << "[Client] Monster Move - ID: " << pkt->monsterID
-            << " New Position(" << pkt->position.x << ", " << pkt->position.z << ")"
-            << " State: " << static_cast<int>(pkt->state) << std::endl;
-
-        gGameFramework.UpdateMonsterPosition(pkt->monsterID, pkt->position, pkt->rotation, pkt->state);
-
+        
         break;
     }
 

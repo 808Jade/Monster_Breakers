@@ -372,60 +372,6 @@ LRESULT CALLBACK CGameFramework::OnProcessingWindowMessage(HWND hWnd, UINT nMess
 // -------------------------------------------------------------------------------------------
 
 
-//void CGameFramework::ItemToHand(int objectIndex)
-//{
-//	CGameObject* pItem = m_pScene->m_ppHierarchicalGameObjects[objectIndex];
-//	CGameObject* pRightHand = m_pPlayer->FindFrame("hand_r");
-//
-//	// 이미 붙어있나 확인
-//	CGameObject* pCurr = pRightHand->GetChild();
-//	CGameObject* pPrev = nullptr;
-//	bool alreadyHeld = false;
-//
-//	while (pCurr) {
-//		if (pCurr == pItem) {
-//			alreadyHeld = true;
-//			break;
-//		}
-//		pPrev = pCurr;
-//		pCurr = pCurr->GetSibling();
-//	}
-//
-//	if (!alreadyHeld) {
-//		// 들기
-//		if (pRightHand->GetChild() == nullptr) {
-//			pRightHand->SetChild(pItem);
-//		}
-//		else {
-//			CGameObject* last = pRightHand->GetChild();
-//			while (last->GetSibling()) last = last->GetSibling();
-//			last->m_pSibling = pItem;
-//		}
-//		pItem->m_pParent = pRightHand;
-//		pItem->m_pSibling = nullptr;
-//
-//		if (objectIndex == 2) {
-//			pItem->SetPosition(0.05f, -0.05f, 1.f); 
-//		}
-//		else { 
-//			pItem->SetPosition(0.05f, -0.05f, 0.1f); 
-//		}
-//
-//		m_pPlayer->UpdateTransform(nullptr);
-//	}
-//	else {
-//		// 놓기
-//		if (pPrev) {
-//			pPrev->m_pSibling = pItem->GetSibling();
-//		}
-//		else {
-//			pRightHand->SetChild(pItem->GetSibling());
-//		}
-//		pItem->m_pParent = nullptr;
-//		pItem->m_pSibling = nullptr;
-//	}
-//}
-
 void CGameFramework::OnDestroy()
 {
     ReleaseObjects();
@@ -465,7 +411,7 @@ void CGameFramework::BuildObjects()
 
 	m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
 
-	m_nScenes = 3; // 총 Scene 개수
+	m_nScenes = 3; // 총 Scene 개수   <- 이게 플레이어 3명까지 가능하다는 소리인건가???
 	m_ppScenes = new CScene * [m_nScenes];
 	bool b = false;
 	if (m_nCurrentScene == 0) {
@@ -535,57 +481,86 @@ void CGameFramework::ProcessInput()
 	static UCHAR pKeysBuffer[256];
 	
 	static bool bPrevSpace = false;
+	static bool bPrevA = false;
+	static bool bPrevD = false;
+	static bool  bIsTurning = false;
+	static float fRemainingYaw = 0.0f;
 
 	bool bProcessedByScene = false;
 	if (GetKeyboardState(pKeysBuffer) && m_pScene) bProcessedByScene = m_pScene->ProcessInput(pKeysBuffer);
 	if (!bProcessedByScene)
 	{
-		float cxDelta = 0.0f, cyDelta = 0.0f;
-		POINT ptCursorPos;
-		if (GetCapture() == m_hWnd && !(m_pScene && m_pScene->isShop))
-		{
-			SetCursor(NULL);
-			GetCursorPos(&ptCursorPos);
-			cxDelta = (float)(ptCursorPos.x - m_ptOldCursorPos.x) / 3.0f;
-			cyDelta = (float)(ptCursorPos.y - m_ptOldCursorPos.y) / 3.0f;
-			SetCursorPos(m_ptOldCursorPos.x, m_ptOldCursorPos.y);
-		}
 		m_pScene->m_ptPos = m_ptOldCursorPos;
 		DWORD dwDirection = 0;
 		if (pKeysBuffer['W'] & 0xF0) dwDirection |= DIR_FORWARD;
 		if (pKeysBuffer['S'] & 0xF0) dwDirection |= DIR_BACKWARD;
-		if (pKeysBuffer['A'] & 0xF0) dwDirection |= DIR_LEFT;
-		if (pKeysBuffer['D'] & 0xF0) dwDirection |= DIR_RIGHT;
 		if (pKeysBuffer[VK_SPACE] & 0xF0) dwDirection |= DIR_UP;
 		if (pKeysBuffer[VK_SHIFT] & 0xF0) dwDirection |= DIR_DOWN;
-		if (pKeysBuffer[VK_CONTROL] & 0xF0) dwDirection |= DIR_CROUCH;
-
+		bool bCurrA = (pKeysBuffer['A'] & 0xF0);
+		bool bCurrD = (pKeysBuffer['D'] & 0xF0);
 		bool bCurrSpace = (pKeysBuffer[VK_SPACE] & 0xF0);      // jump
 
 		CTerrainPlayer* terrainPlayer = dynamic_cast<CTerrainPlayer*>(m_pPlayer);
 		if (!terrainPlayer) return;
+
+		bool bForward = (dwDirection & DIR_FORWARD) != 0;
+
+		if (!bIsTurning)
+		{
+			if (bCurrA && !bPrevA)
+			{
+				bIsTurning = true;
+
+				// W + A 같이 눌린 상태면 45도만 회전
+				if (bForward)
+					fRemainingYaw = -45.0f;   // 반시계 방향 45도
+				else
+					fRemainingYaw = -90.0f;   // A만 눌렸으면 90도
+			}
+			else if (bCurrD && !bPrevD)
+			{
+				bIsTurning = true;
+
+				// W + D 같이 눌린 상태면 45도만 회전
+				if (bForward)
+					fRemainingYaw = 45.0f;    // 시계 방향 45도
+				else
+					fRemainingYaw = 90.0f;    // D만 눌렸으면 90도
+			}
+		}
+
+		float fTimeElapsed = m_GameTimer.GetTimeElapsed();
+		const float fTurnSpeed = 360.0f;
+
+		if (bIsTurning)
+		{
+			float fStep = fTurnSpeed * fTimeElapsed; // 이번 프레임에 돌릴 최대 각도
+
+			// 남은 각도보다 step이 더 크면 딱 맞게 마무리
+			if (fabsf(fRemainingYaw) <= fStep)
+			{
+				terrainPlayer->Rotate(0.0f, fRemainingYaw, 0.0f);
+				fRemainingYaw = 0.0f;
+				bIsTurning = false;
+			}
+			else
+			{
+				// 남은 각도 방향으로 조금씩 회전
+				float fDeltaYaw = (fRemainingYaw > 0.0f) ? fStep : -fStep;
+				terrainPlayer->Rotate(0.0f, fDeltaYaw, 0.0f);
+				fRemainingYaw -= fDeltaYaw;
+			}
+		}
 		AnimationState currentState = terrainPlayer->m_currentAnim;
 
-		// 점프 중이 아닐 때만 상태 전환
 		if (currentState != AnimationState::SWING && currentState != AnimationState::JUMP)
 		{
-			bool isMoving = dwDirection & (DIR_FORWARD | DIR_BACKWARD | DIR_LEFT | DIR_RIGHT);
-			bool isCrouching = dwDirection & DIR_CROUCH;
+			bool isMoving = dwDirection & (DIR_FORWARD | DIR_BACKWARD);
 			bool isRunning = dwDirection & DIR_DOWN;
 
 			if (bCurrSpace && !bPrevSpace)
 			{
 				terrainPlayer->m_currentAnim = AnimationState::JUMP;
-			}
-			
-			else if (isCrouching && isMoving)
-			{
-				terrainPlayer->m_currentAnim = AnimationState::CROUCH_WALK;
-				terrainPlayer->Move(dwDirection, 2.0f, true);
-			}
-			else if (isCrouching)
-			{
-				terrainPlayer->m_currentAnim = AnimationState::CROUCH;
 			}
 			else if (isRunning && isMoving)
 			{
@@ -604,15 +579,8 @@ void CGameFramework::ProcessInput()
 		}
 
 		bPrevSpace = bCurrSpace;
-
-		if (cxDelta || cyDelta)
-		{
-			if (pKeysBuffer[VK_RBUTTON] & 0xF0)
-				m_pPlayer->Rotate(cyDelta, 0.0f, -cxDelta);
-			else
-				m_pPlayer->Rotate(cyDelta, cxDelta, 0.0f);
-		}
-
+		bPrevA = bCurrA;
+		bPrevD = bCurrD;
 	}
 	m_pPlayer->Update(m_GameTimer.GetTimeElapsed());
 }
@@ -632,19 +600,7 @@ void CGameFramework::AnimateObjects()
 	m_pPlayer->Animate(fTimeElapsed);
 
 	if (m_nCurrentScene == 0) m_pPlayer->SetPosition(XMFLOAT3(3, 0, 20));
-	//if (m_nCurrentScene == 1) {
-	//	for (int i = 0; i < 4; ++i)
-	//	{
-	//		if (!m_pPlayer->items[i]) // 손에 들리지 않은 상태일 때만
-	//		{	
-	//			if (m_pScene->m_ppHierarchicalGameObjects[i]) {
-	//				XMFLOAT3 pos = m_pScene->m_ppHierarchicalGameObjects[i]->GetPosition();
-	//				if (pos.y > 0.1f) pos.y -= 0.1;
-	//				m_pScene->m_ppHierarchicalGameObjects[i]->SetPosition(pos);
-	//			}
-	//		}
-	//	}
-	//}
+
 }
 
 void CGameFramework::WaitForGpuComplete()
@@ -831,8 +787,8 @@ void CGameFramework::UpdateMonsterState(CSpider* pMonster, int state)
 	{
 	case 0: pMonster->m_pSkinnedAnimationController->SetTrackEnable(0, true); break; // idle
 	case 1: pMonster->m_pSkinnedAnimationController->SetTrackEnable(1, true); break; // walk
-	case 2: pMonster->m_pSkinnedAnimationController->SetTrackEnable(2, true); break; // run
-	case 3: pMonster->m_pSkinnedAnimationController->SetTrackEnable(3, true); break; // attack
+	case 2: pMonster->m_pSkinnedAnimationController->SetTrackEnable(2, true); break; // attack
+	case 3: pMonster->m_pSkinnedAnimationController->SetTrackEnable(3, true); break; // gethit
 	case 4: pMonster->m_pSkinnedAnimationController->SetTrackEnable(4, true); break; // death
 	default: break;
 	}

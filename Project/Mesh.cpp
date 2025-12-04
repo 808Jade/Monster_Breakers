@@ -579,12 +579,12 @@ void CStandardMesh::LoadMeshFromFile(ID3D12Device *pd3dDevice, ID3D12GraphicsCom
 			nReads = (UINT)::fread(&(m_nSubMeshes), sizeof(int), 1, pInFile);
 			if (m_nSubMeshes > 0)
 			{
-				m_pnSubSetIndices = new int[m_nSubMeshes]();
-				m_ppnSubSetIndices = new UINT*[m_nSubMeshes]();
+				m_pnSubSetIndices = new int[m_nSubMeshes];
+				m_ppnSubSetIndices = new UINT*[m_nSubMeshes];
 
-				m_ppd3dSubSetIndexBuffers = new ID3D12Resource*[m_nSubMeshes]();
-				m_ppd3dSubSetIndexUploadBuffers = new ID3D12Resource*[m_nSubMeshes]();
-				m_pd3dSubSetIndexBufferViews = new D3D12_INDEX_BUFFER_VIEW[m_nSubMeshes]();
+				m_ppd3dSubSetIndexBuffers = new ID3D12Resource*[m_nSubMeshes];
+				m_ppd3dSubSetIndexUploadBuffers = new ID3D12Resource*[m_nSubMeshes];
+				m_pd3dSubSetIndexBufferViews = new D3D12_INDEX_BUFFER_VIEW[m_nSubMeshes];
 
 				for (int i = 0; i < m_nSubMeshes; i++)
 				{

@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include "stdafx.h"
 
@@ -28,7 +28,7 @@ constexpr char SC_P_MONSTER_SPAWN = 8;
 constexpr char SC_P_MONSTER_MOVE = 9;
 constexpr char SC_P_MONSTER_DIE = 10;
 
-// ÀÌ°Ç »ı°¢Á» ´õ ÇØº¸ÀÚ
+// ì´ê±´ ìƒê°ì¢€ ë” í•´ë³´ì
 constexpr char SC_P_UPDATE_MONSTER_HP = 27;
 
 
@@ -36,10 +36,10 @@ constexpr char SC_P_UPDATE_MONSTER_HP = 27;
 constexpr char CS_P_LOADING_DONE = 25;
 
 
-// =================== ÁÖÀÇ!! ========================
+// =================== ì£¼ì˜!! ========================
 // 
-// 1. ¾Ö´Ï¸ŞÀÌ¼Ç µ¿±âÈ­´Â Å¬¶ó¿¡¼­ ¾Ö´Ï¸ŞÀÌ¼Ç ¿Ï·áÇÏ¸é ÇÏ±â
-//		(±×Àü¿£ ÁÖ¼®Ã³¸®ÇØµÒ : ¸Ş¸ğ¸® Å©±âÂ÷ÀÌ·ÎÀÎÇÑ ¿À·ù ¹ß»ı À§Çè)
+// 1. ì• ë‹ˆë©”ì´ì…˜ ë™ê¸°í™”ëŠ” í´ë¼ì—ì„œ ì• ë‹ˆë©”ì´ì…˜ ì™„ë£Œí•˜ë©´ í•˜ê¸°
+//		(ê·¸ì „ì—” ì£¼ì„ì²˜ë¦¬í•´ë‘  : ë©”ëª¨ë¦¬ í¬ê¸°ì°¨ì´ë¡œì¸í•œ ì˜¤ë¥˜ ë°œìƒ ìœ„í—˜)
 // 
 // ===================================================
 
@@ -65,7 +65,7 @@ struct AnimationBlend
 {
 	int from = -1;
 	int to = -1;
-	float duration = 0.5f; // ºí·»µù ½Ã°£
+	float duration = 0.5f; // ë¸”ë Œë”© ì‹œê°„
 	float elapsed = 0.0f;
 	bool active = false;
 };
@@ -77,12 +77,9 @@ struct sc_packet_user_info {
 	XMFLOAT3		position;
 	XMFLOAT3		look;
 	XMFLOAT3		right;
-<<<<<<< Updated upstream
-	//uint8_t			animState;
-=======
 	uint8_t		animState;
->>>>>>> Stashed changes
 	short			hp;
+	//uint8_t		job;
 };
 
 
@@ -93,11 +90,7 @@ struct sc_packet_move {
 	XMFLOAT3			position;
 	XMFLOAT3			look;
 	XMFLOAT3			right;
-<<<<<<< Updated upstream
-	//uint8_t				animState;
-=======
 	uint8_t				animState;
->>>>>>> Stashed changes
 };
 
 
@@ -108,12 +101,10 @@ struct sc_packet_enter {
 	XMFLOAT3			position;
 	XMFLOAT3			look;
 	XMFLOAT3			right;
-<<<<<<< Updated upstream
-	//uint8_t				animState;
-=======
 	uint8_t				animState;
->>>>>>> Stashed changes
 	short				hp;
+	//uint8_t			job;
+
 };
 
 struct sc_packet_leave {
@@ -143,11 +134,7 @@ struct cs_packet_move {
 	XMFLOAT3			position;
 	XMFLOAT3			look;
 	XMFLOAT3			right;
-<<<<<<< Updated upstream
-	//uint8_t				animState;
-=======
 	uint8_t				animState;
->>>>>>> Stashed changes
 };
 
 
