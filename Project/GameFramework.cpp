@@ -302,8 +302,8 @@ void CGameFramework::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM
 		::ReleaseCapture();
 		break;
 	case WM_MOUSEMOVE:
-		//::SetCapture(hWnd);
-		//::GetCursorPos(&m_ptOldCursorPos);
+		::SetCapture(hWnd);
+		::GetCursorPos(&m_ptOldCursorPos);
 		break;
 	default:
 		break;
@@ -411,7 +411,7 @@ void CGameFramework::BuildObjects()
 
 	m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
 
-	m_nScenes = 3; // 총 Scene 개수   <- 이게 플레이어 3명까지 가능하다는 소리인건가???
+	m_nScenes = 3; // 총 Scene 개수
 	m_ppScenes = new CScene * [m_nScenes];
 	bool b = false;
 	if (m_nCurrentScene == 0) {
@@ -428,8 +428,8 @@ void CGameFramework::BuildObjects()
 		m_ppScenes[1]->SetPlayer(pPlayer);
 		//m_pPlayer->SetPosition(XMFLOAT3(3, 0, 20));
 
-		//m_ppScenes[1]->GenerateGameObjectsBoundingBox();
-		//m_ppScenes[1]->InitializeCollisionSystem();
+		m_ppScenes[1]->GenerateGameObjectsBoundingBox();
+		m_ppScenes[1]->InitializeCollisionSystem();
 	}
 	else if (m_nCurrentScene == 2) {
 		m_ppScenes[2] = new CEndScene();
@@ -515,7 +515,7 @@ void CGameFramework::ProcessInput()
 				if (bForward)
 					fRemainingYaw = -45.0f;   // 반시계 방향 45도
 				else
-					fRemainingYaw = -90.0f;   // A만 눌렸으면 90도
+					fRemainingYaw = -30.0f;   // A만 눌렸으면 90도
 			}
 			else if (bCurrD && !bPrevD)
 			{
@@ -525,7 +525,7 @@ void CGameFramework::ProcessInput()
 				if (bForward)
 					fRemainingYaw = 45.0f;    // 시계 방향 45도
 				else
-					fRemainingYaw = 90.0f;    // D만 눌렸으면 90도
+					fRemainingYaw = 30.0f;    // D만 눌렸으면 90도
 			}
 		}
 
@@ -565,12 +565,12 @@ void CGameFramework::ProcessInput()
 			else if (isRunning && isMoving)
 			{
 				terrainPlayer->m_currentAnim = AnimationState::RUN;
-				terrainPlayer->Move(dwDirection, 2.0f, true);
+				terrainPlayer->Move(dwDirection, 4.0f, true);
 			}
 			else if (isMoving)
 			{
 				terrainPlayer->m_currentAnim = AnimationState::WALK;
-				terrainPlayer->Move(dwDirection, 2.0f, true);
+				terrainPlayer->Move(dwDirection, 4.0f, true);
 			}
 			else
 			{

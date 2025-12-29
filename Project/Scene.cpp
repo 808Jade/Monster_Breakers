@@ -169,10 +169,10 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 
 	CLoadedModelInfo* pSpiderModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/SalamanderPA.bin", NULL);
 	XMFLOAT3 monsterPos[4] = {
-		{27, 0, -2},
-		{-54, 0, -90},
-		{4, 0, -50},
-		{-46, 0,-42}
+		{-14.4431, 0, 97.5215},
+		{-9.05774, 0, 122.508},
+		{13.721, 0, 117.925},
+		{4.82955, 0, 96.9888}
 	};
 	for (int i = 0; i < static_cast<int>(m_Monsters.size()); ++i)
 	{
@@ -188,8 +188,8 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(4, false);
 
 		m_Monsters[i]->SetPosition(monsterPos[i]);
-		m_Monsters[i]->Rotate(0, 0, 0);
-		m_Monsters[i]->SetScale(3, 3, 3);
+		m_Monsters[i]->Rotate(0, rand(), 0);
+		m_Monsters[i]->SetScale(2, 2, 2);
 
 		//std::string spiderName = "SalamanderPA" + std::to_string(i);
 		//m_Monsters[i]->SetFrameName(spiderName.c_str());
@@ -203,9 +203,9 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 //
 //	m_GameObjects.clear();
 //	m_GameObjects.resize(8);
-//#pragma endregion
+ 
 //
-//#pragma region Items
+#pragma region Items
 //	long long itemIDs[8] = { 20000, 20001, 20002,
 //							 30000, 30001, 30002, 30003, 30004};
 //
@@ -362,9 +362,9 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 //	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackPosition(6, 0.0f);
 //
 //	if (pOtherPlayerModel) delete pOtherPlayerModel;
-//#pragma endregion
+#pragma endregion
 //
-//#pragma region InventoryUIandShop
+#pragma region InventoryUIandShop
 //	// 인벤토리 UI 및 상점
 //	m_Shaders.clear();
 //	m_Shaders.resize(10);
@@ -499,7 +499,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 //	pShopSpace4Shader->SetTexture(pTextureinven);
 //	pShopSpace4Shader->SetVisible(false);
 //	m_Shaders[9] = pShopSpace4Shader;
-//#pragma endregion
+#pragma endregion
 
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }

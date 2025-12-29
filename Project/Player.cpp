@@ -614,8 +614,6 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 	m_pHand = FindFrame("hand_r");
 
 	// position, look, right ------------------------------------
-
-
 	static XMFLOAT3 prevPosition = GetPosition();
 	static XMFLOAT3 prevLook = GetLook();
 	static XMFLOAT3 prevRight = GetRight();

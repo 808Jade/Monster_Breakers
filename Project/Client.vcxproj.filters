@@ -124,6 +124,9 @@
     <ClCompile Include="CFontMesh.cpp">
       <Filter>소스 파일\Mesh</Filter>
     </ClCompile>
+    <ClCompile Include="Monster.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h">
@@ -209,6 +212,9 @@
     </ClInclude>
     <ClInclude Include="CFontMesh.h">
       <Filter>소스 파일\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Monster.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
