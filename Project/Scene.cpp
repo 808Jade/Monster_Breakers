@@ -163,6 +163,12 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 //
 //
 //
+	
+	m_pKnightModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Knight.bin", NULL);
+	m_pWizardModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Wizard.bin", NULL);
+
+	//m_pThiefModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Thief.bin", NULL);
+	
 	m_Monsters.clear();
 	m_Monsters.resize(4);
 	int monsterIDs[4] = { 10001,10002,10003,10004 };
@@ -1048,6 +1054,15 @@ void CStartScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM
 	switch (nMessageID)
 	{
 	case WM_KEYDOWN:
+		if (wParam == VK_UP)
+		{
+			gGameFramework.SetSelectedPlayerModel(EPlayerModelType::Wizard);
+		}
+		if (wParam == VK_DOWN)
+		{
+			gGameFramework.SetSelectedPlayerModel(EPlayerModelType::Knight);
+		}
+
 		if (m_inputStep == InputStep::EnterID) {
 			if (wParam == VK_RETURN) {
 				m_inputStep = InputStep::EnterIP;

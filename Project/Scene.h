@@ -130,6 +130,11 @@ public:
 	std::vector<CGameObject*> m_Monsters;     
 	std::vector<CShader*>     m_Shaders;
 
+	CLoadedModelInfo* m_pModel = NULL; // 플레이어 모델
+	CLoadedModelInfo* m_pKnightModel = NULL; // 기사
+	CLoadedModelInfo* m_pWizardModel = NULL; // 법사
+	CLoadedModelInfo* m_pThiefModel = NULL;  // 도적
+
 	XMFLOAT3							m_xmf3RotatePosition = XMFLOAT3(0.0f, 0.0f, 0.0f);
 
 	CSkyBox								*m_pSkyBox = NULL;
