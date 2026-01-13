@@ -57,6 +57,8 @@ public:
 	//void ItemToHand(Item* pItem);
 	//void ItemDropFromHand(Item* pItem);
 
+	void RequestMoveToScene(int i) { m_nPendingScene = i; }
+
 	void UpdatePlayerHP(float hp) {
 		m_pPlayer->currentHP = hp;
 	}
@@ -155,6 +157,7 @@ private:
 	int m_nScenes = 0;
 	CScene** m_ppScenes = NULL;
 
+	int m_nPendingScene = -1;
 	POINT m_ptOldCursorPos;
 
 	_TCHAR						m_pszFrameRate[70];

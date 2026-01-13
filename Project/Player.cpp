@@ -405,7 +405,7 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 	SetPosition(XMFLOAT3(3, 0, 20));
 	//SetScale(XMFLOAT3(10.0f, 10.0f, 10.0f));
 
-	if (bOwnModel && pPlayerModel) delete pPlayerModel;
+	if (pPlayerModel) delete pPlayerModel;
 }
 
 CTerrainPlayer::~CTerrainPlayer()

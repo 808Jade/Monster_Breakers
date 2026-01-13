@@ -212,7 +212,26 @@ private:
 	bool m_textDirty = false;
 	CText* m_pFontID = nullptr;
 	CText* m_pFontIP = nullptr;
+};
 
+class CSelectScene : public CScene
+{
+public:
+	CSelectScene(){}
+	~CSelectScene(){}
+
+	virtual void BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
+	virtual void ReleaseObjects();
+
+	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
+	virtual void AnimateObjects(float fTimeElapsed);
+
+	virtual void OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
+
+private:
+	bool loading = false;
+	bool m_bLoadingRenderedOnce = false;
+	int m_SceneId = -1;
 };
 
 class CEndScene : public CScene
