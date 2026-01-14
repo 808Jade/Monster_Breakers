@@ -493,9 +493,6 @@ void CGameFramework::ProcessInput()
 	static UCHAR pKeysBuffer[256];
 	
 	static bool bPrevSpace = false;
-	static bool bPrevA = false;
-	static bool bPrevD = false;
-	static bool  bIsTurning = false;
 	static float fRemainingYaw = 0.0f;
 
 	bool bProcessedByScene = false;
@@ -517,52 +514,19 @@ void CGameFramework::ProcessInput()
 
 		bool bForward = (dwDirection & DIR_FORWARD) != 0;
 
-		if (!bIsTurning)
-		{
-			if (bCurrA && !bPrevA)
-			{
-				bIsTurning = true;
-
-				// W + A 같이 눌린 상태면 45도만 회전
-				if (bForward)
-					fRemainingYaw = -45.0f;   // 반시계 방향 45도
-				else
-					fRemainingYaw = -30.0f;   // A만 눌렸으면 90도
-			}
-			else if (bCurrD && !bPrevD)
-			{
-				bIsTurning = true;
-
-				// W + D 같이 눌린 상태면 45도만 회전
-				if (bForward)
-					fRemainingYaw = 45.0f;    // 시계 방향 45도
-				else
-					fRemainingYaw = 30.0f;    // D만 눌렸으면 90도
-			}
-		}
-
 		float fTimeElapsed = m_GameTimer.GetTimeElapsed();
-		const float fTurnSpeed = 360.0f;
 
-		if (bIsTurning)
+		const float fTurnSpeed = 45.0f; // 180~360 사이로 취향 조절
+
+		float yawInput = 0.0f;
+		if (bCurrA) yawInput -= 1.0f;
+		if (bCurrD) yawInput += 1.0f;
+
+		if (yawInput != 0.0f)
 		{
-			float fStep = fTurnSpeed * fTimeElapsed; // 이번 프레임에 돌릴 최대 각도
-
-			// 남은 각도보다 step이 더 크면 딱 맞게 마무리
-			if (fabsf(fRemainingYaw) <= fStep)
-			{
-				terrainPlayer->Rotate(0.0f, fRemainingYaw, 0.0f);
-				fRemainingYaw = 0.0f;
-				bIsTurning = false;
-			}
-			else
-			{
-				// 남은 각도 방향으로 조금씩 회전
-				float fDeltaYaw = (fRemainingYaw > 0.0f) ? fStep : -fStep;
-				terrainPlayer->Rotate(0.0f, fDeltaYaw, 0.0f);
-				fRemainingYaw -= fDeltaYaw;
-			}
+			terrainPlayer->Rotate(0.0f, yawInput * fTurnSpeed * fTimeElapsed, 0.0f);
 		}
+
 		AnimationState currentState = terrainPlayer->m_currentAnim;
 
 		if (currentState != AnimationState::SWING && currentState != AnimationState::JUMP)
@@ -591,8 +555,6 @@ void CGameFramework::ProcessInput()
 		}
 
 		bPrevSpace = bCurrSpace;
-		bPrevA = bCurrA;
-		bPrevD = bCurrD;
 	}
 	m_pPlayer->Update(m_GameTimer.GetTimeElapsed());
 }
@@ -803,7 +765,7 @@ void CGameFramework::OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int st
 	}
 }
 
-void CGameFramework::UpdateMonsterState(CSpider* pMonster, int state)
+void CGameFramework::UpdateMonsterState(Monster* pMonster, int state)
 {
 	// 애니메이션 트랙 설정 등
 	for (int i = 0; i < 5; ++i)
@@ -829,7 +791,7 @@ void CGameFramework::UpdateMonsterPosition(int monsterID, const XMFLOAT3& pos, c
 		return;
 	}
 
-	CSpider* pMonster = it->second;
+	Monster* pMonster = it->second;
 	pMonster->SetPosition(pos);
 	pMonster->Rotate(rot);
 	UpdateMonsterState(pMonster, state);

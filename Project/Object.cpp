@@ -1518,7 +1518,7 @@ void CAngrybotAnimationController::OnRootMotion(CGameObject* pRootGameObject)
 
 }
 
-CSpider::CSpider(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, CLoadedModelInfo *pModel, int nAnimationTracks) : CGameObject(1)
+Monster::Monster(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, CLoadedModelInfo *pModel, int nAnimationTracks) : CGameObject(1)
 {
 	SetFrameName("SalamanderPA");
 
@@ -1543,18 +1543,18 @@ CSpider::CSpider(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dComman
 
 }
 
-CSpider::~CSpider()
+Monster::~Monster()
 {
 }
 
-void CSpider::Animate(float fTimeElapsed)
+void Monster::Animate(float fTimeElapsed)
 {
 	// rotate
 
 	CGameObject::Animate(fTimeElapsed);
 }	
 
-void CSpider::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
+void Monster::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
 {
 
 	CGameObject::Render(pd3dCommandList, pCamera);
