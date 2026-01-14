@@ -765,7 +765,7 @@ void CGameFramework::OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int st
 	}
 }
 
-void CGameFramework::UpdateMonsterState(Monster* pMonster, int state)
+void CGameFramework::UpdateMonsterState(CSpider* pMonster, int state)
 {
 	// 애니메이션 트랙 설정 등
 	for (int i = 0; i < 5; ++i)
@@ -791,7 +791,7 @@ void CGameFramework::UpdateMonsterPosition(int monsterID, const XMFLOAT3& pos, c
 		return;
 	}
 
-	Monster* pMonster = it->second;
+	CSpider* pMonster = it->second;
 	pMonster->SetPosition(pos);
 	pMonster->Rotate(rot);
 	UpdateMonsterState(pMonster, state);

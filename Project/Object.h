@@ -564,11 +564,11 @@ public:
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 class Hpbar;
-class Monster : public CGameObject
+class CSpider : public CGameObject
 {
 public:
-	Monster(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature, CLoadedModelInfo* pModel, int nAnimationTracks);
-	virtual ~Monster();
+	CSpider(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature, CLoadedModelInfo* pModel, int nAnimationTracks);
+	virtual ~CSpider();
 
 	virtual void Animate(float fTimeElapsed);
 	virtual void SetPlayer(CPlayer* p) { pPlayer = p; }
