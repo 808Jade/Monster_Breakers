@@ -146,9 +146,9 @@ void CScene::BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 {
 	struct UIInfo { std::wstring path; float left; float top; float width; float height; };
 	std::vector<UIInfo> uiList = {
-		{ L"Image/enforce1.dds",  0.20f, 0.25f, -0.45f, 0.4f },
-		{ L"Image/enforce1.dds",  0.45f, 0.25f, -0.45f, 0.4f },
-		{ L"Image/enforce1.dds", 0.70f, 0.25f, -0.45f, 0.4f },
+		{ L"Image/enforce.dds",  0.20f, 0.25f, -0.45f, 0.4f },
+		{ L"Image/enforce.dds",  0.45f, 0.25f, -0.45f, 0.4f },
+		{ L"Image/enforce.dds", 0.70f, 0.25f, -0.45f, 0.4f },
 	};
 
 	for (size_t i = 0; i < uiList.size(); ++i)
@@ -171,8 +171,8 @@ void CScene::BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 
 		m_UITextures.push_back(pTexture);
 
-		CText* pLVText = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"LV. ", uiList[i].left, -0.45f);
-		m_GameObjects.push_back(pLVText);
+		//CText* pLVText = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"LV. ", uiList[i].left, -0.45f);
+		//m_GameObjects.push_back(pLVText);
 	}
 }
 
