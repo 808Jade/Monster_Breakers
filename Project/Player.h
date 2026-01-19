@@ -64,6 +64,8 @@ public:
 	bool	alreadyHeld = false;
 	float currentHP = 100.f;
 
+	int level[3] = { 1,1,1 };
+
 	// 아이템
 	int m_nSelectedInventoryIndex = -1;  // 기본값은 0번 (1번 슬롯)
 	/*std::vector<CGameObject*> m_pHeldItems;*/

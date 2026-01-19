@@ -72,6 +72,11 @@ public:
 	void InitializeCollisionSystem();
 	void GenerateGameObjectsBoundingBox();
 
+	void BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
+private:
+	std::vector<CTexture*> m_UITextures;
+
+public:
 	CPlayer								*m_pPlayer = NULL;
 	std::unordered_map<std::string, CTexture*> m_textureMap;
 

@@ -587,7 +587,7 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 		}
 	}
 
-	if (m_pText) { m_pText->UpdateText(std::to_wstring(debt), L"debt : "); }
+	//if (m_pText) { m_pText->UpdateText(std::to_wstring(debt), L"debt : "); }
 
 	//currentHP = g_myid.hp;
 
