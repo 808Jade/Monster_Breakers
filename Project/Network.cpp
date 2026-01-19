@@ -246,7 +246,6 @@ void ProcessPacket(char* ptr)
         sc_packet_user_info* packet = reinterpret_cast<sc_packet_user_info*>(ptr);
         g_myid = packet->id;
         gGameFramework.UpdatePlayerHP(packet->hp);
-        //gGameFramework.SetMyJob(packet->job);  // << 직업 설정
         //g_pScene->m_pPlayer->currentHP = packet->hp;
         
 
@@ -265,6 +264,10 @@ void ProcessPacket(char* ptr)
         sc_packet_enter* packet = reinterpret_cast<sc_packet_enter*>(ptr);
         int id = packet->id;
 
+        // 이부분에서 다른 플레이어의 직업을 받아야 하지 않을까?
+
+
+
         if (id == g_myid) break;
 
         std::cout << "[Client] New Player " << id << "Connect " << "\n";
@@ -276,6 +279,7 @@ void ProcessPacket(char* ptr)
             << std::endl;*/
 
         // 씬에 OtherPlayer가 딱 나타난다
+        // 그리고 이제 if문 써서 직업에 따라 렌더링 다르게 하는걸로?
         //gGameFramework.OnOtherClientConnected();
 
         break;
