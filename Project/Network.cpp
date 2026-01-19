@@ -213,9 +213,7 @@ void InitializeNetwork(char serverIP[]) {
 
     WSACloseEvent(connectOverlapped.hEvent);
 
-    std::thread(RecvThread).detach();
-    std::thread(SendThread).detach();
-
+ 
     std::cout << "Sever Connect" << std::endl;
 
 
@@ -224,10 +222,13 @@ void InitializeNetwork(char serverIP[]) {
     p.size = sizeof(p);
     p.type = CS_P_LOGIN;
     strcpy_s(p.name, sizeof(p.name), user_name.c_str());
+    //p.job = gGameFramework.GetSelectedJob();
     send_packet(&p);
   
     std::cout << "[Client] Login Packet Send : Name=" << p.name << std::endl;
 
+    std::thread(RecvThread).detach();
+    std::thread(SendThread).detach();
 }
 
 void ProcessPacket(char* ptr)
@@ -245,6 +246,7 @@ void ProcessPacket(char* ptr)
         sc_packet_user_info* packet = reinterpret_cast<sc_packet_user_info*>(ptr);
         g_myid = packet->id;
         gGameFramework.UpdatePlayerHP(packet->hp);
+        //gGameFramework.SetMyJob(packet->job);  // << 직업 설정
         //g_pScene->m_pPlayer->currentHP = packet->hp;
         
 
@@ -266,7 +268,7 @@ void ProcessPacket(char* ptr)
         if (id == g_myid) break;
 
         std::cout << "[Client] New Player " << id << "Connect " << "\n";
-       /* std::cout << "[Client] New Player Information Recv "
+        /*std::cout << "[Client] New Player Information Recv "
             << " Position(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")"
             << " Look(" << packet->look.x << "," << packet->look.y << "," << packet->look.z << ")"
             << " Right(" << packet->right.x << "," << packet->right.y << "," << packet->right.z << ")"
@@ -274,7 +276,7 @@ void ProcessPacket(char* ptr)
             << std::endl;*/
 
         // 씬에 OtherPlayer가 딱 나타난다
-        gGameFramework.OnOtherClientConnected();
+        //gGameFramework.OnOtherClientConnected();
 
         break;
     }
@@ -287,19 +289,19 @@ void ProcessPacket(char* ptr)
         if (other_id == g_myid) break;
 
         // OtherPlayer의 위치를 반영한다
-        if (!gGameFramework.isLoading && !gGameFramework.isStartScene) {
+ /*       if (!gGameFramework.isLoading && !gGameFramework.isStartScene) {
             gGameFramework.UpdateOtherPlayerPosition(0, packet->position);
             gGameFramework.UpdateOtherPlayerLook(0, packet->look, packet->right);
             gGameFramework.UpdateOtherPlayerAnimation(0, packet->animState);
             gGameFramework.UpdateOtherPlayerRotate(0, packet->right, packet->look);
-        }
+        }*/
 
-        /*std::cout << "[Client] New Player Information Recv "
+        std::cout << "[Client] New Player Information Recv "
             << " Position(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")"
             << " Look(" << packet->look.x << "," << packet->look.y << "," << packet->look.z << ")"
             << " Right(" << packet->right.x << "," << packet->right.y << "," << packet->right.z << ")"
             << "Animation : " << static_cast<int>(packet->animState)
-            << std::endl;*/
+            << std::endl;
 
         break;
     }

@@ -61,6 +61,13 @@ enum class AnimationState : uint8_t {
 	CROUCH_WALK   // 6
 };
 
+enum PLAYER_JOB {
+	JOB_WARRIOR = 0,
+	JOB_THIEF = 1,
+	JOB_MAGE = 2,
+	JOB_MAX
+};
+
 struct AnimationBlend
 {
 	int from = -1;
@@ -77,7 +84,7 @@ struct sc_packet_user_info {
 	XMFLOAT3		position;
 	XMFLOAT3		look;
 	XMFLOAT3		right;
-	uint8_t		animState;
+	uint8_t			animState;
 	short			hp;
 	//uint8_t		job;
 };
@@ -119,7 +126,7 @@ struct cs_packet_login {
 	char				type;
 	//XMFLOAT3			position;
 	char				name[MAX_ID_LENGTH];
-
+	uint8_t				job;
 };
 
 
