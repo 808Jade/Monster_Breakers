@@ -72,6 +72,11 @@ public:
 	void InitializeCollisionSystem();
 	void GenerateGameObjectsBoundingBox();
 
+	void BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
+private:
+	std::vector<CTexture*> m_UITextures;
+
+public:
 	CPlayer								*m_pPlayer = NULL;
 	std::unordered_map<std::string, CTexture*> m_textureMap;
 
@@ -129,6 +134,11 @@ public:
 	std::vector<CGameObject*> m_GameObjects;  
 	std::vector<CGameObject*> m_Monsters;     
 	std::vector<CShader*>     m_Shaders;
+
+	CLoadedModelInfo* m_pModel = NULL; // 플레이어 모델
+	CLoadedModelInfo* m_pKnightModel = NULL; // 기사
+	CLoadedModelInfo* m_pWizardModel = NULL; // 법사
+	CLoadedModelInfo* m_pThiefModel = NULL;  // 도적
 
 	XMFLOAT3							m_xmf3RotatePosition = XMFLOAT3(0.0f, 0.0f, 0.0f);
 
@@ -207,7 +217,26 @@ private:
 	bool m_textDirty = false;
 	CText* m_pFontID = nullptr;
 	CText* m_pFontIP = nullptr;
+};
 
+class CSelectScene : public CScene
+{
+public:
+	CSelectScene(){}
+	~CSelectScene(){}
+
+	virtual void BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
+	virtual void ReleaseObjects();
+
+	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
+	virtual void AnimateObjects(float fTimeElapsed);
+
+	virtual void OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
+
+private:
+	bool loading = false;
+	bool m_bLoadingRenderedOnce = false;
+	int m_SceneId = -1;
 };
 
 class CEndScene : public CScene

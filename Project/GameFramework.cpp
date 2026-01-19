@@ -411,31 +411,43 @@ void CGameFramework::BuildObjects()
 
 	m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
 
-	m_nScenes = 3; // 총 Scene 개수
+	m_nScenes = 4; // 총 Scene 개수
 	m_ppScenes = new CScene * [m_nScenes];
+
+
 	bool b = false;
 	if (m_nCurrentScene == 0) {
 		m_ppScenes[0] = new CStartScene();
 		m_ppScenes[0]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
-		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[0]->GetGraphicsRootSignature(),NULL);
+		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[0]->GetGraphicsRootSignature(),NULL, NULL);
 		m_ppScenes[0]->SetPlayer(pPlayer);
 	}
 	else if (m_nCurrentScene == 1) {
-		m_ppScenes[1] = new CScene();
+		m_ppScenes[1] = new CSelectScene();
 		m_ppScenes[1]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
-		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[1]->GetGraphicsRootSignature(), NULL);
-
+		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[1]->GetGraphicsRootSignature(), NULL, NULL);
 		m_ppScenes[1]->SetPlayer(pPlayer);
-		//m_pPlayer->SetPosition(XMFLOAT3(3, 0, 20));
-
-		m_ppScenes[1]->GenerateGameObjectsBoundingBox();
-		m_ppScenes[1]->InitializeCollisionSystem();
 	}
 	else if (m_nCurrentScene == 2) {
-		m_ppScenes[2] = new CEndScene();
+		m_ppScenes[2] = new CScene();
 		m_ppScenes[2]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
-		CPlayer* pPlayer = new CPlayer();
+		if (GetSelectedPlayerModel() == EPlayerModelType::Wizard)
+			m_ppScenes[2]->m_pModel = m_ppScenes[2]->m_pWizardModel;
+		else
+			m_ppScenes[2]->m_pModel = m_ppScenes[2]->m_pKnightModel;
+		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[2]->GetGraphicsRootSignature(), NULL, m_ppScenes[2]->m_pModel);
+
 		m_ppScenes[2]->SetPlayer(pPlayer);
+		//m_pPlayer->SetPosition(XMFLOAT3(3, 0, 20));
+
+		m_ppScenes[2]->GenerateGameObjectsBoundingBox();
+		m_ppScenes[2]->InitializeCollisionSystem();
+	}
+	else if (m_nCurrentScene == 3) {
+		m_ppScenes[3] = new CEndScene();
+		m_ppScenes[3]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
+		CPlayer* pPlayer = new CPlayer();
+		m_ppScenes[3]->SetPlayer(pPlayer);
 	}
 
 //#ifdef _WITH_TERRAIN_PLAYER
@@ -481,9 +493,6 @@ void CGameFramework::ProcessInput()
 	static UCHAR pKeysBuffer[256];
 	
 	static bool bPrevSpace = false;
-	static bool bPrevA = false;
-	static bool bPrevD = false;
-	static bool  bIsTurning = false;
 	static float fRemainingYaw = 0.0f;
 
 	bool bProcessedByScene = false;
@@ -505,52 +514,19 @@ void CGameFramework::ProcessInput()
 
 		bool bForward = (dwDirection & DIR_FORWARD) != 0;
 
-		if (!bIsTurning)
-		{
-			if (bCurrA && !bPrevA)
-			{
-				bIsTurning = true;
-
-				// W + A 같이 눌린 상태면 45도만 회전
-				if (bForward)
-					fRemainingYaw = -45.0f;   // 반시계 방향 45도
-				else
-					fRemainingYaw = -30.0f;   // A만 눌렸으면 90도
-			}
-			else if (bCurrD && !bPrevD)
-			{
-				bIsTurning = true;
-
-				// W + D 같이 눌린 상태면 45도만 회전
-				if (bForward)
-					fRemainingYaw = 45.0f;    // 시계 방향 45도
-				else
-					fRemainingYaw = 30.0f;    // D만 눌렸으면 90도
-			}
-		}
-
 		float fTimeElapsed = m_GameTimer.GetTimeElapsed();
-		const float fTurnSpeed = 360.0f;
 
-		if (bIsTurning)
+		const float fTurnSpeed = 45.0f; // 180~360 사이로 취향 조절
+
+		float yawInput = 0.0f;
+		if (bCurrA) yawInput -= 1.0f;
+		if (bCurrD) yawInput += 1.0f;
+
+		if (yawInput != 0.0f)
 		{
-			float fStep = fTurnSpeed * fTimeElapsed; // 이번 프레임에 돌릴 최대 각도
-
-			// 남은 각도보다 step이 더 크면 딱 맞게 마무리
-			if (fabsf(fRemainingYaw) <= fStep)
-			{
-				terrainPlayer->Rotate(0.0f, fRemainingYaw, 0.0f);
-				fRemainingYaw = 0.0f;
-				bIsTurning = false;
-			}
-			else
-			{
-				// 남은 각도 방향으로 조금씩 회전
-				float fDeltaYaw = (fRemainingYaw > 0.0f) ? fStep : -fStep;
-				terrainPlayer->Rotate(0.0f, fDeltaYaw, 0.0f);
-				fRemainingYaw -= fDeltaYaw;
-			}
+			terrainPlayer->Rotate(0.0f, yawInput * fTurnSpeed * fTimeElapsed, 0.0f);
 		}
+
 		AnimationState currentState = terrainPlayer->m_currentAnim;
 
 		if (currentState != AnimationState::SWING && currentState != AnimationState::JUMP)
@@ -579,8 +555,6 @@ void CGameFramework::ProcessInput()
 		}
 
 		bPrevSpace = bCurrSpace;
-		bPrevA = bCurrA;
-		bPrevD = bCurrD;
 	}
 	m_pPlayer->Update(m_GameTimer.GetTimeElapsed());
 }
@@ -631,20 +605,34 @@ void CGameFramework::MoveToNextFrame()
 
 void CGameFramework::MoveToNextScene(int i)
 {
-	m_ppScenes[m_nScene]->ReleaseObjects();
+	int prev = m_nCurrentScene;
+	if (prev >= 0 && prev < 4 && m_ppScenes[prev])
+	{
+		m_ppScenes[prev]->ReleaseObjects();
+		delete m_ppScenes[prev];
+		m_ppScenes[prev] = nullptr;
+	}
 	m_nCurrentScene = i;
 	BuildObjects();
 	LoadingDoneToServer();
-	isStartScene = false;
+	if(i==2) isStartScene = false;
 }
 
 //#define _WITH_PLAYER_TOP
 
 void CGameFramework::FrameAdvance()
 {    
+	if (m_nPendingScene != -1)
+	{
+		int next = m_nPendingScene;
+		m_nPendingScene = -1;
+
+		MoveToNextScene(next);
+		return;
+	}
+
 	m_GameTimer.Tick(60.0f);
 	
-
 	HRESULT hResult = m_pd3dCommandAllocator->Reset();
 	hResult = m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
 

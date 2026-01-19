@@ -64,6 +64,8 @@ public:
 	bool	alreadyHeld = false;
 	float currentHP = 100.f;
 
+	int level[3] = { 1,1,1 };
+
 	// 아이템
 	int m_nSelectedInventoryIndex = -1;  // 기본값은 0번 (1번 슬롯)
 	/*std::vector<CGameObject*> m_pHeldItems;*/
@@ -102,7 +104,6 @@ public:
 
 	virtual void Move(DWORD nDirection, float fDistance, bool bVelocity = false);
 	void Move(const XMFLOAT3& xmf3Shift, bool bVelocity = false);
-	void Move(float fx= 0.0f, float fyOffset = 0.0f, float fzOffset = 0.0f);
 	void Rotate(float x, float y, float z);
 
 	virtual void CalculateBoundingBox() override;
@@ -146,7 +147,7 @@ public:
 class CTerrainPlayer : public CPlayer
 {
 public:
-	CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, void *pContext=NULL);
+	CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, void *pContext=NULL, CLoadedModelInfo* pModel = NULL);
 	virtual ~CTerrainPlayer();
 
 	CText* m_pText = nullptr;

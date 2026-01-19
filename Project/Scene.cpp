@@ -142,6 +142,40 @@ void CScene::GenerateGameObjectsBoundingBox()
 	}
 }
 
+void CScene::BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
+{
+	struct UIInfo { std::wstring path; float left; float top; float width; float height; };
+	std::vector<UIInfo> uiList = {
+		{ L"Image/enforce1.dds",  0.20f, 0.25f, -0.45f, 0.4f },
+		{ L"Image/enforce1.dds",  0.45f, 0.25f, -0.45f, 0.4f },
+		{ L"Image/enforce1.dds", 0.70f, 0.25f, -0.45f, 0.4f },
+	};
+
+	for (size_t i = 0; i < uiList.size(); ++i)
+	{
+		// 텍스처 생성 및 로드
+		CTexture* pTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+		pTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, const_cast<wchar_t*>(uiList[i].path.c_str()), RESOURCE_TEXTURE2D, 0);
+
+		CScene::CreateShaderResourceViews(pd3dDevice, pTexture, 0, 15);
+
+		CTextureToScreenShader* pShader = new CTextureToScreenShader(1);
+		pShader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+
+		CScreenRectMeshTextured* pMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, uiList[i].left, uiList[i].top, uiList[i].width, uiList[i].height);
+		pShader->SetMesh(0, pMesh);
+		pShader->SetTexture(pTexture);
+		pShader->SetVisible(true);
+
+		m_Shaders.push_back(pShader);
+
+		m_UITextures.push_back(pTexture);
+
+		CText* pLVText = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"LV. ", uiList[i].left, -0.45f);
+		m_GameObjects.push_back(pLVText);
+	}
+}
+
 void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList)
 {
 	m_pd3dGraphicsRootSignature = CreateGraphicsRootSignature(pd3dDevice);
@@ -163,6 +197,12 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 //
 //
 //
+	
+	m_pKnightModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Knight.bin", NULL);
+	m_pWizardModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Wizard.bin", NULL);
+
+	//m_pThiefModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Thief.bin", NULL);
+	
 	m_Monsters.clear();
 	m_Monsters.resize(4);
 	int monsterIDs[4] = { 10001,10002,10003,10004 };
@@ -200,6 +240,9 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	}
 
 	if (pSpiderModel) delete pSpiderModel;
+
+	BuildSimpleUI(pd3dDevice, pd3dCommandList);
+
 //
 //	m_GameObjects.clear();
 //	m_GameObjects.resize(8);
@@ -365,6 +408,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 #pragma endregion
 //
 #pragma region InventoryUIandShop
+
 //	// 인벤토리 UI 및 상점
 //	m_Shaders.clear();
 //	m_Shaders.resize(10);
@@ -532,6 +576,12 @@ void CScene::ReleaseObjects()
 		if (monster) monster->Release();
 	}
 	m_Monsters.clear();
+
+	for (auto* pTex : m_UITextures)
+	{
+		if (pTex) delete pTex;
+	}
+	m_UITextures.clear();
 
 	ReleaseShaderVariables();
 
@@ -853,10 +903,23 @@ void CScene::CreateShaderResourceViews(ID3D12Device* pd3dDevice, CTexture* pText
 
 void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
+	RECT rt[3] =
+	{
+		{ 0, 0, FRAME_BUFFER_WIDTH / 3, FRAME_BUFFER_HEIGHT },
+		{ FRAME_BUFFER_WIDTH / 3, 0, FRAME_BUFFER_WIDTH / 3 * 2, FRAME_BUFFER_HEIGHT },
+		{ FRAME_BUFFER_WIDTH / 3 * 2, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT }
+	};
+
+	POINT pt;
+	GetCursorPos(&pt);        // screen 좌표
+	ScreenToClient(hWnd, &pt); // client 좌표로 변환
+
 	switch (nMessageID)
 	{
 	case WM_LBUTTONDOWN:
 	{
+		cout << "Mouse Clicked at (" << pt.x << ", " << pt.y << ")" << endl;
+
 		dynamic_cast<CTerrainPlayer*>(m_pPlayer)->m_currentAnim = AnimationState::SWING;
 	}
 	break;
@@ -886,10 +949,15 @@ bool CScene::ProcessInput(UCHAR *pKeysBuffer)
 
 void CScene::AnimateObjects(float fTimeElapsed)
 {
-	for (auto* obj : m_GameObjects) if (obj) {
-		obj->Animate(fTimeElapsed);
+	for (auto* obj : m_GameObjects) {
+		if (obj) obj->Animate(fTimeElapsed);
+		if (auto* textObj = dynamic_cast<CText*>(obj)) {
+			textObj->UpdateText(std::to_wstring(m_pPlayer->level[0]), L"LV. ");
+			textObj->UpdateText(std::to_wstring(m_pPlayer->level[1]), L"LV. ");
+			textObj->UpdateText(std::to_wstring(m_pPlayer->level[2]), L"LV. ");
+		}
 	}
-
+	
 	for(auto* shader : m_Shaders) if(shader) shader->AnimateObjects(fTimeElapsed);
 }
 
@@ -1093,6 +1161,128 @@ void CStartScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM
 }
 
 // ==========================================================================================================
+// SelectScene
+// ==========================================================================================================
+void CSelectScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
+{
+	m_pd3dGraphicsRootSignature = CreateGraphicsRootSignature(pd3dDevice);
+
+	CreateCbvSrvDescriptorHeaps(pd3dDevice, 5, 100);
+
+	m_Shaders.clear();
+	m_Shaders.resize(2);
+
+	CTextureToScreenShader* pTextureToScreenShader = new CTextureToScreenShader(1);
+	pTextureToScreenShader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+
+	CTexture* pTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+	pTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/SelectScene.dds", RESOURCE_TEXTURE2D, 0);
+
+	CreateShaderResourceViews(pd3dDevice, pTexture, 0, 15);
+
+	CScreenRectMeshTextured* pMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, -1.0f, 2.0f, 1.0f, 2.0f);
+	pTextureToScreenShader->SetMesh(0, pMesh);
+	pTextureToScreenShader->SetTexture(pTexture);
+
+	m_Shaders[0] = pTextureToScreenShader;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	CTextureToScreenShader* pTextureToScreenShader1 = new CTextureToScreenShader(1);
+	pTextureToScreenShader1->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+
+	CTexture* pTexture1 = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+	pTexture1->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/loading.dds", RESOURCE_TEXTURE2D, 0);
+
+	CreateShaderResourceViews(pd3dDevice, pTexture1, 0, 15);
+
+	pTextureToScreenShader1->SetMesh(0, pMesh);
+	pTextureToScreenShader1->SetTexture(pTexture1);
+
+	m_Shaders[1] = pTextureToScreenShader1;
+
+	CreateShaderVariables(pd3dDevice, pd3dCommandList);
+}
+
+void CSelectScene::ReleaseObjects()
+{
+	if (m_pd3dGraphicsRootSignature) m_pd3dGraphicsRootSignature->Release();
+
+	for (auto* shader : m_Shaders)
+	{
+		if (!shader) continue;
+		shader->ReleaseShaderVariables();
+		shader->ReleaseObjects();
+		shader->Release();
+	}
+	m_Shaders.clear();
+}
+
+void CSelectScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
+{
+	if (m_pd3dGraphicsRootSignature) pd3dCommandList->SetGraphicsRootSignature(m_pd3dGraphicsRootSignature);
+	if (m_pd3dCbvSrvDescriptorHeap) pd3dCommandList->SetDescriptorHeaps(1, &m_pd3dCbvSrvDescriptorHeap);
+
+	if (pCamera) {
+		pCamera->SetViewportsAndScissorRects(pd3dCommandList);
+		pCamera->UpdateShaderVariables(pd3dCommandList);
+	}
+
+	UpdateShaderVariables(pd3dCommandList);
+
+	const int idx = (loading ? 1 : 0);
+
+	if (idx >= 0 && idx < (int)m_Shaders.size() && m_Shaders[idx])
+	{
+		m_Shaders[idx]->Render(pd3dCommandList, pCamera);
+		if (loading) m_bLoadingRenderedOnce = true;
+	}
+}
+
+void CSelectScene::AnimateObjects(float fTimeElapsed)
+{
+	if (m_SceneId != -1 && m_bLoadingRenderedOnce)
+	{
+		int next = m_SceneId;
+		m_SceneId = -1;                 // 중복 전환 방지(권장)
+		gGameFramework.RequestMoveToScene(next);
+	}
+}
+
+void CSelectScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
+{
+	RECT rt[3] =
+	{
+		{ 0, 0, FRAME_BUFFER_WIDTH / 3, FRAME_BUFFER_HEIGHT },
+		{ FRAME_BUFFER_WIDTH / 3, 0, FRAME_BUFFER_WIDTH / 3 * 2, FRAME_BUFFER_HEIGHT },
+		{ FRAME_BUFFER_WIDTH / 3 * 2, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT }
+	};
+
+	POINT pt;
+	GetCursorPos(&pt);        // screen 좌표
+	ScreenToClient(hWnd, &pt); // client 좌표로 변환
+
+	switch (nMessageID)
+	{
+	case WM_LBUTTONDOWN:
+		for(int i = 0; i < 3; ++i)
+			if (PtInRect(&rt[i], pt)) {
+				if (i == 0) gGameFramework.SetSelectedPlayerModel(EPlayerModelType::Knight);
+				if (i == 1) gGameFramework.SetSelectedPlayerModel(EPlayerModelType::Wizard);
+				if (i == 2) gGameFramework.SetSelectedPlayerModel(EPlayerModelType::Thief);
+			}
+		break;
+	case WM_LBUTTONUP:
+		loading = true;
+		m_SceneId = 2;
+		m_bLoadingRenderedOnce = false;
+		break;
+	default:
+		break;
+	}
+}
+
+// ==========================================================================================================
 // EndScene
 // ==========================================================================================================
 void CEndScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
@@ -1143,9 +1333,10 @@ void CEndScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCam
 	if (m_pd3dGraphicsRootSignature) pd3dCommandList->SetGraphicsRootSignature(m_pd3dGraphicsRootSignature);
 	if (m_pd3dCbvSrvDescriptorHeap) pd3dCommandList->SetDescriptorHeaps(1, &m_pd3dCbvSrvDescriptorHeap);
 
-	pCamera->SetViewportsAndScissorRects(pd3dCommandList);
-	pCamera->UpdateShaderVariables(pd3dCommandList);
-
+	if (pCamera) {
+		pCamera->SetViewportsAndScissorRects(pd3dCommandList);
+		pCamera->UpdateShaderVariables(pd3dCommandList);
+	}
 	UpdateShaderVariables(pd3dCommandList);
 
 	for(auto* shader : m_Shaders) if(shader) shader->Render(pd3dCommandList, pCamera);

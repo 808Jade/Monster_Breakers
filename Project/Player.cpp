@@ -343,11 +343,16 @@ void CPlayer::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamer
 //#endif
 //}
 
-CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, void *pContext)
+CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, void *pContext, CLoadedModelInfo* pModel)
 {
 	m_pCamera = ChangeCamera(THIRD_PERSON_CAMERA, 0.0f);
 
-	CLoadedModelInfo *pPlayerModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, "Model/Knight.bin", NULL);
+	bool bOwnModel = false;
+	CLoadedModelInfo* pPlayerModel = pModel;
+	if (!pPlayerModel) {
+		pPlayerModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, "Model/Knight.bin", NULL);
+		bOwnModel = true;
+	}
 	SetChild(pPlayerModel->m_pModelRootObject, true);
 
 	m_pSkinnedAnimationController = new CAnimationController(pd3dDevice, pd3dCommandList, 5, pPlayerModel);
@@ -582,7 +587,7 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 		}
 	}
 
-	if (m_pText) { m_pText->UpdateText(std::to_wstring(debt), L"debt : "); }
+	//if (m_pText) { m_pText->UpdateText(std::to_wstring(debt), L"debt : "); }
 
 	//currentHP = g_myid.hp;
 
