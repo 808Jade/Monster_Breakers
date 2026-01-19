@@ -86,7 +86,7 @@ struct sc_packet_user_info {
 	XMFLOAT3		right;
 	uint8_t			animState;
 	short			hp;
-	//uint8_t		job;
+	uint8_t			job;
 };
 
 
@@ -110,7 +110,7 @@ struct sc_packet_enter {
 	XMFLOAT3			right;
 	uint8_t				animState;
 	short				hp;
-	//uint8_t			job;
+	uint8_t				job;
 
 };
 
@@ -224,3 +224,6 @@ struct sc_packet_particle_impact {
 
 #pragma pack (pop)
 
+static_assert(offsetof(sc_packet_user_info, id) == 2, "Packet layout mismatch");
+static_assert(offsetof(sc_packet_enter, id) == 2, "Packet layout mismatch");
+static_assert(offsetof(sc_packet_move, id) == 2, "Packet layout mismatch");

@@ -247,6 +247,7 @@ void ProcessPacket(char* ptr)
         g_myid = packet->id;
         gGameFramework.UpdatePlayerHP(packet->hp);
         //g_pScene->m_pPlayer->currentHP = packet->hp;
+        cout << "myid: " << packet->id << endl;
         
 
         /*std::cout << "[Client] My Player : " << packet->id << std::endl;
@@ -262,15 +263,15 @@ void ProcessPacket(char* ptr)
     case SC_P_ENTER: // 새로 들어온 플레이어의 정보를 포함하고 있는 패킷 타입
     {
         sc_packet_enter* packet = reinterpret_cast<sc_packet_enter*>(ptr);
-        int id = packet->id;
+        long long player_id = packet->id;
 
         // 이부분에서 다른 플레이어의 직업을 받아야 하지 않을까?
 
 
 
-        if (id == g_myid) break;
+        if (player_id == g_myid) break;
 
-        std::cout << "[Client] New Player " << id << "Connect " << "\n";
+        std::cout << "[Client] New Player " << player_id << "Connect " << "\n";
         /*std::cout << "[Client] New Player Information Recv "
             << " Position(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")"
             << " Look(" << packet->look.x << "," << packet->look.y << "," << packet->look.z << ")"
@@ -288,7 +289,7 @@ void ProcessPacket(char* ptr)
     case SC_P_MOVE: // 상대 플레이어 (움직이면) 좌표 받기
     {
         sc_packet_move* packet = reinterpret_cast<sc_packet_move*>(ptr);
-        int other_id = packet->id;
+        long long other_id = packet->id;
 
         if (other_id == g_myid) break;
 
@@ -300,7 +301,7 @@ void ProcessPacket(char* ptr)
             gGameFramework.UpdateOtherPlayerRotate(0, packet->right, packet->look);
         }*/
 
-        std::cout << "[Client] New Player Information Recv "
+        std::cout << "[Client] New Player Information Recv " << "PlayerNo : " << other_id << ", "
             << " Position(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")"
             << " Look(" << packet->look.x << "," << packet->look.y << "," << packet->look.z << ")"
             << " Right(" << packet->right.x << "," << packet->right.y << "," << packet->right.z << ")"
