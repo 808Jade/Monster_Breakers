@@ -3,6 +3,7 @@
 #define FRAME_BUFFER_WIDTH 1920
 #define FRAME_BUFFER_HEIGHT 1080
 
+#include "Common.h"
 #include "Timer.h"
 #include "Player.h"
 #include "Scene.h"
@@ -41,6 +42,18 @@ public:
 	void OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	void OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK OnProcessingWindowMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
+
+
+	uint8_t CGameFramework::GetSelectedJob() const {
+		cout << "[DEBUG] SelectedModel=" << static_cast<int>(m_eSelectedPlayerModel) << endl;
+
+		switch (m_eSelectedPlayerModel) {
+		case EPlayerModelType::Knight:return 0;
+		case EPlayerModelType::Wizard:return 1;
+		case EPlayerModelType::Thief:return 2;
+		default: return 0;
+		}
+	}
 
 
 	//long long FindNearestItemInRange(float range, XMFLOAT3 playerPos);

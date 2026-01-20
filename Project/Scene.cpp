@@ -1297,6 +1297,142 @@ void CStartScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM
 }
 
 // ==========================================================================================================
+<<<<<<< Updated upstream
+=======
+// SelectScene
+// ==========================================================================================================
+void CSelectScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
+{
+	m_pd3dGraphicsRootSignature = CreateGraphicsRootSignature(pd3dDevice);
+
+	CreateCbvSrvDescriptorHeaps(pd3dDevice, 5, 100);
+
+	m_Shaders.clear();
+	m_Shaders.resize(2);
+
+	CTextureToScreenShader* pTextureToScreenShader = new CTextureToScreenShader(1);
+	pTextureToScreenShader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+
+	CTexture* pTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+	pTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/SelectScene.dds", RESOURCE_TEXTURE2D, 0);
+
+	CreateShaderResourceViews(pd3dDevice, pTexture, 0, 15);
+
+	CScreenRectMeshTextured* pMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, -1.0f, 2.0f, 1.0f, 2.0f);
+	pTextureToScreenShader->SetMesh(0, pMesh);
+	pTextureToScreenShader->SetTexture(pTexture);
+
+	m_Shaders[0] = pTextureToScreenShader;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	CTextureToScreenShader* pTextureToScreenShader1 = new CTextureToScreenShader(1);
+	pTextureToScreenShader1->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+
+	CTexture* pTexture1 = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+	pTexture1->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/loading.dds", RESOURCE_TEXTURE2D, 0);
+
+	CreateShaderResourceViews(pd3dDevice, pTexture1, 0, 15);
+
+	pTextureToScreenShader1->SetMesh(0, pMesh);
+	pTextureToScreenShader1->SetTexture(pTexture1);
+
+	m_Shaders[1] = pTextureToScreenShader1;
+
+	CreateShaderVariables(pd3dDevice, pd3dCommandList);
+}
+
+void CSelectScene::ReleaseObjects()
+{
+	if (m_pd3dGraphicsRootSignature) m_pd3dGraphicsRootSignature->Release();
+
+	for (auto* shader : m_Shaders)
+	{
+		if (!shader) continue;
+		shader->ReleaseShaderVariables();
+		shader->ReleaseObjects();
+		shader->Release();
+	}
+	m_Shaders.clear();
+}
+
+void CSelectScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
+{
+	if (m_pd3dGraphicsRootSignature) pd3dCommandList->SetGraphicsRootSignature(m_pd3dGraphicsRootSignature);
+	if (m_pd3dCbvSrvDescriptorHeap) pd3dCommandList->SetDescriptorHeaps(1, &m_pd3dCbvSrvDescriptorHeap);
+
+	if (pCamera) {
+		pCamera->SetViewportsAndScissorRects(pd3dCommandList);
+		pCamera->UpdateShaderVariables(pd3dCommandList);
+	}
+
+	UpdateShaderVariables(pd3dCommandList);
+
+	const int idx = (loading ? 1 : 0);
+
+	if (idx >= 0 && idx < (int)m_Shaders.size() && m_Shaders[idx])
+	{
+		m_Shaders[idx]->Render(pd3dCommandList, pCamera);
+		if (loading) m_bLoadingRenderedOnce = true;
+	}
+}
+
+void CSelectScene::AnimateObjects(float fTimeElapsed)
+{
+	if (m_SceneId != -1 && m_bLoadingRenderedOnce)
+	{
+		int next = m_SceneId;
+		m_SceneId = -1;                 // 중복 전환 방지(권장)
+		gGameFramework.RequestMoveToScene(next);
+	}
+}
+
+void CSelectScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
+{
+	RECT rt[3] =
+	{
+		{ 0, 0, FRAME_BUFFER_WIDTH / 3, FRAME_BUFFER_HEIGHT },
+		{ FRAME_BUFFER_WIDTH / 3, 0, FRAME_BUFFER_WIDTH / 3 * 2, FRAME_BUFFER_HEIGHT },
+		{ FRAME_BUFFER_WIDTH / 3 * 2, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT }
+	};
+
+	POINT pt;
+	GetCursorPos(&pt);        // screen 좌표
+	ScreenToClient(hWnd, &pt); // client 좌표로 변환
+
+	switch (nMessageID)
+	{
+	case WM_LBUTTONDOWN:
+		for(int i = 0; i < 3; ++i)
+			if (PtInRect(&rt[i], pt)) {
+				if (i == 0) gGameFramework.SetSelectedPlayerModel(EPlayerModelType::Knight);
+				if (i == 1) gGameFramework.SetSelectedPlayerModel(EPlayerModelType::Wizard);
+				if (i == 2) gGameFramework.SetSelectedPlayerModel(EPlayerModelType::Thief);
+			}
+		break;
+	case WM_LBUTTONUP:
+		{
+			uint8_t job = gGameFramework.GetSelectedJob();
+			cs_packet_login p{};
+			p.size = sizeof(p);
+			p.type = CS_P_LOGIN;
+			strcpy_s(p.name, sizeof(p.name), user_name.c_str());
+			p.job = job;
+			send_packet(&p);
+
+			cout << "[Client] Login Send: Name=" << user_name << " Job=" << static_cast<int>(job) << endl;
+		}
+	
+		loading = true;
+		m_SceneId = 2;
+		m_bLoadingRenderedOnce = false;
+		break;
+		
+	}
+}
+
+// ==========================================================================================================
+>>>>>>> Stashed changes
 // EndScene
 // ==========================================================================================================
 void CEndScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)

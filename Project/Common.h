@@ -61,6 +61,16 @@ enum class AnimationState : uint8_t {
 	CROUCH_WALK   // 6
 };
 
+<<<<<<< Updated upstream
+=======
+enum PLAYER_JOB {
+	JOB_WARRIOR = 0,
+	JOB_MAGE = 1,
+	JOB_THIEF = 2,
+	JOB_MAX
+};
+
+>>>>>>> Stashed changes
 struct AnimationBlend
 {
 	int from = -1;
