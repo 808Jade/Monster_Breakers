@@ -8,6 +8,13 @@
 #include "Player.h"
 #include "Scene.h"
 
+enum class EPlayerModelType
+{
+	Knight,
+	Wizard,
+	Thief
+};
+
 class CGameFramework
 {
 public:
@@ -43,6 +50,8 @@ public:
 	void OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK OnProcessingWindowMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 
+	void SetSelectedPlayerModel(EPlayerModelType type) { m_eSelectedPlayerModel = type; }
+	EPlayerModelType GetSelectedPlayerModel() const { return m_eSelectedPlayerModel; }
 
 	uint8_t CGameFramework::GetSelectedJob() const {
 		cout << "[DEBUG] SelectedModel=" << static_cast<int>(m_eSelectedPlayerModel) << endl;
@@ -61,6 +70,8 @@ public:
 	//void ItemToHand(Item* pItem);
 	//void ItemDropFromHand(Item* pItem);
 
+	void RequestMoveToScene(int i) { m_nPendingScene = i; }
+
 	void UpdatePlayerHP(float hp) {
 		m_pPlayer->currentHP = hp;
 	}
@@ -72,8 +83,6 @@ public:
 	void ItemSpawned(long long itemID, const XMFLOAT3& pos, int type, int price);
 	void UpdateItemPosition(long long itemID, const XMFLOAT3& pos);
 	void UpdateItemRotation(long long itemID, const XMFLOAT3& look, const XMFLOAT3& right);
-
-	void ItemToHand(int objectIndex);
 
 	void OnOtherClientConnected()
 	{
@@ -154,11 +163,14 @@ private:
 	CPlayer						*m_pPlayer = NULL;
 	CCamera						*m_pCamera = NULL;
 
+	EPlayerModelType m_eSelectedPlayerModel = EPlayerModelType::Knight; // ±âº»°ª
+
 	int m_nCurrentScene = 0;
 	int m_nScene = 0;
 	int m_nScenes = 0;
 	CScene** m_ppScenes = NULL;
 
+	int m_nPendingScene = -1;
 	POINT m_ptOldCursorPos;
 
 	_TCHAR						m_pszFrameRate[70];

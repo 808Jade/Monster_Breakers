@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "stdafx.h"
 
@@ -33,7 +33,7 @@ constexpr char SC_P_UPDATE_MONSTER_HP = 27;
 
 
 
-constexpr char CS_P_LOADING_DONE = 30;
+constexpr char CS_P_LOADING_DONE = 25;
 
 
 // =================== 주의!! ========================
@@ -61,8 +61,6 @@ enum class AnimationState : uint8_t {
 	CROUCH_WALK   // 6
 };
 
-<<<<<<< Updated upstream
-=======
 enum PLAYER_JOB {
 	JOB_WARRIOR = 0,
 	JOB_MAGE = 1,
@@ -70,7 +68,6 @@ enum PLAYER_JOB {
 	JOB_MAX
 };
 
->>>>>>> Stashed changes
 struct AnimationBlend
 {
 	int from = -1;
@@ -87,9 +84,9 @@ struct sc_packet_user_info {
 	XMFLOAT3		position;
 	XMFLOAT3		look;
 	XMFLOAT3		right;
-	//uint8_t		animState;
+	uint8_t			animState;
 	short			hp;
-	//uint8_t		job;
+	uint8_t			job;
 };
 
 
@@ -100,7 +97,7 @@ struct sc_packet_move {
 	XMFLOAT3			position;
 	XMFLOAT3			look;
 	XMFLOAT3			right;
-	//uint8_t			animState;
+	uint8_t				animState;
 };
 
 
@@ -111,9 +108,9 @@ struct sc_packet_enter {
 	XMFLOAT3			position;
 	XMFLOAT3			look;
 	XMFLOAT3			right;
-	//uint8_t			animState;
+	uint8_t				animState;
 	short				hp;
-	//uint8_t			job;
+	uint8_t				job;
 
 };
 
@@ -129,7 +126,7 @@ struct cs_packet_login {
 	char				type;
 	//XMFLOAT3			position;
 	char				name[MAX_ID_LENGTH];
-
+	uint8_t				job;
 };
 
 
@@ -144,7 +141,7 @@ struct cs_packet_move {
 	XMFLOAT3			position;
 	XMFLOAT3			look;
 	XMFLOAT3			right;
-	//uint8_t			animState;
+	uint8_t				animState;
 };
 
 
@@ -227,3 +224,6 @@ struct sc_packet_particle_impact {
 
 #pragma pack (pop)
 
+static_assert(offsetof(sc_packet_user_info, id) == 2, "Packet layout mismatch");
+static_assert(offsetof(sc_packet_enter, id) == 2, "Packet layout mismatch");
+static_assert(offsetof(sc_packet_move, id) == 2, "Packet layout mismatch");

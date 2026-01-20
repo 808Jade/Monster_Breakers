@@ -49,7 +49,7 @@ protected:
 	XMFLOAT3			m_lastPushDirection; // 마지막 충돌 방향 저장
 	BoundingCylinder	m_BoundingCylinder;
 
-	BoundingBox			m_shovelAttackBoundingBox;
+	BoundingBox			m_swordAttackBoundingBox;
 
 public:
 	//bool	isSwing = false;
@@ -63,6 +63,8 @@ public:
 	bool	m_isMonsterHit = false;
 	bool	alreadyHeld = false;
 	float currentHP = 100.f;
+
+	int level[3] = { 1,1,1 };
 
 	// 아이템
 	int m_nSelectedInventoryIndex = -1;  // 기본값은 0번 (1번 슬롯)
@@ -79,7 +81,7 @@ public:
 	XMFLOAT3 GetUpVector() { return(m_xmf3Up); }
 	XMFLOAT3 GetRightVector() { return(m_xmf3Right); }
 	XMFLOAT3 GetPushDirection() const { return m_lastPushDirection; }
-	BoundingBox GetShovelAttackBoundingBox() { return m_shovelAttackBoundingBox; }
+	//BoundingBox GetSwordAttackBoundingBox() { return m_swordAttackBoundingBox; }
 
 	void SetFriction(float fFriction) { m_fFriction = fFriction; }
 	void SetGravity(const XMFLOAT3& xmf3Gravity) { m_xmf3Gravity = xmf3Gravity; }
@@ -88,7 +90,7 @@ public:
 	void SetVelocity(const XMFLOAT3& xmf3Velocity) { m_xmf3Velocity = xmf3Velocity; }
 	void SetPosition(const XMFLOAT3& xmf3Position) { Move(XMFLOAT3(xmf3Position.x - m_xmf3Position.x, xmf3Position.y - m_xmf3Position.y, xmf3Position.z - m_xmf3Position.z), false); }
 	void SetPushDirection(const XMFLOAT3& direction) { m_lastPushDirection = direction; }
-	void SetShovelAttadckBoundingBox(const BoundingBox& bbShovelAttack) { m_shovelAttackBoundingBox = bbShovelAttack; }
+	void SetSwordAttadckBoundingBox(const BoundingBox& bbSwordAttack) { m_swordAttackBoundingBox = bbSwordAttack; }
 
 	void SetScale(XMFLOAT3& xmf3Scale) { m_xmf3Scale = xmf3Scale; }
 
@@ -102,7 +104,6 @@ public:
 
 	virtual void Move(DWORD nDirection, float fDistance, bool bVelocity = false);
 	void Move(const XMFLOAT3& xmf3Shift, bool bVelocity = false);
-	void Move(float fx= 0.0f, float fyOffset = 0.0f, float fzOffset = 0.0f);
 	void Rotate(float x, float y, float z);
 
 	virtual void CalculateBoundingBox() override;
@@ -111,7 +112,8 @@ public:
 		outBox.Center = cylinder.Center;
 		outBox.Extents = XMFLOAT3(cylinder.Radius, cylinder.Height * 0.5f, cylinder.Radius);
 	}
-	void GenerateShovelAttackBoundingBox();
+	void GenerateSwordAttackBoundingBox();
+	BoundingBox GetSwordAttackBoundingBox();
 
 	virtual void Update(float fTimeElapsed);
 
@@ -130,11 +132,6 @@ public:
 	virtual CCamera *ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed) { return(NULL); }
 	virtual void OnPrepareRender();
 	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera = NULL);
-
-	// 물건 줍기
-	bool TryPickUpItem(CGameObject* pItem);
-	bool DropItem(int index);
-	void UpdateItem();
 };
 
 //class CSoundCallbackHandler : public CAnimationCallbackHandler
@@ -150,7 +147,7 @@ public:
 class CTerrainPlayer : public CPlayer
 {
 public:
-	CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, void *pContext=NULL);
+	CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, void *pContext=NULL, CLoadedModelInfo* pModel = NULL);
 	virtual ~CTerrainPlayer();
 
 	CText* m_pText = nullptr;
@@ -183,8 +180,6 @@ public:
 	int m_currentTrack = -1;
 
 	void StartAnimationBlend(int fromTrack, int toTrack, float blendTime);
-
-	bool IsShovel();
 };
 
 

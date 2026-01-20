@@ -213,9 +213,7 @@ void InitializeNetwork(char serverIP[]) {
 
     WSACloseEvent(connectOverlapped.hEvent);
 
-    std::thread(RecvThread).detach();
-    std::thread(SendThread).detach();
-
+ 
     std::cout << "Sever Connect" << std::endl;
 
 
@@ -225,6 +223,7 @@ void InitializeNetwork(char serverIP[]) {
     p.size = sizeof(p);
     p.type = CS_P_LOGIN;
     strcpy_s(p.name, sizeof(p.name), user_name.c_str());
+    //p.job = gGameFramework.GetSelectedJob();
     send_packet(&p);
 =======
     //cs_packet_login p{};
@@ -237,6 +236,8 @@ void InitializeNetwork(char serverIP[]) {
   
     //std::cout << "[Client] Login Packet Send : Name=" << p.name << std::endl;
 
+    std::thread(RecvThread).detach();
+    std::thread(SendThread).detach();
 }
 
 void ProcessPacket(char* ptr)
@@ -255,6 +256,7 @@ void ProcessPacket(char* ptr)
         g_myid = packet->id;
         gGameFramework.UpdatePlayerHP(packet->hp);
         //g_pScene->m_pPlayer->currentHP = packet->hp;
+        cout << "myid: " << packet->id << endl;
         
 
         /*std::cout << "[Client] My Player : " << packet->id << std::endl;
@@ -270,12 +272,16 @@ void ProcessPacket(char* ptr)
     case SC_P_ENTER: // 새로 들어온 플레이어의 정보를 포함하고 있는 패킷 타입
     {
         sc_packet_enter* packet = reinterpret_cast<sc_packet_enter*>(ptr);
-        int id = packet->id;
+        long long player_id = packet->id;
 
-        if (id == g_myid) break;
+        // 이부분에서 다른 플레이어의 직업을 받아야 하지 않을까?
 
-       /* std::cout << "[Client] New Player " << id << "Connect " << "\n";
-        std::cout << "[Client] New Player Information Recv "
+
+
+        if (player_id == g_myid) break;
+
+        std::cout << "[Client] New Player " << player_id << "Connect " << "\n";
+        /*std::cout << "[Client] New Player Information Recv "
             << " Position(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")"
             << " Look(" << packet->look.x << "," << packet->look.y << "," << packet->look.z << ")"
             << " Right(" << packet->right.x << "," << packet->right.y << "," << packet->right.z << ")"
@@ -283,7 +289,8 @@ void ProcessPacket(char* ptr)
             << std::endl;*/
 
         // 씬에 OtherPlayer가 딱 나타난다
-        gGameFramework.OnOtherClientConnected();
+        // 그리고 이제 if문 써서 직업에 따라 렌더링 다르게 하는걸로?
+        //gGameFramework.OnOtherClientConnected();
 
         break;
     }
@@ -291,24 +298,24 @@ void ProcessPacket(char* ptr)
     case SC_P_MOVE: // 상대 플레이어 (움직이면) 좌표 받기
     {
         sc_packet_move* packet = reinterpret_cast<sc_packet_move*>(ptr);
-        int other_id = packet->id;
+        long long other_id = packet->id;
 
         if (other_id == g_myid) break;
 
         // OtherPlayer의 위치를 반영한다
-        if (!gGameFramework.isLoading && !gGameFramework.isStartScene) {
+ /*       if (!gGameFramework.isLoading && !gGameFramework.isStartScene) {
             gGameFramework.UpdateOtherPlayerPosition(0, packet->position);
             gGameFramework.UpdateOtherPlayerLook(0, packet->look, packet->right);
-            //gGameFramework.UpdateOtherPlayerAnimation(0, packet->animState);
+            gGameFramework.UpdateOtherPlayerAnimation(0, packet->animState);
             gGameFramework.UpdateOtherPlayerRotate(0, packet->right, packet->look);
-        }
+        }*/
 
-        /*std::cout << "[Client] New Player Information Recv "
+        std::cout << "[Client] New Player Information Recv " << "PlayerNo : " << other_id << ", "
             << " Position(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")"
             << " Look(" << packet->look.x << "," << packet->look.y << "," << packet->look.z << ")"
             << " Right(" << packet->right.x << "," << packet->right.y << "," << packet->right.z << ")"
             << "Animation : " << static_cast<int>(packet->animState)
-            << std::endl;*/
+            << std::endl;
 
         break;
     }
@@ -382,7 +389,7 @@ void send_position_to_server(const XMFLOAT3& position, const XMFLOAT3& look, con
     p.position = position;
     p.look = look;
     p.right = right;
-    //p.animState = animState;
+    p.animState = animState;
     send_packet(&p);
 
 }

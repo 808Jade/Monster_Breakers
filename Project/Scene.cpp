@@ -35,7 +35,7 @@ void CScene::BuildDefaultLightsAndMaterials(bool toggle)
 	::ZeroMemory(m_pLights, sizeof(LIGHT) * m_nLights);
 
 	//m_xmf4GlobalAmbient = XMFLOAT4(0.08f, 0.08f, 0.08f, 1.0f);
-	m_xmf4GlobalAmbient = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	m_xmf4GlobalAmbient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
 
 	//m_pLights[0].m_bEnable = true;
 	//m_pLights[0].m_nType = POINT_LIGHT;
@@ -47,17 +47,20 @@ void CScene::BuildDefaultLightsAndMaterials(bool toggle)
 	//m_pLights[0].m_xmf3Attenuation = XMFLOAT3(0.5f, 0.05f, 0.0001f);
 
 	m_pLights[0].m_bEnable = toggle;
-	m_pLights[0].m_nType = SPOT_LIGHT;
-	m_pLights[0].m_fRange = 50.0f;
-	m_pLights[0].m_xmf4Ambient = XMFLOAT4(0.005f, 0.005f, 0.005f, 1.0f);
-	m_pLights[0].m_xmf4Diffuse = XMFLOAT4(0.125f, 0.125f, 0.12f, 1.0f);
-	m_pLights[0].m_xmf4Specular = XMFLOAT4(0.25f, 0.25f, 0.2f, 1.0f);
-	m_pLights[0].m_xmf3Position = XMFLOAT3(-50.0f, 20.0f, -5.0f);
-	m_pLights[0].m_xmf3Direction = XMFLOAT3(0.0f, -1.0f, 1.0f);
-	m_pLights[0].m_xmf3Attenuation = XMFLOAT3(1.0f, 0.05f, 0.001f);
-	m_pLights[0].m_fFalloff = 8.0f;
-	m_pLights[0].m_fPhi = (float)cos(XMConvertToRadians(30.0f));
-	m_pLights[0].m_fTheta = (float)cos(XMConvertToRadians(15.0f));
+	m_pLights[0].m_nType = DIRECTIONAL_LIGHT;
+	m_pLights[0].m_xmf4Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	m_pLights[0].m_xmf4Diffuse = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	m_pLights[0].m_xmf4Specular = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	XMFLOAT3 lightDir = XMFLOAT3(0.5f, -1.0f, 0.5f); // 약간 대각선 아래로
+	XMVECTOR vLightDir = XMLoadFloat3(&lightDir);
+	vLightDir = XMVector3Normalize(vLightDir);
+	XMStoreFloat3(&m_pLights[0].m_xmf3Direction, vLightDir);
+	m_pLights[0].m_xmf3Position = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	m_pLights[0].m_fRange = 0.0f;
+	m_pLights[0].m_xmf3Attenuation = XMFLOAT3(1.0f, 0.0f, 0.0f);
+	m_pLights[0].m_fFalloff = 0.0f;
+	m_pLights[0].m_fPhi = 0.0f;
+	m_pLights[0].m_fTheta = 0.0f;
 
 	//m_pLights[2].m_bEnable = true;
 	//m_pLights[2].m_nType = SPOT_LIGHT;
@@ -139,6 +142,40 @@ void CScene::GenerateGameObjectsBoundingBox()
 	}
 }
 
+void CScene::BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
+{
+	struct UIInfo { std::wstring path; float left; float top; float width; float height; };
+	std::vector<UIInfo> uiList = {
+		{ L"Image/enforce.dds",  0.20f, 0.25f, -0.45f, 0.4f },
+		{ L"Image/enforce.dds",  0.45f, 0.25f, -0.45f, 0.4f },
+		{ L"Image/enforce.dds", 0.70f, 0.25f, -0.45f, 0.4f },
+	};
+
+	for (size_t i = 0; i < uiList.size(); ++i)
+	{
+		// 텍스처 생성 및 로드
+		CTexture* pTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+		pTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, const_cast<wchar_t*>(uiList[i].path.c_str()), RESOURCE_TEXTURE2D, 0);
+
+		CScene::CreateShaderResourceViews(pd3dDevice, pTexture, 0, 15);
+
+		CTextureToScreenShader* pShader = new CTextureToScreenShader(1);
+		pShader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+
+		CScreenRectMeshTextured* pMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, uiList[i].left, uiList[i].top, uiList[i].width, uiList[i].height);
+		pShader->SetMesh(0, pMesh);
+		pShader->SetTexture(pTexture);
+		pShader->SetVisible(true);
+
+		m_Shaders.push_back(pShader);
+
+		m_UITextures.push_back(pTexture);
+
+		//CText* pLVText = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"LV. ", uiList[i].left, -0.45f);
+		//m_GameObjects.push_back(pLVText);
+	}
+}
+
 void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList)
 {
 	m_pd3dGraphicsRootSignature = CreateGraphicsRootSignature(pd3dDevice);
@@ -147,7 +184,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 
 	CMaterial::PrepareShaders(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature); 
 
-	BuildDefaultLightsAndMaterials(false);
+	BuildDefaultLightsAndMaterials(true);
 
 	Device = pd3dDevice;
 	Commandlist = pd3dCommandList;
@@ -158,51 +195,60 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 
 //	m_pEffect = new CParticle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 //
-//#pragma region Monsters
 //
-//	m_Monsters.clear();
-//	m_Monsters.resize(4);
-//	int monsterIDs[4] = { 10001,10002,10003,10004 };
 //
-//	CLoadedModelInfo* pSpiderModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/spider_myOldOne.bin", NULL);
-//	XMFLOAT3 monsterPos[4] = {
-//		{27, 0, -2},
-//		{-54, 0, -90},
-//		{4, 0, -50},
-//		{-46, 0,-42}
-//	};
-//	for (int i = 0; i < static_cast<int>(m_Monsters.size()); ++i)
-//	{
-//		m_Monsters[i] = new CSpider(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pSpiderModel, 5);
-//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); //idle
-//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(1, 1); //walk
-//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(2, 2); //run
-//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); //attack
-//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(4, 4); //death
-//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(1, false);
-//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(2, false);
-//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(3, false);
-//		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(4, false);
-//
-//		m_Monsters[i]->SetPosition(monsterPos[i]);
-//		m_Monsters[i]->Rotate(0, 0, 0);
-//		m_Monsters[i]->SetScale(3, 3, 3);
-//
-//		std::string spiderName = "Spider" + std::to_string(i);
-//		m_Monsters[i]->SetFrameName(spiderName.c_str());
-//
-//		static_cast<CSpider*>(m_Monsters[i])->SetMonsterID(monsterIDs[i]);
-//		g_monsters[monsterIDs[i]] = static_cast<CSpider*>(m_Monsters[i]);
-//
-//	}
-//
-//	if (pSpiderModel) delete pSpiderModel;
+	
+	m_pKnightModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Knight.bin", NULL);
+	m_pWizardModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Wizard.bin", NULL);
+
+	//m_pThiefModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Thief.bin", NULL);
+	
+	m_Monsters.clear();
+	m_Monsters.resize(4);
+	int monsterIDs[4] = { 10001,10002,10003,10004 };
+
+	CLoadedModelInfo* pSpiderModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/SalamanderPA.bin", NULL);
+	XMFLOAT3 monsterPos[4] = {
+		{-14.4431, 0, 97.5215},
+		{-9.05774, 0, 122.508},
+		{13.721, 0, 117.925},
+		{4.82955, 0, 96.9888}
+	};
+	for (int i = 0; i < static_cast<int>(m_Monsters.size()); ++i)
+	{
+		m_Monsters[i] = new CSpider(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pSpiderModel, 5);
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); //idle
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(1, 1); //walk
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(2, 2); //attack
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); //gethit
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(4, 4); //death
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(1, false);
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(2, false);
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(3, false);
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(4, false);
+
+		m_Monsters[i]->SetPosition(monsterPos[i]);
+		m_Monsters[i]->Rotate(0, rand(), 0);
+		m_Monsters[i]->SetScale(2, 2, 2);
+
+		//std::string spiderName = "SalamanderPA" + std::to_string(i);
+		//m_Monsters[i]->SetFrameName(spiderName.c_str());
+
+		static_cast<CSpider*>(m_Monsters[i])->SetMonsterID(monsterIDs[i]);
+		g_monsters[monsterIDs[i]] = static_cast<CSpider*>(m_Monsters[i]);
+
+	}
+
+	if (pSpiderModel) delete pSpiderModel;
+
+	BuildSimpleUI(pd3dDevice, pd3dCommandList);
+
 //
 //	m_GameObjects.clear();
 //	m_GameObjects.resize(8);
-//#pragma endregion
+ 
 //
-//#pragma region Items
+#pragma region Items
 //	long long itemIDs[8] = { 20000, 20001, 20002,
 //							 30000, 30001, 30002, 30003, 30004};
 //
@@ -359,9 +405,10 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 //	m_ppOtherPlayers[0]->m_pSkinnedAnimationController->SetTrackPosition(6, 0.0f);
 //
 //	if (pOtherPlayerModel) delete pOtherPlayerModel;
-//#pragma endregion
+#pragma endregion
 //
-//#pragma region InventoryUIandShop
+#pragma region InventoryUIandShop
+
 //	// 인벤토리 UI 및 상점
 //	m_Shaders.clear();
 //	m_Shaders.resize(10);
@@ -496,7 +543,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 //	pShopSpace4Shader->SetTexture(pTextureinven);
 //	pShopSpace4Shader->SetVisible(false);
 //	m_Shaders[9] = pShopSpace4Shader;
-//#pragma endregion
+#pragma endregion
 
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }
@@ -529,6 +576,12 @@ void CScene::ReleaseObjects()
 		if (monster) monster->Release();
 	}
 	m_Monsters.clear();
+
+	for (auto* pTex : m_UITextures)
+	{
+		if (pTex) delete pTex;
+	}
+	m_UITextures.clear();
 
 	ReleaseShaderVariables();
 
@@ -850,92 +903,24 @@ void CScene::CreateShaderResourceViews(ID3D12Device* pd3dDevice, CTexture* pText
 
 void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
+	RECT rt[3] =
+	{
+		{ 0, 0, FRAME_BUFFER_WIDTH / 3, FRAME_BUFFER_HEIGHT },
+		{ FRAME_BUFFER_WIDTH / 3, 0, FRAME_BUFFER_WIDTH / 3 * 2, FRAME_BUFFER_HEIGHT },
+		{ FRAME_BUFFER_WIDTH / 3 * 2, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT }
+	};
+
+	POINT pt;
+	GetCursorPos(&pt);        // screen 좌표
+	ScreenToClient(hWnd, &pt); // client 좌표로 변환
+
 	switch (nMessageID)
 	{
 	case WM_LBUTTONDOWN:
 	{
-		if (!isShop) {
-			int index = m_pPlayer->m_nSelectedInventoryIndex;
+		cout << "Mouse Clicked at (" << pt.x << ", " << pt.y << ")" << endl;
 
-			// 손에 든 아이템 인덱스 유효성 검사
-			if (index < 0 || index >= 4) break;
-
-			CGameObject* pHeldItem = m_pPlayer->m_pHeldItems[index];
-			if (!pHeldItem) break;
-
-			char* frameName = pHeldItem->GetFrameName();
-
-			if (!strcmp(frameName, "FlashLight"))
-			{
-				m_pPlayer->bflashlight = !m_pPlayer->bflashlight;
-				BuildDefaultLightsAndMaterials(m_pPlayer->bflashlight);
-				// server 로 켯다는거 보내주기
-
-			}
-			else if (!strcmp(frameName, "Shovel"))
-			{
-				dynamic_cast<CTerrainPlayer*>(m_pPlayer)->m_currentAnim = AnimationState::SWING;
-
-				m_pEffect->Activate(m_pPlayer->m_pHeldItems[m_pPlayer->m_nSelectedInventoryIndex]->GetPosition());
-
-
-				if (m_pPlayer->m_isMonsterHit)
-				{
-					// server 로 공격 데미지 값 보내주기 - 몬스터 hp 깎여야함
-				}
-				break;
-			}
-		}
-		else {
-			// 상점 판매 버튼 클릭
-			const RECT rt[4] =
-			{
-				{450, 240, 550, 265},
-				{450, 310, 550, 335},
-				{450, 370, 550, 395},
-				{450, 440, 550, 465}
-			};
-
-			for (int i = 0; i < 4; ++i) {
-				if (PtInRect(&rt[i], m_ptPos)) {
-					Item* pItem = dynamic_cast<Item*>(m_pPlayer->m_pHeldItems[i]);
-					if (pItem && pItem->IsExist() && pItem->GetPrice() > 0) {
-						dynamic_cast<CTerrainPlayer*>(m_pPlayer)->debt -= pItem->GetPrice();
-						long long itemID = pItem->GetUniqueID();
-
-						auto it = g_items.find(itemID);
-						if (it != g_items.end()) {					
-							it->second->ChangeExistState(false);						
-							m_pPlayer->m_pHeldItems[i] = nullptr;
-						
-							for (auto* obj : m_GameObjects) {
-								Item* pGameObjectItem = dynamic_cast<Item*>(obj);
-								if (pGameObjectItem && pGameObjectItem->GetUniqueID() == itemID) {
-									// 같은 id 아이템 삭제
-									break;
-								}
-							}
-						}
-						auto texIt = m_textureMap.find("inven");
-						if (texIt != m_textureMap.end())
-						{
-							if (i < static_cast<int>(m_Shaders.size()) &&
-								i + 6 < static_cast<int>(m_Shaders.size()) &&
-								5 < static_cast<int>(m_Shaders.size()))
-							{
-								auto* pShader = dynamic_cast<CTextureToScreenShader*>(m_Shaders[i]);
-								auto* pShader1 = dynamic_cast<CTextureToScreenShader*>(m_Shaders[i + 6]);
-								auto* pShop = dynamic_cast<CShopShader*>(m_Shaders[5]);
-
-								if (pShader)pShader->SetTexture(texIt->second);						
-								if (pShader1)pShader1->SetTexture(texIt->second);
-								if (pShop)pShop->price[i] = L"0";							
-							}
-						}
-					}
-				}
-			}
-		}
+		dynamic_cast<CTerrainPlayer*>(m_pPlayer)->m_currentAnim = AnimationState::SWING;
 	}
 	break;
 	}
@@ -948,112 +933,10 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 	case WM_KEYDOWN:
 		switch (wParam)
 		{
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		{
-			int slotIndex = wParam - '1';
-			m_pPlayer->m_nSelectedInventoryIndex = slotIndex;
-
-			// 슬롯에 따라 visible 갱신
-			for (int i = 0; i < 4; ++i)
-			{
-				CGameObject* item = NULL;
-				if (m_pPlayer->m_pHeldItems[i]) {
-					item = m_pPlayer->m_pHeldItems[i];
-					item->SetVisible(i == slotIndex); // 선택된 슬롯만 true
-				}
-			}
-		}
-			break;
-		case 'F':
-		case 'f':
-		{
-			bool bPickedUp = false;
-
-			for(auto* obj : m_GameObjects)
-			{
-				CGameObject* pObj = obj;
-				if (!pObj) continue;
-
-				Item* pItem = dynamic_cast<Item*>(pObj);
-				if (!pItem) continue;
-				
-
-				XMFLOAT3 playerPos = m_pPlayer->GetPosition();
-				XMFLOAT3 itemPos = pItem->GetPosition();
-				float distance = Vector3::Length(Vector3::Subtract(playerPos, itemPos));
-				if (distance > 0.5f) continue;
-				if (m_pPlayer->TryPickUpItem(pItem))
-
-				{
-					std::string frameName = pItem->m_pstrFrameName;
-					auto it = m_textureMap.find(frameName);
-					if (it != m_textureMap.end())
-					{
-						int newIndex = -1;
-						for (int i = 0; i < 4; ++i)
-							if (!m_pPlayer->m_pHeldItems[i]) {
-								newIndex = i - 1;
-								break;
-							}
-							else continue;
-						if (newIndex < 4 && newIndex > -1)
-						{
-							auto* pShader = dynamic_cast<CTextureToScreenShader*>(m_Shaders[newIndex]);
-							auto* pShader1 = dynamic_cast<CTextureToScreenShader*>(m_Shaders[newIndex + 6]);
-							if (pShader) pShader->SetTexture(it->second);
-							if (pShader1)
-							{
-								pShader1->SetTexture(it->second);
-								dynamic_cast<CShopShader*>(m_Shaders[5])->price[newIndex] = std::to_wstring(pItem->GetPrice());
-							}
-						}
-					}
-					bPickedUp = true;
-					break;
-				}
-			}
-
-			if (!bPickedUp)
-			{
-				int index = m_pPlayer->m_nSelectedInventoryIndex;
-				if (m_pPlayer->DropItem(index))
-				{
-					auto it = m_textureMap.find("inven");
-					if (it != m_textureMap.end())
-					{
-						auto* pShader = dynamic_cast<CTextureToScreenShader*>(m_Shaders[index]);
-						auto* pShader1 = dynamic_cast<CTextureToScreenShader*>(m_Shaders[index + 6]);
-						if (pShader) pShader->SetTexture(it->second);
-						if (pShader1)
-						{
-							pShader1->SetTexture(it->second);
-							dynamic_cast<CShopShader*>(m_Shaders[5])->price[index] = L"0";
-						}
-					}
-				}
-			}
-
-			break;
-		}
-		case VK_TAB:		
-			isShop = !isShop;
-			for (int i = 5; i < 10 && i < static_cast<int>(m_Shaders.size()); ++i)
-			{
-				if (auto* texShader = dynamic_cast<CTextureToScreenShader*>(m_Shaders[i]))
-				{
-					texShader->visible = isShop;
-				}
-			}
-			break;
-		case VK_UP:
-			dynamic_cast<CTerrainPlayer*>(m_pPlayer)->debt -= 1000;
+		default:
 			break;
 		}
 		break;
-		
 	default:
 		break;
 	}
@@ -1066,35 +949,16 @@ bool CScene::ProcessInput(UCHAR *pKeysBuffer)
 
 void CScene::AnimateObjects(float fTimeElapsed)
 {
-	for (auto* obj : m_GameObjects) if (obj) {
-		obj->Animate(fTimeElapsed);
-		if (obj->isFalling) {
-			XMFLOAT3 pos = obj->GetPosition();
-			if (pos.y > 0.1f)
-			{
-				pos.y -= 0.1f;
-				obj->SetPosition(pos);
-				Item* itemObj = dynamic_cast<Item*>(obj);
-				if (itemObj) {
-					//SendItemMove(itemObj->GetUniqueID(), pos, obj->GetLook(), obj->GetRight());
-				}
-			}
-			else obj->isFalling = false;
-
+	for (auto* obj : m_GameObjects) {
+		if (obj) obj->Animate(fTimeElapsed);
+		if (auto* textObj = dynamic_cast<CText*>(obj)) {
+			textObj->UpdateText(std::to_wstring(m_pPlayer->level[0]), L"LV. ");
+			textObj->UpdateText(std::to_wstring(m_pPlayer->level[1]), L"LV. ");
+			textObj->UpdateText(std::to_wstring(m_pPlayer->level[2]), L"LV. ");
 		}
 	}
-
+	
 	for(auto* shader : m_Shaders) if(shader) shader->AnimateObjects(fTimeElapsed);
-
-	//// 손전등
-	//if (m_pLights && m_GameObjects[0])
-	//{	
-	//	m_pLights[0].m_xmf3Position = m_GameObjects[0]->GetPosition();
-	//	m_pLights[0].m_xmf3Direction = m_GameObjects[0]->GetLook();
-	//}
-
-	//// 삽
-	//if (m_pEffect&& m_GameObjects[1]) m_pEffect->Animate(fTimeElapsed, m_GameObjects[1]->GetPosition());
 }
 
 void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
@@ -1297,8 +1161,6 @@ void CStartScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM
 }
 
 // ==========================================================================================================
-<<<<<<< Updated upstream
-=======
 // SelectScene
 // ==========================================================================================================
 void CSelectScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
@@ -1432,7 +1294,6 @@ void CSelectScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM w
 }
 
 // ==========================================================================================================
->>>>>>> Stashed changes
 // EndScene
 // ==========================================================================================================
 void CEndScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
@@ -1483,9 +1344,10 @@ void CEndScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCam
 	if (m_pd3dGraphicsRootSignature) pd3dCommandList->SetGraphicsRootSignature(m_pd3dGraphicsRootSignature);
 	if (m_pd3dCbvSrvDescriptorHeap) pd3dCommandList->SetDescriptorHeaps(1, &m_pd3dCbvSrvDescriptorHeap);
 
-	pCamera->SetViewportsAndScissorRects(pd3dCommandList);
-	pCamera->UpdateShaderVariables(pd3dCommandList);
-
+	if (pCamera) {
+		pCamera->SetViewportsAndScissorRects(pd3dCommandList);
+		pCamera->UpdateShaderVariables(pd3dCommandList);
+	}
 	UpdateShaderVariables(pd3dCommandList);
 
 	for(auto* shader : m_Shaders) if(shader) shader->Render(pd3dCommandList, pCamera);

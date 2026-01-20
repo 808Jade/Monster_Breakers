@@ -105,23 +105,48 @@ void Map::LoadGeometryFromFile()
 		}
 
 		int index = -1;
+
+		// 1. 오브젝트 이름에서 순수한 모델 이름 추출
+		std::string targetModelName = objectName;
+
+		size_t suffixPos = objectName.rfind(" (");
+
+		if (suffixPos != std::string::npos)
+		{
+			// 접미사가 있다면 제거하고 앞부분만 남김
+			targetModelName = objectName.substr(0, suffixPos);
+		}
+
+		// 2. 정확한 이름 비교 (Exact Match)
 		for (int i = 0; i < m_vLoadedModelInfo.size(); i++)
 		{
 			string modelName = m_vLoadedModelInfo[i]->GetFrameName();
-			if (objectName.find(modelName) != string::npos)
+
+			if (targetModelName == modelName)
 			{
 				index = static_cast<int>(i);
 				break;
 			}
 		}
 
-		//cout << std::left
-		//	<< std::setw(30) << objectName << " [ "
+		if (index == -1)
+		{
+			std::cout << "Warning: Could not find matching model for object: " << objectName
+				<< " (Parsed: " << targetModelName << ")" << std::endl;
+		}
+
+		//if (objectName.find("trailway") != std::string::npos || objectName.find("Tileway") != std::string::npos)
+		//{
+		//		cout << std::left
+		//	<< std::setw(20) << objectName << " [ "
 		//	<< std::setw(4) << index << "] ( "
 		//	<< std::setw(10) << position.x << ", "
 		//	<< std::setw(10) << position.y << ", "
 		//	<< std::setw(10) << position.z << " )  |"
-		//	<< std::setw(3) << scale.x << " | " << endl;
+		//	<< std::setw(10) << scale.x << " , " 
+		//	<< std::setw(10) << scale.y << " , " 
+		//	<< std::setw(10) << scale.z << " | " << endl;
+		//}
 
 		m_vObjectInstances.emplace_back(index, objectName, position, rotation, scale, quaternion, matrix);
 	}
@@ -170,8 +195,8 @@ void Map::SetMapObjects()
 		CGameObject* pNewObject = pModel->Clone();
 
 		pNewObject->SetPosition(instance.position);
-		pNewObject->SetScale(instance.scale);
 		pNewObject->Rotate(instance.rotation);
+		pNewObject->SetScale(instance.scale);
 
 		//std::cout << "Object: " << instance.objectName
 		//	<< " | Model Index: " << instance.modelIndex

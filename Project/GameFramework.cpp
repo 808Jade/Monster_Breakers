@@ -302,8 +302,8 @@ void CGameFramework::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM
 		::ReleaseCapture();
 		break;
 	case WM_MOUSEMOVE:
-		//::SetCapture(hWnd);
-		//::GetCursorPos(&m_ptOldCursorPos);
+		::SetCapture(hWnd);
+		::GetCursorPos(&m_ptOldCursorPos);
 		break;
 	default:
 		break;
@@ -411,31 +411,43 @@ void CGameFramework::BuildObjects()
 
 	m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
 
-	m_nScenes = 3; // 총 Scene 개수   <- 이게 플레이어 3명까지 가능하다는 소리인건가???
+	m_nScenes = 4; // 총 Scene 개수
 	m_ppScenes = new CScene * [m_nScenes];
+
+
 	bool b = false;
 	if (m_nCurrentScene == 0) {
 		m_ppScenes[0] = new CStartScene();
 		m_ppScenes[0]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
-		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[0]->GetGraphicsRootSignature(),NULL);
+		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[0]->GetGraphicsRootSignature(),NULL, NULL);
 		m_ppScenes[0]->SetPlayer(pPlayer);
 	}
 	else if (m_nCurrentScene == 1) {
-		m_ppScenes[1] = new CScene();
+		m_ppScenes[1] = new CSelectScene();
 		m_ppScenes[1]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
-		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[1]->GetGraphicsRootSignature(), NULL);
-
+		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[1]->GetGraphicsRootSignature(), NULL, NULL);
 		m_ppScenes[1]->SetPlayer(pPlayer);
-		//m_pPlayer->SetPosition(XMFLOAT3(3, 0, 20));
-
-		//m_ppScenes[1]->GenerateGameObjectsBoundingBox();
-		//m_ppScenes[1]->InitializeCollisionSystem();
 	}
 	else if (m_nCurrentScene == 2) {
-		m_ppScenes[2] = new CEndScene();
+		m_ppScenes[2] = new CScene();
 		m_ppScenes[2]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
-		CPlayer* pPlayer = new CPlayer();
+		if (GetSelectedPlayerModel() == EPlayerModelType::Wizard)
+			m_ppScenes[2]->m_pModel = m_ppScenes[2]->m_pWizardModel;
+		else
+			m_ppScenes[2]->m_pModel = m_ppScenes[2]->m_pKnightModel;
+		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[2]->GetGraphicsRootSignature(), NULL, m_ppScenes[2]->m_pModel);
+
 		m_ppScenes[2]->SetPlayer(pPlayer);
+		//m_pPlayer->SetPosition(XMFLOAT3(3, 0, 20));
+
+		m_ppScenes[2]->GenerateGameObjectsBoundingBox();
+		m_ppScenes[2]->InitializeCollisionSystem();
+	}
+	else if (m_nCurrentScene == 3) {
+		m_ppScenes[3] = new CEndScene();
+		m_ppScenes[3]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
+		CPlayer* pPlayer = new CPlayer();
+		m_ppScenes[3]->SetPlayer(pPlayer);
 	}
 
 //#ifdef _WITH_TERRAIN_PLAYER
@@ -481,67 +493,60 @@ void CGameFramework::ProcessInput()
 	static UCHAR pKeysBuffer[256];
 	
 	static bool bPrevSpace = false;
+	static float fRemainingYaw = 0.0f;
 
 	bool bProcessedByScene = false;
 	if (GetKeyboardState(pKeysBuffer) && m_pScene) bProcessedByScene = m_pScene->ProcessInput(pKeysBuffer);
 	if (!bProcessedByScene)
 	{
-		float cxDelta = 0.0f, cyDelta = 0.0f;
-		POINT ptCursorPos;
-		if (GetCapture() == m_hWnd && !(m_pScene && m_pScene->isShop))
-		{
-			SetCursor(NULL);
-			GetCursorPos(&ptCursorPos);
-			cxDelta = (float)(ptCursorPos.x - m_ptOldCursorPos.x) / 3.0f;
-			cyDelta = (float)(ptCursorPos.y - m_ptOldCursorPos.y) / 3.0f;
-			SetCursorPos(m_ptOldCursorPos.x, m_ptOldCursorPos.y);
-		}
 		m_pScene->m_ptPos = m_ptOldCursorPos;
 		DWORD dwDirection = 0;
 		if (pKeysBuffer['W'] & 0xF0) dwDirection |= DIR_FORWARD;
 		if (pKeysBuffer['S'] & 0xF0) dwDirection |= DIR_BACKWARD;
-		if (pKeysBuffer['A'] & 0xF0) dwDirection |= DIR_LEFT;
-		if (pKeysBuffer['D'] & 0xF0) dwDirection |= DIR_RIGHT;
 		if (pKeysBuffer[VK_SPACE] & 0xF0) dwDirection |= DIR_UP;
 		if (pKeysBuffer[VK_SHIFT] & 0xF0) dwDirection |= DIR_DOWN;
-		if (pKeysBuffer[VK_CONTROL] & 0xF0) dwDirection |= DIR_CROUCH;
-
+		bool bCurrA = (pKeysBuffer['A'] & 0xF0);
+		bool bCurrD = (pKeysBuffer['D'] & 0xF0);
 		bool bCurrSpace = (pKeysBuffer[VK_SPACE] & 0xF0);      // jump
 
 		CTerrainPlayer* terrainPlayer = dynamic_cast<CTerrainPlayer*>(m_pPlayer);
 		if (!terrainPlayer) return;
+
+		bool bForward = (dwDirection & DIR_FORWARD) != 0;
+
+		float fTimeElapsed = m_GameTimer.GetTimeElapsed();
+
+		const float fTurnSpeed = 45.0f; // 180~360 사이로 취향 조절
+
+		float yawInput = 0.0f;
+		if (bCurrA) yawInput -= 1.0f;
+		if (bCurrD) yawInput += 1.0f;
+
+		if (yawInput != 0.0f)
+		{
+			terrainPlayer->Rotate(0.0f, yawInput * fTurnSpeed * fTimeElapsed, 0.0f);
+		}
+
 		AnimationState currentState = terrainPlayer->m_currentAnim;
 
-		// 점프 중이 아닐 때만 상태 전환
 		if (currentState != AnimationState::SWING && currentState != AnimationState::JUMP)
 		{
-			bool isMoving = dwDirection & (DIR_FORWARD | DIR_BACKWARD | DIR_LEFT | DIR_RIGHT);
-			bool isCrouching = dwDirection & DIR_CROUCH;
+			bool isMoving = dwDirection & (DIR_FORWARD | DIR_BACKWARD);
 			bool isRunning = dwDirection & DIR_DOWN;
 
 			if (bCurrSpace && !bPrevSpace)
 			{
 				terrainPlayer->m_currentAnim = AnimationState::JUMP;
 			}
-			
-			else if (isCrouching && isMoving)
-			{
-				terrainPlayer->m_currentAnim = AnimationState::CROUCH_WALK;
-				terrainPlayer->Move(dwDirection, 2.0f, true);
-			}
-			else if (isCrouching)
-			{
-				terrainPlayer->m_currentAnim = AnimationState::CROUCH;
-			}
 			else if (isRunning && isMoving)
 			{
 				terrainPlayer->m_currentAnim = AnimationState::RUN;
-				terrainPlayer->Move(dwDirection, 2.0f, true);
+				terrainPlayer->Move(dwDirection, 4.0f, true);
 			}
 			else if (isMoving)
 			{
 				terrainPlayer->m_currentAnim = AnimationState::WALK;
-				terrainPlayer->Move(dwDirection, 2.0f, true);
+				terrainPlayer->Move(dwDirection, 4.0f, true);
 			}
 			else
 			{
@@ -550,15 +555,6 @@ void CGameFramework::ProcessInput()
 		}
 
 		bPrevSpace = bCurrSpace;
-
-		if (cxDelta || cyDelta)
-		{
-			if (pKeysBuffer[VK_RBUTTON] & 0xF0)
-				m_pPlayer->Rotate(cyDelta, 0.0f, -cxDelta);
-			else
-				m_pPlayer->Rotate(cyDelta, cxDelta, 0.0f);
-		}
-
 	}
 	m_pPlayer->Update(m_GameTimer.GetTimeElapsed());
 }
@@ -578,19 +574,7 @@ void CGameFramework::AnimateObjects()
 	m_pPlayer->Animate(fTimeElapsed);
 
 	if (m_nCurrentScene == 0) m_pPlayer->SetPosition(XMFLOAT3(3, 0, 20));
-	//if (m_nCurrentScene == 1) {
-	//	for (int i = 0; i < 4; ++i)
-	//	{
-	//		if (!m_pPlayer->items[i]) // 손에 들리지 않은 상태일 때만
-	//		{	
-	//			if (m_pScene->m_ppHierarchicalGameObjects[i]) {
-	//				XMFLOAT3 pos = m_pScene->m_ppHierarchicalGameObjects[i]->GetPosition();
-	//				if (pos.y > 0.1f) pos.y -= 0.1;
-	//				m_pScene->m_ppHierarchicalGameObjects[i]->SetPosition(pos);
-	//			}
-	//		}
-	//	}
-	//}
+
 }
 
 void CGameFramework::WaitForGpuComplete()
@@ -621,20 +605,34 @@ void CGameFramework::MoveToNextFrame()
 
 void CGameFramework::MoveToNextScene(int i)
 {
-	m_ppScenes[m_nScene]->ReleaseObjects();
+	int prev = m_nCurrentScene;
+	if (prev >= 0 && prev < 4 && m_ppScenes[prev])
+	{
+		m_ppScenes[prev]->ReleaseObjects();
+		delete m_ppScenes[prev];
+		m_ppScenes[prev] = nullptr;
+	}
 	m_nCurrentScene = i;
 	BuildObjects();
 	LoadingDoneToServer();
-	isStartScene = false;
+	if(i==2) isStartScene = false;
 }
 
 //#define _WITH_PLAYER_TOP
 
 void CGameFramework::FrameAdvance()
 {    
+	if (m_nPendingScene != -1)
+	{
+		int next = m_nPendingScene;
+		m_nPendingScene = -1;
+
+		MoveToNextScene(next);
+		return;
+	}
+
 	m_GameTimer.Tick(60.0f);
 	
-
 	HRESULT hResult = m_pd3dCommandAllocator->Reset();
 	hResult = m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
 
@@ -777,8 +775,8 @@ void CGameFramework::UpdateMonsterState(CSpider* pMonster, int state)
 	{
 	case 0: pMonster->m_pSkinnedAnimationController->SetTrackEnable(0, true); break; // idle
 	case 1: pMonster->m_pSkinnedAnimationController->SetTrackEnable(1, true); break; // walk
-	case 2: pMonster->m_pSkinnedAnimationController->SetTrackEnable(2, true); break; // run
-	case 3: pMonster->m_pSkinnedAnimationController->SetTrackEnable(3, true); break; // attack
+	case 2: pMonster->m_pSkinnedAnimationController->SetTrackEnable(2, true); break; // attack
+	case 3: pMonster->m_pSkinnedAnimationController->SetTrackEnable(3, true); break; // gethit
 	case 4: pMonster->m_pSkinnedAnimationController->SetTrackEnable(4, true); break; // death
 	default: break;
 	}
