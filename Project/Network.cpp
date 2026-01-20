@@ -218,14 +218,23 @@ void InitializeNetwork(char serverIP[]) {
 
 
     // 로그인 패킷 전송
+<<<<<<< Updated upstream
     cs_packet_login p{};
     p.size = sizeof(p);
     p.type = CS_P_LOGIN;
     strcpy_s(p.name, sizeof(p.name), user_name.c_str());
     //p.job = gGameFramework.GetSelectedJob();
     send_packet(&p);
+=======
+    //cs_packet_login p{};
+    //p.size = sizeof(p);
+    //p.type = CS_P_LOGIN;
+    //strcpy_s(p.name, sizeof(p.name), user_name.c_str());
+    ////p.job = gGameFramework.GetSelectedJob();
+    //send_packet(&p);
+>>>>>>> Stashed changes
   
-    std::cout << "[Client] Login Packet Send : Name=" << p.name << std::endl;
+    //std::cout << "[Client] Login Packet Send : Name=" << p.name << std::endl;
 
     std::thread(RecvThread).detach();
     std::thread(SendThread).detach();

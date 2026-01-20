@@ -1273,12 +1273,23 @@ void CSelectScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM w
 			}
 		break;
 	case WM_LBUTTONUP:
+		{
+			uint8_t job = gGameFramework.GetSelectedJob();
+			cs_packet_login p{};
+			p.size = sizeof(p);
+			p.type = CS_P_LOGIN;
+			strcpy_s(p.name, sizeof(p.name), user_name.c_str());
+			p.job = job;
+			send_packet(&p);
+
+			cout << "[Client] Login Send: Name=" << user_name << " Job=" << static_cast<int>(job) << endl;
+		}
+	
 		loading = true;
 		m_SceneId = 2;
 		m_bLoadingRenderedOnce = false;
 		break;
-	default:
-		break;
+		
 	}
 }
 
