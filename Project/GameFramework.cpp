@@ -661,7 +661,7 @@ void CGameFramework::FrameAdvance()
 
 	AnimateObjects();
 
-	if (m_pScene) m_pScene->Render(m_pd3dCommandList, m_pCamera);
+	if (m_pScene) m_pScene->Render(m_pd3dCommandList, m_pCamera, d3dRtvCPUDescriptorHandle, d3dDsvCPUDescriptorHandle);
 
 #ifdef _WITH_PLAYER_TOP
 	m_pd3dCommandList->ClearDepthStencilView(d3dDsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);

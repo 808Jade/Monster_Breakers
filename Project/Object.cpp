@@ -819,6 +819,22 @@ void CGameObject::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pC
 	if (m_pChild && m_pChild->GetVisible()) m_pChild->Render(pd3dCommandList, pCamera);
 }
 
+void CGameObject::RenderShadow(ID3D12GraphicsCommandList* pd3dCommandList)
+{
+	if (m_pSkinnedAnimationController)
+		m_pSkinnedAnimationController->UpdateShaderVariables(pd3dCommandList); // b7/b8
+
+	if (m_pMesh)
+	{
+		UpdateShaderVariable(pd3dCommandList, &m_xmf4x4World);
+
+		m_pMesh->Render(pd3dCommandList, 0);
+	}
+
+	if (m_pSibling && m_pSibling->GetVisible()) m_pSibling->RenderShadow(pd3dCommandList);
+	if (m_pChild && m_pChild->GetVisible()) m_pChild->RenderShadow(pd3dCommandList);
+}
+
 void CGameObject::CreateShaderVariables(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList)
 {
 }
