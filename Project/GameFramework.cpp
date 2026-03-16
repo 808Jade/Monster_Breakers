@@ -433,8 +433,11 @@ void CGameFramework::BuildObjects()
 		m_ppScenes[2]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
 		if (GetSelectedPlayerModel() == EPlayerModelType::Wizard)
 			m_ppScenes[2]->m_pModel = m_ppScenes[2]->m_pWizardModel;
-		else
+		else if (GetSelectedPlayerModel() == EPlayerModelType::Knight)
 			m_ppScenes[2]->m_pModel = m_ppScenes[2]->m_pKnightModel;
+		else
+			m_ppScenes[2]->m_pModel = m_ppScenes[2]->m_pThiefModel;
+
 		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[2]->GetGraphicsRootSignature(), NULL, m_ppScenes[2]->m_pModel);
 
 		m_ppScenes[2]->SetPlayer(pPlayer);
