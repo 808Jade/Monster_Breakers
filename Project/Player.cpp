@@ -386,8 +386,10 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 	SetPlayerUpdatedContext(pContext);
 	SetCameraUpdatedContext(pContext);
 
-	m_pText = new CText(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, L"debt : ", -0.9f, 0.9f);
-	
+	m_pText = new CText(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, L"Gold : ", -0.9f, 0.9f);
+	for (int i = 0; i < 3; ++i)
+		m_plevel[i] = new CText(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, L"LV.", 0.25f + i * 0.25f, -0.45f);
+
 	m_playerHP = new CTextureToScreenShader(1);
 	m_playerHP->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
 	CTexture* pTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
@@ -528,6 +530,8 @@ void CTerrainPlayer::Move(DWORD dwDirection, float fDistance, bool bUpdateVeloci
 void CTerrainPlayer::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
 {
 	if (m_pText) m_pText->Render(pd3dCommandList, pCamera);
+	for (int i = 0; i < 3; ++i)
+		if (m_plevel[i]) m_plevel[i]->Render(pd3dCommandList, pCamera);
 	if (m_playerHP) m_playerHP->Render(pd3dCommandList, pCamera);
 	CPlayer::Render(pd3dCommandList, pCamera);
 }
@@ -587,7 +591,10 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 		}
 	}
 
-	//if (m_pText) { m_pText->UpdateText(std::to_wstring(debt), L"debt : "); }
+	if (m_pText) { m_pText->UpdateText(std::to_wstring(gold), L"Gold : "); }
+
+	for (int i = 0; i < 3; ++i)
+		if (m_plevel[i]) m_plevel[i]->UpdateText(std::to_wstring(level[i]), L"LV.");
 
 	//currentHP = g_myid.hp;
 

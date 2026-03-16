@@ -151,6 +151,7 @@ public:
 	virtual ~CTerrainPlayer();
 
 	CText* m_pText = nullptr;
+	CText* m_plevel[3] = { nullptr, nullptr, nullptr };
 
 	//server
 	AnimationState m_currentAnim = AnimationState::IDLE;
@@ -166,10 +167,10 @@ public:
 
 	virtual void Update(float fTimeElapsed);
 
-	int debt = 10000;
+	int gold = 10000;
 
 	CTextureToScreenShader* m_playerHP = NULL;
-	ID3D12Device* device = nullptr; 
+	ID3D12Device* device = nullptr;
 	ID3D12GraphicsCommandList* cmdList = nullptr;
 	void SetHPWidth(float newWidth);
 
@@ -181,5 +182,6 @@ public:
 
 	void StartAnimationBlend(int fromTrack, int toTrack, float blendTime);
 };
+
 
 

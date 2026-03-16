@@ -433,8 +433,11 @@ void CGameFramework::BuildObjects()
 		m_ppScenes[2]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
 		if (GetSelectedPlayerModel() == EPlayerModelType::Wizard)
 			m_ppScenes[2]->m_pModel = m_ppScenes[2]->m_pWizardModel;
-		else
+		else if (GetSelectedPlayerModel() == EPlayerModelType::Knight)
 			m_ppScenes[2]->m_pModel = m_ppScenes[2]->m_pKnightModel;
+		else
+			m_ppScenes[2]->m_pModel = m_ppScenes[2]->m_pThiefModel;
+
 		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[2]->GetGraphicsRootSignature(), NULL, m_ppScenes[2]->m_pModel);
 
 		m_ppScenes[2]->SetPlayer(pPlayer);
@@ -661,7 +664,7 @@ void CGameFramework::FrameAdvance()
 
 	AnimateObjects();
 
-	if (m_pScene) m_pScene->Render(m_pd3dCommandList, m_pCamera);
+	if (m_pScene) m_pScene->Render(m_pd3dCommandList, m_pCamera, d3dRtvCPUDescriptorHandle, d3dDsvCPUDescriptorHandle);
 
 #ifdef _WITH_PLAYER_TOP
 	m_pd3dCommandList->ClearDepthStencilView(d3dDsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
