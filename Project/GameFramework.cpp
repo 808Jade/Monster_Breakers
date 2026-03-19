@@ -437,6 +437,7 @@ void CGameFramework::BuildObjects()
 			m_ppScenes[2]->m_pModel = m_ppScenes[2]->m_pKnightModel;
 		else
 			m_ppScenes[2]->m_pModel = m_ppScenes[2]->m_pThiefModel;
+		m_ppScenes[2]->BuildSimpleUI(m_pd3dDevice, m_pd3dCommandList);
 
 		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[2]->GetGraphicsRootSignature(), NULL, m_ppScenes[2]->m_pModel);
 

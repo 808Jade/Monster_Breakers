@@ -7,6 +7,8 @@
 #include "GameFramework.h"
 
 #include <random>
+#include <array>
+#include <unordered_map>
 
 static std::mt19937 rng{ std::random_device{}() };
 static bool Chance(int percent) { // 0~100
@@ -153,15 +155,24 @@ void CScene::GenerateGameObjectsBoundingBox()
 void CScene::BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
 {
 	struct UIInfo { std::wstring path; float left; float top; float width; float height; };
-	std::vector<UIInfo> uiList = {
-		{ L"Image/방패막기.dds",  0.25f, 0.2f, -0.4f, 0.4f },
-		{ L"Image/강타.dds",		0.50f, 0.2f, -0.4f, 0.4f },
-		{ L"Image/도발.dds",		0.75f, 0.2f, -0.4f, 0.4f },
-		{ L"Image/enforce.dds",  0.20f, 0.25f, -0.45f, 0.4f },
-		{ L"Image/enforce.dds",  0.45f, 0.25f, -0.45f, 0.4f },
-		{ L"Image/enforce.dds", 0.70f, 0.25f, -0.45f, 0.4f },
+
+	static const std::unordered_map<CLoadedModelInfo*, std::array<const wchar_t*, 3>> skillImageMap = {
+		{ m_pKnightModel, { L"Image/방패막기.dds", L"Image/강타.dds",    L"Image/도발.dds"   } },
+		{ m_pWizardModel, { L"Image/화염구.dds",   L"Image/공격력버프.dds",  L"Image/체력버프.dds" } },
+		{ m_pThiefModel,  { L"Image/던지기.dds",   L"Image/휘두르기.dds", L"Image/뒤로순보.dds" } },
 	};
 
+	std::array<float, 3> skillSlotX{ 0.25f, 0.50f, 0.75f };
+
+	std::vector<UIInfo> uiList;
+
+	uiList.push_back({ L"Image/hpbar.dds", 0.2f, 0.6f, 1.0f, 0.45f });
+
+	auto it = skillImageMap.find(m_pModel);
+	if (it != skillImageMap.end()) {
+		for (int i = 0; i < 3; ++i) 
+			uiList.push_back({ it->second[i], skillSlotX[i], 0.2f, -0.4f, 0.4f });
+	}
 	for (size_t i = 0; i < uiList.size(); ++i)
 	{
 		// 텍스처 생성 및 로드
@@ -249,8 +260,6 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	}
 
 	if (pSpiderModel) delete pSpiderModel;
-
-	BuildSimpleUI(pd3dDevice, pd3dCommandList);
 
 //
 //	m_GameObjects.clear();

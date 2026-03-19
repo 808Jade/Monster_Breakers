@@ -219,8 +219,9 @@ BoundingBox CPlayer::GetSwordAttackBoundingBox()
 	CGameObject* pWeapon = FindFrame("SM_Weapon_04");
 	if (!pWeapon)
 	{
-		// 디버깅용 로그 (처음엔 켜두고, 나중에 되면 주석처리해도 됨)
-		std::cout << "Weapon frame SM_Weapon_04 not found!\n";
+		// 디버깅용 로그 플레이어마다 다르게 해야함
+		// 법사 - 화염구, 도적 - SM_Weapon_01
+		// std::cout << "Weapon frame SM_Weapon_04 not found!\n";
 		return emptyBox;
 	}
 
@@ -388,7 +389,7 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 
 	m_pText = new CText(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, L"Gold : ", -0.9f, 0.9f);
 	for (int i = 0; i < 3; ++i)
-		m_plevel[i] = new CText(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, L"LV.", 0.25f + i * 0.25f, -0.45f);
+		m_plevel[i] = new CText(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, L"LV.", 0.3f + i * 0.25f, -0.375f);
 
 	m_playerHP = new CTextureToScreenShader(1);
 	m_playerHP->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
