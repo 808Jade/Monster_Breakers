@@ -391,13 +391,13 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 	for (int i = 0; i < 3; ++i)
 		m_plevel[i] = new CText(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, L"LV.", 0.3f + i * 0.25f, -0.375f);
 
-	m_playerHP = new CTextureToScreenShader(1);
+	m_playerHP = new CScreenShader(1);
 	m_playerHP->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
 	CTexture* pTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
 	pTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/hp.dds", RESOURCE_TEXTURE2D, 0);
 	CScene::CreateShaderResourceViews(pd3dDevice, pTexture, 0, 15);
 	
-	CScreenRectMeshTextured* pMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.25f, 0.5f, 0.9f, 0.1f);
+	CScreenRectMeshTextured* pMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.25f, 0.7f, 0.85f, 0.1f);
 	m_playerHP->SetMesh(0, pMesh);
 	m_playerHP->SetTexture(pTexture);
 
@@ -533,7 +533,7 @@ void CTerrainPlayer::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera*
 	if (m_pText) m_pText->Render(pd3dCommandList, pCamera);
 	for (int i = 0; i < 3; ++i)
 		if (m_plevel[i]) m_plevel[i]->Render(pd3dCommandList, pCamera);
-	if (m_playerHP) m_playerHP->Render(pd3dCommandList, pCamera);
+	// if (m_playerHP) m_playerHP->Render(pd3dCommandList, pCamera);
 	CPlayer::Render(pd3dCommandList, pCamera);
 }
 

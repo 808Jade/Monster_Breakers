@@ -69,7 +69,6 @@ public:
 	virtual ~CTextureToScreenShader();
 
 	virtual D3D12_INPUT_LAYOUT_DESC CreateInputLayout();
-
 	virtual D3D12_DEPTH_STENCIL_DESC CreateDepthStencilState();
 
 	virtual D3D12_SHADER_BYTECODE CreateVertexShader();
@@ -92,6 +91,15 @@ public:
 	void SetTexture(CTexture* pTexture);
 
 	void SetVisible(bool b) { visible = b; }
+};
+
+class CScreenShader : public CTextureToScreenShader
+{
+public:
+	CScreenShader(int nMeshes) : CTextureToScreenShader(nMeshes) {}
+	virtual ~CScreenShader() {}
+
+	virtual D3D12_SHADER_BYTECODE CreatePixelShader() override;
 };
 
 class CShopShader : public CTextureToScreenShader

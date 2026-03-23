@@ -316,14 +316,22 @@ VS_TEXTURED_OUTPUT VSTextureToScreen(VS_TEXTURED_INPUT input)
 
     return (output);
 }
-
+// HP 바 전용 - discard 없이 그냥 출력
+float4 PSTextureToScreenHP(VS_TEXTURED_OUTPUT input) : SV_TARGET
+{
+    float4 cColor = gtxtTexture.Sample(gssWrap, input.uv);
+    return (cColor);
+}
 float4 PSTextureToScreen(VS_TEXTURED_OUTPUT input) : SV_TARGET
 {
     float4 cColor = gtxtTexture.Sample(gssWrap, input.uv);
 
-    if ((cColor.r >= 0.9f) && (cColor.g == 0.f) && (cColor.b == 0.f))
+    float maxGB = max(cColor.g, cColor.b);
+    if (cColor.r > 0.3f && cColor.r > maxGB * 3.0f)
         discard;
-	
+   //if (cColor.a < 0.1f)
+   //    discard;
+    
     return (cColor);
 }
 

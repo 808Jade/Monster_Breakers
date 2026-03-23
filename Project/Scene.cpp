@@ -166,7 +166,7 @@ void CScene::BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 
 	std::vector<UIInfo> uiList;
 
-	uiList.push_back({ L"Image/hpbar.dds", 0.2f, 0.6f, 1.0f, 0.45f });
+	uiList.push_back({ L"Image/hpbar.dds", 0.15f, 0.7f, 0.9f, 0.2f });
 
 	auto it = skillImageMap.find(m_pModel);
 	if (it != skillImageMap.end()) {
@@ -1171,6 +1171,10 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 	for (int i = 0; i < m_nOtherPlayers; ++i)
 		if (m_ppOtherPlayers[i] && m_ppOtherPlayers[i]->visible) m_ppOtherPlayers[i]->Render(pd3dCommandList, pCamera);
 
+	CTerrainPlayer* pTerrainPlayer = dynamic_cast<CTerrainPlayer*>(m_pPlayer);
+	if (pTerrainPlayer && pTerrainPlayer->m_playerHP) 
+		pTerrainPlayer->m_playerHP->Render(pd3dCommandList, pCamera);
+	
 	for (auto* shader : m_Shaders)
 	{
 		if (!shader) continue;
