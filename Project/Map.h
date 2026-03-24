@@ -4,7 +4,7 @@
 
 struct MapObjectInstance
 {
-    int modelIndex;           // m_vLoadedModelInfo에서 참조할 모델의 인덱스
+    int modelIndex;           // m_vLoadedModelInfo에서 참조할 모델의 인덱스 (모델 종류에 따라 인덱싱)
     std::string objectName;
     DirectX::XMFLOAT3 position;
     DirectX::XMFLOAT3 rotation;
@@ -19,6 +19,24 @@ struct MapObjectInstance
     }
 };
 
+// GPU로 전송될 순수 데이터
+struct VS_INSTANCE_DATA
+{
+    DirectX::XMFLOAT4X4 worldMatrix;
+};
+
+// 맵에서 관리할 인스턴스 그룹 구조체
+struct InstanceGroup
+{
+    CGameObject* pModel;                           // 원본 모델
+    UINT nInstances;                               // 그릴 개수
+    std::vector<VS_INSTANCE_DATA> vInstanceData;   // CPU에 모아둔 행렬들
+
+    // TODO: 이게 뒤에 필요하게 되는데, 어떻게 설계를 할건지.. 임시로 둔다
+    ID3D12Resource* pInstanceBuffer;               // GPU 메모리에 올라간 실제 버퍼 (완성품)
+    D3D12_VERTEX_BUFFER_VIEW instanceBufferView;   // GPU에게 이 버퍼를 설명해주는 명세서
+};
+
 class Map : public CGameObject
 {
 public:
@@ -31,10 +49,14 @@ public:
 
     string ReadString(ifstream& inFile);
 
+    void BuildInstanceBuffers(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
+
 	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = NULL);
+    //virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = NULL, UINT n);
 
 public:
 	std::vector<MapObjectInstance> m_vObjectInstances;
 	std::vector<CGameObject*> m_vLoadedModelInfo;
-    std::vector<CGameObject*> m_vMapObjects;
+    std::vector<CGameObject*> m_vMapObjects; // 이제 필요 없
+    std::map<int, InstanceGroup> m_mInstanceGroups;
 };

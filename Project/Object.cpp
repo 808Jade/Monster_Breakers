@@ -819,6 +819,54 @@ void CGameObject::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pC
 	if (m_pChild && m_pChild->GetVisible()) m_pChild->Render(pd3dCommandList, pCamera);
 }
 
+void CGameObject::RenderInstanced(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, UINT nInstances, ID3D12Resource* pInstanceBuffer)
+{
+	// 인스턴스 데이터가 없으면 그릴 필요가 없음
+	if (!pInstanceBuffer || nInstances == 0) return;
+
+	// 1. 애니메이션 처리
+	if (m_pSkinnedAnimationController) m_pSkinnedAnimationController->UpdateShaderVariables(pd3dCommandList);
+
+	if (m_pMesh)
+	{
+		// -------------------------------------------------------------------
+		// [핵심 차이점 1] UpdateShaderVariable(&m_xmf4x4World)가 사라졌습니다!
+		// 개별 위치가 아니라 GPU에 올라간 버퍼에서 위치를 꺼내 쓸 것이기 때문입니다.
+		// -------------------------------------------------------------------
+
+		// [핵심 차이점 2] GPU에게 명부(Instance Buffer)의 위치를 알려줍니다.
+		D3D12_VERTEX_BUFFER_VIEW instanceBufferView;
+		instanceBufferView.BufferLocation = pInstanceBuffer->GetGPUVirtualAddress();
+		instanceBufferView.StrideInBytes = sizeof(VS_INSTANCE_DATA); // 행렬 1개 크기 (64바이트)
+		instanceBufferView.SizeInBytes = sizeof(VS_INSTANCE_DATA) * nInstances;
+
+		// 1번 슬롯에 인스턴스 버퍼 장착! (0번 슬롯은 보통 정점 버퍼용으로 씁니다)
+		pd3dCommandList->IASetVertexBuffers(1, 1, &instanceBufferView);
+
+		// 3. 기존과 동일하게 재질(Material)을 세팅합니다.
+		if (m_nMaterials > 0)
+		{
+			for (int i = 0; i < m_nMaterials; i++)
+			{
+				if (m_ppMaterials[i])
+				{
+					if (m_ppMaterials[i]->m_pShader) m_ppMaterials[i]->m_pShader->Render(pd3dCommandList, pCamera);
+					m_ppMaterials[i]->UpdateShaderVariable(pd3dCommandList);
+				}
+
+				// [핵심 차이점 3] 메쉬에게 "몇 개를 그릴지" 알려주며 렌더링을 지시합니다.
+				m_pMesh->RenderInstanced(pd3dCommandList, i, nInstances);
+			}
+		}
+	}
+
+	// 4. 자식/형제 계층 구조가 있다면 동일한 인스턴스 버퍼(명부)를 넘겨주며 똑같이 그리게 합니다.
+	if (m_pSibling && m_pSibling->GetVisible())
+		m_pSibling->RenderInstanced(pd3dCommandList, pCamera, nInstances, pInstanceBuffer);
+	if (m_pChild && m_pChild->GetVisible())
+		m_pChild->RenderInstanced(pd3dCommandList, pCamera, nInstances, pInstanceBuffer);
+}
+
 void CGameObject::CreateShaderVariables(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList)
 {
 }
