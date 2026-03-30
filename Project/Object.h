@@ -419,7 +419,7 @@ public:
 
 	virtual void OnPrepareRender() { }
 	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = NULL);
-	virtual void RenderInstanced(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = NULL, UINT nInstances, ID3D12Resource* pInstanceBuffer);
+	virtual void RenderInstanced(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, UINT nInstances, ID3D12Resource* pInstanceBuffer);
 
 	virtual void OnLateUpdate() { }
 

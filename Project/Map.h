@@ -2,6 +2,8 @@
 
 #include "Object.h"
 
+class CInstancedStandardShader;
+
 struct MapObjectInstance
 {
     int modelIndex;           // m_vLoadedModelInfo에서 참조할 모델의 인덱스 (모델 종류에 따라 인덱싱)
@@ -43,9 +45,11 @@ public:
 	Map(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
 	virtual ~Map();
 
+    void ReleaseUploadBuffers() override;
+
 	void LoadMapObjectsFromFile(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
 	void LoadGeometryFromFile();
-	void SetMapObjects();
+	void SetInstanceData();
 
     string ReadString(ifstream& inFile);
 
@@ -55,8 +59,12 @@ public:
     //virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = NULL, UINT n);
 
 public:
+    CInstancedStandardShader* m_pInstancedShader = NULL;
+
 	std::vector<MapObjectInstance> m_vObjectInstances;
 	std::vector<CGameObject*> m_vLoadedModelInfo;
     std::vector<CGameObject*> m_vMapObjects; // 이제 필요 없
     std::map<int, InstanceGroup> m_mInstanceGroups;
+
+    std::vector<ID3D12Resource*> m_vUploadBuffers; // 임시 보관소
 };

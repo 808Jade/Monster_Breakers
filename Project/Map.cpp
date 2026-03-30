@@ -1,11 +1,15 @@
 #include "stdafx.h"
 #include "Map.h"
+#include "Shader.h"
 
 Map::Map(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature)
 {
+	m_pInstancedShader = new CInstancedStandardShader();
+	m_pInstancedShader->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
+
 	LoadMapObjectsFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
 	LoadGeometryFromFile();
-	SetMapObjects();
+	SetInstanceData();
 	BuildInstanceBuffers(pd3dDevice, pd3dCommandList);
 
 	//cout << "[ m_vLoadedModelInfo ]" << endl;
@@ -24,6 +28,14 @@ Map::Map(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, I
 
 Map::~Map()
 {
+}
+
+void Map::ReleaseUploadBuffers()
+{
+	for (auto& pUploadBuffer : m_vUploadBuffers) {
+		if (pUploadBuffer) pUploadBuffer->Release();
+	}
+	m_vUploadBuffers.clear();
 }
 
 string Map::ReadString(std::ifstream& inFile)
@@ -107,25 +119,24 @@ void Map::LoadGeometryFromFile()
 
 		int index = -1;
 
-		// 1. 오브젝트 이름에서 순수한 모델 이름 추출
+		// 오브젝트 이름에서 순수한 모델 이름 추출
 		std::string targetModelName = objectName;
 
 		size_t suffixPos = objectName.rfind(" (");
 
 		if (suffixPos != std::string::npos)
 		{
-			// 접미사가 있다면 제거하고 앞부분만 남김
 			targetModelName = objectName.substr(0, suffixPos);
 		}
 
-		// 2. 정확한 이름 비교 (Exact Match)
-		for (int i = 0; i < m_vLoadedModelInfo.size(); i++)
+		// 이름 비교
+		for (int j = 0; j < m_vLoadedModelInfo.size(); j++)
 		{
-			string modelName = m_vLoadedModelInfo[i]->GetFrameName();
+			string modelName = m_vLoadedModelInfo[j]->GetFrameName();
 
 			if (targetModelName == modelName)
 			{
-				index = static_cast<int>(i);
+				index = static_cast<int>(j);
 				break;
 			}
 		}
@@ -167,7 +178,7 @@ void Map::LoadMapObjectsFromFile(ID3D12Device* pd3dDevice, ID3D12GraphicsCommand
 
 	for (const auto& entry : std::filesystem::directory_iterator(path)) {
 		if (entry.path().extension() == ".bin") {
-			CLoadedModelInfo* pModelInfo = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, entry.path(), nullptr);
+			CLoadedModelInfo* pModelInfo = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, entry.path(), m_pInstancedShader);
 
 			if (pModelInfo) {
 				m_vLoadedModelInfo.push_back(pModelInfo->m_pModelRootObject);
@@ -177,7 +188,7 @@ void Map::LoadMapObjectsFromFile(ID3D12Device* pd3dDevice, ID3D12GraphicsCommand
 }
 
 // m_vLoadedModelInfo과 m_vObjectInstances를 참조하여 m_vMapObjects에 오브젝트 리스트를 저장 
-void Map::SetMapObjects()
+void Map::SetInstanceData()
 {
 	//m_vMapObjects.clear();
 
@@ -232,7 +243,12 @@ void Map::SetMapObjects()
 
 		// 파일에 저장된 matrix[16]을 XMFLOAT4X4로 복사
 		// (필요시 XMMatrixTranspose 를 통해 HLSL에 맞게 전치행렬로 변환해야 할 수도 있습니다)
-		memcpy(&gpuData.worldMatrix, instance.transformMatrix, sizeof(float) * 16);
+		XMFLOAT4X4 tempMat;
+		//memcpy(&gpuData.worldMatrix, instance.transformMatrix, sizeof(float) * 16);
+		memcpy(&tempMat, instance.transformMatrix, sizeof(float) * 16);
+		XMMATRIX xmMat = XMLoadFloat4x4(&tempMat);
+		xmMat = XMMatrixTranspose(xmMat); // 행과 열을 뒤집어줌
+		XMStoreFloat4x4(&gpuData.worldMatrix, xmMat);
 
 		m_mInstanceGroups[modelIdx].vInstanceData.push_back(gpuData);
 		m_mInstanceGroups[modelIdx].nInstances++;
@@ -242,23 +258,20 @@ void Map::SetMapObjects()
 	// BuildInstanceBuffers();
 }
 
-
+// CPU 인스턴스 데이터를 GPU버퍼로 만든다
 void Map::BuildInstanceBuffers(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
 {
-	// 맵에 있는 모든 인스턴스 그룹을 하나씩 꺼내옵니다.
 	for (auto& pair : m_mInstanceGroups)
 	{
-		InstanceGroup& group = pair.second; // 현재 작업할 그룹 (예: 참나무 그룹)
+		InstanceGroup& group = pair.second;
 
-		// 1. 방어 코드: 그릴 게 없으면 버퍼를 만들 필요가 없음
 		if (group.nInstances == 0 || group.vInstanceData.empty())
 			continue;
 
-		// 2. 전체 버퍼 크기 계산 = (행렬 1개 크기) * (인스턴스 개수)
+		// 전체 버퍼 크기 계산 = (행렬 1개 크기) * (인스턴스 개수)
 		UINT nBufferSize = group.nInstances * sizeof(VS_INSTANCE_DATA);
 
-		// 3. GPU 메모리에 "진짜 버퍼(pInstanceBuffer)" 생성 및 데이터 복사!
-		// 아까 보셨던 ::CreateBufferResource 유틸리티 함수를 그대로 활용합니다.
+		// GPU 메모리에 "진짜 버퍼(pInstanceBuffer)" 생성 및 데이터 복사
 		ID3D12Resource* pUploadBuffer = NULL;
 
 		group.pInstanceBuffer = ::CreateBufferResource(
@@ -267,14 +280,16 @@ void Map::BuildInstanceBuffers(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLi
 			group.vInstanceData.data(),            // CPU 원본 데이터의 시작 주소 (명부)
 			nBufferSize,                           // 복사할 총 바이트 수
 			D3D12_HEAP_TYPE_DEFAULT,               // 목적지: GPU 전용 초고속 메모리
-			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, // 용도: 정점/상수 버퍼용으로 쓸 거임!
+			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, // 용도: 정점/상수 버퍼용
 			&pUploadBuffer                         // 배달부: 임시 업로드 버퍼
 		);
 
-		// (주의: pUploadBuffer는 GPU가 복사를 완전히 끝마칠 때까지 메모리에서 해제되면 안 됩니다.
-		// 엔진 구조에 따라 이 업로드 버퍼들을 멤버 변수 벡터 같은 곳에 모아두었다가 나중에 지우는 처리가 필요할 수 있습니다.)
+		// 생성된 업로드 버퍼를 허공에 날리지 말고 벡터에 안전하게 보관
+		if (pUploadBuffer) {
+			m_vUploadBuffers.push_back(pUploadBuffer);
+		}
 
-		// 4. GPU에게 이 버퍼를 설명해 줄 "명세서(View)" 작성
+		// GPU에게 이 버퍼를 설명해 줄 "명세서(View)" 작성
 		group.instanceBufferView.BufferLocation = group.pInstanceBuffer->GetGPUVirtualAddress(); // 주소
 		group.instanceBufferView.StrideInBytes = sizeof(VS_INSTANCE_DATA);                       // 1개당 크기 (64바이트)
 		group.instanceBufferView.SizeInBytes = nBufferSize;                                      // 전체 크기
