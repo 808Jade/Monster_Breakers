@@ -217,8 +217,7 @@ public:
 
 	CCollisionManager					m_CollisionManager;
 
-	CParticle							*m_pEffect = NULL;
-	
+	CParticle* m_Fireballs;
 	POINT m_ptPos;
 
 public:

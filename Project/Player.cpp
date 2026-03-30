@@ -356,16 +356,20 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 	}
 	SetChild(pPlayerModel->m_pModelRootObject, true);
 
-	m_pSkinnedAnimationController = new CAnimationController(pd3dDevice, pd3dCommandList, 5, pPlayerModel);
+	m_pSkinnedAnimationController = new CAnimationController(pd3dDevice, pd3dCommandList, 7, pPlayerModel);
 	m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); // 기본
 	m_pSkinnedAnimationController->SetTrackAnimationSet(1, 1); // 걷기
 	m_pSkinnedAnimationController->SetTrackAnimationSet(2, 2); // 뛰기
-	m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); // 점프
-	m_pSkinnedAnimationController->SetTrackAnimationSet(4, 4); // 휘두르기
+	m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); // 기본공격
+	m_pSkinnedAnimationController->SetTrackAnimationSet(4, 4); // skill 1
+	m_pSkinnedAnimationController->SetTrackAnimationSet(5, 5); // skill 2
+	m_pSkinnedAnimationController->SetTrackAnimationSet(6, 6); // skill 3
 	m_pSkinnedAnimationController->SetTrackEnable(1, false); 
 	m_pSkinnedAnimationController->SetTrackEnable(2, false); 
 	m_pSkinnedAnimationController->SetTrackEnable(3, false); 
 	m_pSkinnedAnimationController->SetTrackEnable(4, false); 
+	m_pSkinnedAnimationController->SetTrackEnable(5, false); 
+	m_pSkinnedAnimationController->SetTrackEnable(6, false); 
 	m_pSkinnedAnimationController->SetTrackType(3, 0);
 	m_pSkinnedAnimationController->SetTrackType(4, 0);
 
@@ -515,9 +519,7 @@ void CTerrainPlayer::Move(DWORD dwDirection, float fDistance, bool bUpdateVeloci
 	bool isRunning = dwDirection & DIR_DOWN;
 	bool isJumping = dwDirection & DIR_UP;
 
-	if (isJumping)
-		m_currentAnim = AnimationState::JUMP;
-	else if (isRunning && isMoving)
+	if (isRunning && isMoving)
 		m_currentAnim = AnimationState::RUN;
 	else if (isMoving)
 		m_currentAnim = AnimationState::WALK;
@@ -565,20 +567,35 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 
 		switch (m_currentAnim)
 		{
-		case AnimationState::JUMP:
-			PlayAnimationTrack(3, 2.0f);
+		case AnimationState::ATTACK:
+			PlayAnimationTrack(3, 1.0f);
 			if (IsAnimationFinished(3)) {
 				m_pSkinnedAnimationController->SetTrackPosition(3, 0.0f);
 				m_currentAnim = AnimationState::IDLE;
 			}
 			break;
-		case AnimationState::SWING:
+		case AnimationState::SKILL1:
 			PlayAnimationTrack(4, 1.0f);
 			if (IsAnimationFinished(4)) {
 				m_pSkinnedAnimationController->SetTrackPosition(4, 0.0f);
 				m_currentAnim = AnimationState::IDLE;
 			}
 			break;
+		case AnimationState::SKILL2:
+			PlayAnimationTrack(5, 1.0f);
+			if (IsAnimationFinished(5)) {
+				m_pSkinnedAnimationController->SetTrackPosition(5, 0.0f);
+				m_currentAnim = AnimationState::IDLE;
+			}	
+			break;
+		case AnimationState::SKILL3:
+			PlayAnimationTrack(6, 1.0f);
+			if (IsAnimationFinished(6)) {
+				m_pSkinnedAnimationController->SetTrackPosition(6, 0.0f);
+				m_currentAnim = AnimationState::IDLE;
+			}
+			break;
+
 		case AnimationState::RUN:
 			PlayAnimationTrack(2);
 			break;

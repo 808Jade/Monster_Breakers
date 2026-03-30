@@ -55,10 +55,10 @@ enum class AnimationState : uint8_t {
 	IDLE,         // 0
 	WALK,         // 1
 	RUN,          // 2 
-	JUMP,         // 3
-	SWING,        // 4
-	CROUCH,       // 5
-	CROUCH_WALK   // 6
+	ATTACK,       // 3
+	SKILL1,       // 4
+	SKILL2,       // 5
+	SKILL3        // 6
 };
 
 enum PLAYER_JOB {

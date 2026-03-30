@@ -214,11 +214,8 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 
 	m_pMap = new Map(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 
-//	m_pEffect = new CParticle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-//
-//
-//
-	
+	m_Fireballs = new CParticle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+
 	m_pKnightModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Knight.bin", NULL);
 	m_pWizardModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Wizard.bin", NULL);
 	m_pThiefModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Thief.bin", NULL);
@@ -1058,7 +1055,7 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 		for (int i = 0; i < 3; ++i)
 			if (PtInRect(&rt[i], pt)) { idx = i; break; }
 
-		if (idx == -1) { p->m_currentAnim = AnimationState::SWING; break; }
+		if (idx == -1) { p->m_currentAnim = AnimationState::ATTACK; break; }
 
 		int lv = p->level[idx];
 		int cost = 100 + lv * 50;
@@ -1080,6 +1077,24 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 	case WM_KEYDOWN:
 		switch (wParam)
 		{
+		case 'Q':
+		{
+			auto* pPlayer = dynamic_cast<CTerrainPlayer*>(m_pPlayer);
+			if (!pPlayer || m_pModel != m_pWizardModel) break;
+
+			pPlayer->m_currentAnim = AnimationState::SKILL1;
+			
+			CGameObject* pHand = pPlayer->FindFrame("RightHand");
+			if (pHand)
+			{
+				m_Fireballs->SetPosition(pHand->GetPosition());
+			}
+			m_Fireballs->Activate(pHand->GetPosition(), pPlayer->GetLook());
+			
+			// SERVER!!
+			// send_skill_packet(SKILL_FIREBALL, m_Fireballs->GetPosition(), m_Fireballs->GetLook());
+			break;
+		}
 		default:
 			break;
 		}
@@ -1105,6 +1120,8 @@ void CScene::AnimateObjects(float fTimeElapsed)
 		}
 	}
 	
+	if (m_Fireballs) if (m_Fireballs) 
+		m_Fireballs->Animate(fTimeElapsed);
 	for(auto* shader : m_Shaders) if(shader) shader->AnimateObjects(fTimeElapsed);
 }
 
@@ -1166,7 +1183,9 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 
 	m_CollisionManager.Update(m_pPlayer);
 
-	if (m_pEffect) m_pEffect->Render(pd3dCommandList, pCamera);
+	if (m_Fireballs) if (m_Fireballs) { 
+		m_Fireballs->Render(pd3dCommandList, pCamera);
+	}
 
 	for (int i = 0; i < m_nOtherPlayers; ++i)
 		if (m_ppOtherPlayers[i] && m_ppOtherPlayers[i]->visible) m_ppOtherPlayers[i]->Render(pd3dCommandList, pCamera);

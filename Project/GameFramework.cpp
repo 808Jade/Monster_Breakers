@@ -511,7 +511,6 @@ void CGameFramework::ProcessInput()
 		if (pKeysBuffer[VK_SHIFT] & 0xF0) dwDirection |= DIR_DOWN;
 		bool bCurrA = (pKeysBuffer['A'] & 0xF0);
 		bool bCurrD = (pKeysBuffer['D'] & 0xF0);
-		bool bCurrSpace = (pKeysBuffer[VK_SPACE] & 0xF0);      // jump
 
 		CTerrainPlayer* terrainPlayer = dynamic_cast<CTerrainPlayer*>(m_pPlayer);
 		if (!terrainPlayer) return;
@@ -533,16 +532,16 @@ void CGameFramework::ProcessInput()
 
 		AnimationState currentState = terrainPlayer->m_currentAnim;
 
-		if (currentState != AnimationState::SWING && currentState != AnimationState::JUMP)
+		if (currentState != AnimationState::ATTACK &&
+			currentState != AnimationState::SKILL1 &&
+			currentState != AnimationState::SKILL2 &&
+			currentState != AnimationState::SKILL3)
 		{
+			
 			bool isMoving = dwDirection & (DIR_FORWARD | DIR_BACKWARD);
 			bool isRunning = dwDirection & DIR_DOWN;
 
-			if (bCurrSpace && !bPrevSpace)
-			{
-				terrainPlayer->m_currentAnim = AnimationState::JUMP;
-			}
-			else if (isRunning && isMoving)
+		if (isRunning && isMoving)
 			{
 				terrainPlayer->m_currentAnim = AnimationState::RUN;
 				terrainPlayer->Move(dwDirection, 4.0f, true);
@@ -557,8 +556,6 @@ void CGameFramework::ProcessInput()
 				terrainPlayer->m_currentAnim = AnimationState::IDLE;
 			}
 		}
-
-		bPrevSpace = bCurrSpace;
 	}
 	m_pPlayer->Update(m_GameTimer.GetTimeElapsed());
 }
