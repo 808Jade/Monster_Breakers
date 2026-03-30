@@ -144,6 +144,8 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CCubeMesh.cpp" />
     <ClCompile Include="CCubeShader.cpp" />
+    <ClCompile Include="CFireballShader.cpp" />
+    <ClCompile Include="CFireballSystem.cpp" />
     <ClCompile Include="CFontMesh.cpp" />
     <ClCompile Include="CFontShader.cpp" />
     <ClCompile Include="CollisionManager.cpp" />
@@ -173,6 +175,8 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CCubeMesh.h" />
     <ClInclude Include="CCubeShader.h" />
+    <ClInclude Include="CFireballShader.h" />
+    <ClInclude Include="CFireballSystem.h" />
     <ClInclude Include="CFontMesh.h" />
     <ClInclude Include="CFontShader.h" />
     <ClInclude Include="CollisionManager.h" />

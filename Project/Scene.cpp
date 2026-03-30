@@ -214,7 +214,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 
 	m_pMap = new Map(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 
-	m_Fireballs = new CParticle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	m_pFireballSystem = new CFireballSystem(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 
 	m_pKnightModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Knight.bin", NULL);
 	m_pWizardModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Wizard.bin", NULL);
@@ -586,6 +586,7 @@ void CScene::ReleaseObjects()
 
 	if (m_pTerrain) delete m_pTerrain;
 	if (m_pSkyBox) delete m_pSkyBox;
+	if (m_pFireballSystem) { delete m_pFireballSystem; m_pFireballSystem = nullptr; }
 
 	for (auto* monster : m_Monsters)
 	{
@@ -608,7 +609,7 @@ ID3D12RootSignature *CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevic
 {
 	ID3D12RootSignature *pd3dGraphicsRootSignature = NULL;
 
-	D3D12_DESCRIPTOR_RANGE pd3dDescriptorRanges[13];
+	D3D12_DESCRIPTOR_RANGE pd3dDescriptorRanges[14];
 
 	pd3dDescriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	pd3dDescriptorRanges[0].NumDescriptors = 1;
@@ -688,7 +689,13 @@ ID3D12RootSignature *CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevic
 	pd3dDescriptorRanges[12].RegisterSpace = 0;
 	pd3dDescriptorRanges[12].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	D3D12_ROOT_PARAMETER pd3dRootParameters[19];
+	pd3dDescriptorRanges[13].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	pd3dDescriptorRanges[13].NumDescriptors = 1;
+	pd3dDescriptorRanges[13].BaseShaderRegister = 4; // t4: gFireballParticles
+	pd3dDescriptorRanges[13].RegisterSpace = 0;
+	pd3dDescriptorRanges[13].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	D3D12_ROOT_PARAMETER pd3dRootParameters[20];
 
 	pd3dRootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	pd3dRootParameters[0].Descriptor.ShaderRegister = 1; //Camera
@@ -785,6 +792,11 @@ ID3D12RootSignature *CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevic
 	pd3dRootParameters[18].Descriptor.ShaderRegister = 5; // b5
 	pd3dRootParameters[18].Descriptor.RegisterSpace = 0;
 	pd3dRootParameters[18].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	pd3dRootParameters[19].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	pd3dRootParameters[19].Descriptor.ShaderRegister = 4;
+	pd3dRootParameters[19].Descriptor.RegisterSpace = 0;
+	pd3dRootParameters[19].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 
 	D3D12_STATIC_SAMPLER_DESC pd3dSamplerDescs[4];
 
@@ -1085,11 +1097,8 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 			pPlayer->m_currentAnim = AnimationState::SKILL1;
 			
 			CGameObject* pHand = pPlayer->FindFrame("RightHand");
-			if (pHand)
-			{
-				m_Fireballs->SetPosition(pHand->GetPosition());
-			}
-			m_Fireballs->Activate(pHand->GetPosition(), pPlayer->GetLook());
+
+			m_pFireballSystem->Emit(pHand->GetPosition(), pPlayer->GetLook(), 20.0f);
 			
 			// SERVER!!
 			// send_skill_packet(SKILL_FIREBALL, m_Fireballs->GetPosition(), m_Fireballs->GetLook());
@@ -1120,8 +1129,8 @@ void CScene::AnimateObjects(float fTimeElapsed)
 		}
 	}
 	
-	if (m_Fireballs) if (m_Fireballs) 
-		m_Fireballs->Animate(fTimeElapsed);
+	if (m_pFireballSystem) if (m_pFireballSystem)
+		m_pFireballSystem->Animate(fTimeElapsed);
 	for(auto* shader : m_Shaders) if(shader) shader->AnimateObjects(fTimeElapsed);
 }
 
@@ -1183,9 +1192,6 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 
 	m_CollisionManager.Update(m_pPlayer);
 
-	if (m_Fireballs) if (m_Fireballs) { 
-		m_Fireballs->Render(pd3dCommandList, pCamera);
-	}
 
 	for (int i = 0; i < m_nOtherPlayers; ++i)
 		if (m_ppOtherPlayers[i] && m_ppOtherPlayers[i]->visible) m_ppOtherPlayers[i]->Render(pd3dCommandList, pCamera);
@@ -1199,6 +1205,9 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 		if (!shader) continue;
 		auto* texShader = dynamic_cast<CTextureToScreenShader*>(shader);
 		if (texShader && texShader->visible) shader->Render(pd3dCommandList, pCamera);
+	}
+	if (m_pFireballSystem) if (m_pFireballSystem) {
+		m_pFireballSystem->Render(pd3dCommandList, pCamera);
 	}
 }
 

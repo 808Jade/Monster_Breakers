@@ -401,7 +401,7 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 	pTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/hp.dds", RESOURCE_TEXTURE2D, 0);
 	CScene::CreateShaderResourceViews(pd3dDevice, pTexture, 0, 15);
 	
-	CScreenRectMeshTextured* pMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.25f, 0.7f, 0.85f, 0.1f);
+	CScreenRectMeshTextured* pMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.25f, 0.55f, 0.85f, 0.1f);
 	m_playerHP->SetMesh(0, pMesh);
 	m_playerHP->SetTexture(pTexture);
 

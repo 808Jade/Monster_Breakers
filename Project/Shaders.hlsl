@@ -70,7 +70,7 @@ float ShadowFactor(float4 lightH)
 {
     float3 ndc = lightH.xyz / lightH.w;
 
-    // ∂Û¿Ã∆Æ frustum π€¿Ã∏È ±◊∏≤¿⁄ ¿˚øÎ X
+    // ÎùºÏù¥Ìä∏ frustum Î∞ñÏù¥Î©¥ Í∑∏Î¶ºÏûê Ï†ÅÏö© X
     if (ndc.x < -1 || ndc.x > 1 || ndc.y < -1 || ndc.y > 1 || ndc.z < 0 || ndc.z > 1)
         return 1.0f;
 
@@ -155,7 +155,7 @@ float4 PSStandard(VS_STANDARD_OUTPUT input) : SV_TARGET
     if (gnTexturesMask & MATERIAL_NORMAL_MAP)
     {
         float3x3 TBN = float3x3(normalize(input.tangentW), normalize(input.bitangentW), normalize(input.normalW));
-        float3 vNormal = normalize(cNormalColor.rgb * 2.0f - 1.0f); //[0, 1] °Ê [-1, 1]
+        float3 vNormal = normalize(cNormalColor.rgb * 2.0f - 1.0f); //[0, 1] ‚Üí [-1, 1]
         normalW = normalize(mul(vNormal, TBN));
     }
     else
@@ -316,7 +316,7 @@ VS_TEXTURED_OUTPUT VSTextureToScreen(VS_TEXTURED_INPUT input)
 
     return (output);
 }
-// HP πŸ ¿¸øÎ - discard æ¯¿Ã ±◊≥… √‚∑¬
+// HP Î∞î Ï†ÑÏö© - discard ÏóÜÏù¥ Í∑∏ÎÉ• Ï∂úÎ†•
 float4 PSTextureToScreenHP(VS_TEXTURED_OUTPUT input) : SV_TARGET
 {
     float4 cColor = gtxtTexture.Sample(gssWrap, input.uv);
@@ -439,4 +439,106 @@ float4 PSSkyBox(VS_SKYBOX_CUBEMAP_OUTPUT input) : SV_TARGET
 	float4 cColor = gtxtSkyCubeTexture.Sample(gssClamp, input.positionL);
 
 	return(cColor);
+}
+
+#define SPRITE_COLS  4
+#define SPRITE_ROWS  4
+
+struct FireballParticle
+{
+    float3 position;
+    float size;
+    float3 velocity;
+    float lifetime;
+    float maxLifetime;
+    float uvOffset;
+    uint active;
+    float pad;
+};
+
+StructuredBuffer<FireballParticle> gFireballParticles : register(t4);
+
+struct VS_FIREBALL_IN
+{
+    float3 posL : POSITION;
+    float2 uv : TEXCOORD;
+};
+
+struct VS_FIREBALL_OUT
+{
+    float4 posH : SV_POSITION;
+    float2 uv : TEXCOORD0;
+    float lifeRatio : TEXCOORD1;
+};
+
+VS_FIREBALL_OUT VSFireball(VS_FIREBALL_IN input, uint instanceID : SV_InstanceID)
+{
+    VS_FIREBALL_OUT output;
+
+    FireballParticle p = gFireballParticles[instanceID];
+
+    if (!p.active)
+    {
+        output.posH = float4(0.0f, 0.0f, 2.0f, 1.0f);
+        output.uv = float2(0.0f, 0.0f);
+        output.lifeRatio = 0.0f;
+        return output;
+    }
+
+    float3 camRight = normalize(float3(gmtxView[0][0], gmtxView[1][0], gmtxView[2][0]));
+    float3 camUp = normalize(float3(gmtxView[0][1], gmtxView[1][1], gmtxView[2][1]));
+
+    float3 worldPos = p.position
+                    + camRight * input.posL.x * p.size
+                    + camUp * input.posL.y * p.size;
+
+    float4 posV = mul(float4(worldPos, 1.0f), gmtxView);
+    output.posH = mul(posV, gmtxProjection);
+
+    float frameF = fmod(p.uvOffset * (SPRITE_COLS * SPRITE_ROWS), (float) (SPRITE_COLS * SPRITE_ROWS));
+    uint frameI = (uint) frameF % (SPRITE_COLS * SPRITE_ROWS);
+    uint col = frameI % SPRITE_COLS;
+    uint row = frameI / SPRITE_COLS;
+
+    float cellW = 1.0f / SPRITE_COLS;
+    float cellH = 1.0f / SPRITE_ROWS;
+
+    float2 spriteUV;
+    spriteUV.x = ((float) col + input.uv.x) * cellW;
+    spriteUV.y = ((float) row + input.uv.y) * cellH;
+
+    spriteUV.x += sin(input.uv.y * 6.0f + p.uvOffset * 3.14f) * 0.015f;
+
+    output.uv = spriteUV;
+    output.lifeRatio = saturate(p.lifetime / p.maxLifetime);
+
+    return output;
+}
+
+float4 PSFireball(VS_FIREBALL_OUT input) : SV_TARGET
+{
+    float4 texColor = gtxtTexture.Sample(gssWrap, input.uv);
+    float life = input.lifeRatio;
+
+    float3 cYoung = float3(1.0f, 0.95f, 0.55f);
+    float3 cMid = float3(1.0f, 0.40f, 0.05f);
+    float3 cOld = float3(0.55f, 0.05f, 0.0f);
+
+    float3 fireColor = lerp(cYoung, cMid, saturate(life * 2.0f));
+    fireColor = lerp(fireColor, cOld, saturate((life - 0.5f) * 2.0f));
+    texColor.rgb *= fireColor;
+
+    float2 center = input.uv - float2(0.5f, 0.5f);
+
+    float2 cellUV = frac(input.uv * float2(SPRITE_COLS, SPRITE_ROWS));
+    float2 c2 = cellUV - float2(0.5f, 0.5f);
+    float edgeFade = 1.0f - smoothstep(0.35f, 0.5f, length(c2));
+
+    float lifeFade = 1.0f - smoothstep(0.55f, 1.0f, life);
+
+    texColor.a *= edgeFade * lifeFade;
+
+    clip(texColor.a - 0.01f);
+
+    return texColor;
 }
