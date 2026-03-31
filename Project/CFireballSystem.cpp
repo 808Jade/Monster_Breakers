@@ -18,15 +18,9 @@ CFireballSystem::CFireballSystem(
     m_pShader->CreateShader(pd3dDevice, pd3dCommandList, pd3dRootSignature);
     m_pShader->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
-    // ── 텍스처: fire_spritesheet.dds (PNG를 DDS로 변환해서 사용)
-    //    없으면 기존 hp.dds를 임시로 써도 동작은 함
     m_pTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
-    m_pTexture->LoadTextureFromDDSFile(
-        pd3dDevice, pd3dCommandList,
-        L"Image/fire_spritesheet.dds",
-        RESOURCE_TEXTURE2D, 0);
+    m_pTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/fire_spritesheet.dds", RESOURCE_TEXTURE2D, 0);
 
-    // SRV 등록 (descriptor 인덱스 0, 루트 파라미터 15)
     CScene::CreateShaderResourceViews(pd3dDevice, m_pTexture, 0, 15);
 }
 
@@ -216,8 +210,10 @@ void CFireballSystem::Render(
     // 파이프라인 / 디스크립터 설정
     m_pShader->Render(pd3dCommandList, pCamera);
 
-    pd3dCommandList->SetGraphicsRootShaderResourceView(
-        19, m_pParticleDefaultBuffer->GetGPUVirtualAddress());
+    if (m_pTexture)
+        m_pTexture->UpdateShaderVariable(pd3dCommandList, 0, 0);
+
+    pd3dCommandList->SetGraphicsRootShaderResourceView(19, m_pParticleDefaultBuffer->GetGPUVirtualAddress());
 
     // 쿼드(6정점) × MAX_PARTICLES 인스턴스 – 단일 드로우콜
     pd3dCommandList->IASetVertexBuffers(0, 1, &m_QuadVBView);

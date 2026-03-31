@@ -575,7 +575,7 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 			}
 			break;
 		case AnimationState::SKILL1:
-			PlayAnimationTrack(4, 1.0f);
+			PlayAnimationTrack(4, 2.0f);
 			if (IsAnimationFinished(4)) {
 				m_pSkinnedAnimationController->SetTrackPosition(4, 0.0f);
 				m_currentAnim = AnimationState::IDLE;

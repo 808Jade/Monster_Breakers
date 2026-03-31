@@ -609,7 +609,7 @@ ID3D12RootSignature *CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevic
 {
 	ID3D12RootSignature *pd3dGraphicsRootSignature = NULL;
 
-	D3D12_DESCRIPTOR_RANGE pd3dDescriptorRanges[14];
+	D3D12_DESCRIPTOR_RANGE pd3dDescriptorRanges[13];
 
 	pd3dDescriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	pd3dDescriptorRanges[0].NumDescriptors = 1;
@@ -688,12 +688,6 @@ ID3D12RootSignature *CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevic
 	pd3dDescriptorRanges[12].BaseShaderRegister = 5; // t5
 	pd3dDescriptorRanges[12].RegisterSpace = 0;
 	pd3dDescriptorRanges[12].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
-	pd3dDescriptorRanges[13].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	pd3dDescriptorRanges[13].NumDescriptors = 1;
-	pd3dDescriptorRanges[13].BaseShaderRegister = 4; // t4: gFireballParticles
-	pd3dDescriptorRanges[13].RegisterSpace = 0;
-	pd3dDescriptorRanges[13].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
 	D3D12_ROOT_PARAMETER pd3dRootParameters[20];
 
@@ -796,7 +790,7 @@ ID3D12RootSignature *CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevic
 	pd3dRootParameters[19].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
 	pd3dRootParameters[19].Descriptor.ShaderRegister = 4;
 	pd3dRootParameters[19].Descriptor.RegisterSpace = 0;
-	pd3dRootParameters[19].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	pd3dRootParameters[19].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	D3D12_STATIC_SAMPLER_DESC pd3dSamplerDescs[4];
 
@@ -1084,24 +1078,25 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 
 void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
+			auto* pPlayer = dynamic_cast<CTerrainPlayer*>(m_pPlayer);
 	switch (nMessageID)
 	{
+
 	case WM_KEYDOWN:
 		switch (wParam)
 		{
 		case 'Q':
 		{
-			auto* pPlayer = dynamic_cast<CTerrainPlayer*>(m_pPlayer);
+			pPlayer->m_currentAnim = AnimationState::SKILL1;
+
 			if (!pPlayer || m_pModel != m_pWizardModel) break;
 
-			pPlayer->m_currentAnim = AnimationState::SKILL1;
-			
 			CGameObject* pHand = pPlayer->FindFrame("RightHand");
 
-			m_pFireballSystem->Emit(pHand->GetPosition(), pPlayer->GetLook(), 20.0f);
+			m_pFireballSystem->Emit(pHand->GetPosition(), pPlayer->GetLook(), 20.0f); 
 			
 			// SERVER!!
-			// send_skill_packet(SKILL_FIREBALL, m_Fireballs->GetPosition(), m_Fireballs->GetLook());
+			// send_skill_packet(SKILL_FIREBALL, m_pFireballSystem->GetPosition(), m_pFireballSystem->GetLook());
 			break;
 		}
 		default:

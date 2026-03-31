@@ -29,7 +29,7 @@ public:
 
     void Emit(XMFLOAT3 position, XMFLOAT3 direction, float speed = 15.0f);
     void Animate(float fTimeElapsed);
-    void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
+    virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
     void ReleaseUploadBuffers();
 
 private:

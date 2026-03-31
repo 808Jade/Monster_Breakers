@@ -38,7 +38,7 @@ D3D12_BLEND_DESC CFireballShader::CreateBlendState()
     d3dBlendDesc.RenderTarget[0].BlendEnable = TRUE;
     d3dBlendDesc.RenderTarget[0].LogicOpEnable = FALSE;
     d3dBlendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
-    d3dBlendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;        // ← 가산
+    d3dBlendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
     d3dBlendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
     d3dBlendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
     d3dBlendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_INV_SRC_ALPHA;
@@ -55,7 +55,7 @@ D3D12_DEPTH_STENCIL_DESC CFireballShader::CreateDepthStencilState()
     ::ZeroMemory(&d3dDepthStencilDesc, sizeof(D3D12_DEPTH_STENCIL_DESC));
 
     // 깊이 테스트는 수행하되 쓰기는 하지 않음
-    // → 반투명 파티클끼리 앞뒤 관계 없이 정상 렌더링
+    // 반투명 파티클끼리 앞뒤 관계 없이 정상 렌더링
     d3dDepthStencilDesc.DepthEnable = TRUE;
     d3dDepthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO; // 쓰기 OFF
     d3dDepthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
