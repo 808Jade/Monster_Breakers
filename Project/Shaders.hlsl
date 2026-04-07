@@ -331,3 +331,32 @@ float4 PSSkyBox(VS_SKYBOX_CUBEMAP_OUTPUT input) : SV_TARGET
 
 	return(cColor);
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+struct VS_INSTANCED_STANDARD_INPUT
+{
+    float3 position : POSITION;
+    float2 uv : TEXCOORD;
+    float3 normal : NORMAL;
+    float3 tangent : TANGENT;
+    float3 bitangent : BITANGENT;
+    
+	// (행렬은 내부적으로 float4 4개로 쪼개져서 1, 2, 3, 4번 슬롯을 자동으로 차지합니다)
+    matrix mtxInstanceTransform : INSTANCE_TRANSFORM;
+};
+
+VS_STANDARD_OUTPUT VSInstancedStandard(VS_INSTANCED_STANDARD_INPUT input)
+{
+    VS_STANDARD_OUTPUT output;
+	
+	// 상수 버퍼인 'gmtxGameObject' 대신, 1번 레일에서 들어온 'input.mtxInstanceTransform'을 곱한다
+    output.positionW = mul(float4(input.position, 1.0f), input.mtxInstanceTransform).xyz;
+    output.normalW = mul(input.normal, (float3x3) input.mtxInstanceTransform);
+    output.tangentW = mul(input.tangent, (float3x3) input.mtxInstanceTransform);
+    output.bitangentW = mul(input.bitangent, (float3x3) input.mtxInstanceTransform);
+    output.position = mul(mul(float4(output.positionW, 1.0f), gmtxView), gmtxProjection);
+    output.uv = input.uv;
+	
+    return (output);
+}

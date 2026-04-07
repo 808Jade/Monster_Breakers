@@ -80,14 +80,19 @@ void CMesh::Render(ID3D12GraphicsCommandList *pd3dCommandList, int nSubSet)
 	}
 }
 
-void CMesh::RenderInstanced(ID3D12GraphicsCommandList* pd3dCommandList, int nSubSet, UINT nInstances)
+void CMesh::RenderInstanced(ID3D12GraphicsCommandList* pd3dCommandList, int nSubSet, UINT nInstances, D3D12_VERTEX_BUFFER_VIEW* pInstanceBufferView)
 {
-	// 1. 기존과 동일하게 메쉬 데이터를 파이프라인에 세팅합니다.
+	// 기존과 동일하게 메쉬 데이터를 파이프라인에 세팅
 	UpdateShaderVariables(pd3dCommandList);
 
-	OnPreRender(pd3dCommandList, NULL); 	// 0번 슬롯에 이 메쉬의 기본 정점 버퍼가 장착됩니다
+	OnPreRender(pd3dCommandList, NULL); 	// 0번 슬롯에 이 메쉬의 기본 정점 버퍼 장착
 
 	pd3dCommandList->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
+
+	if (pInstanceBufferView != NULL)
+	{
+		pd3dCommandList->IASetVertexBuffers(5, 1, pInstanceBufferView);
+	}
 
 	if ((m_nSubMeshes > 0) && (nSubSet < m_nSubMeshes))
 	{

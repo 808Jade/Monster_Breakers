@@ -190,6 +190,7 @@ void Map::LoadMapObjectsFromFile(ID3D12Device* pd3dDevice, ID3D12GraphicsCommand
 // m_vLoadedModelInfo과 m_vObjectInstances를 참조하여 m_vMapObjects에 오브젝트 리스트를 저장 
 void Map::SetInstanceData()
 {
+	// 기존 코드
 	//m_vMapObjects.clear();
 
 	//for (const auto& instance : m_vObjectInstances)
@@ -242,20 +243,16 @@ void Map::SetInstanceData()
 		VS_INSTANCE_DATA gpuData;
 
 		// 파일에 저장된 matrix[16]을 XMFLOAT4X4로 복사
-		// (필요시 XMMatrixTranspose 를 통해 HLSL에 맞게 전치행렬로 변환해야 할 수도 있습니다)
 		XMFLOAT4X4 tempMat;
 		//memcpy(&gpuData.worldMatrix, instance.transformMatrix, sizeof(float) * 16);
 		memcpy(&tempMat, instance.transformMatrix, sizeof(float) * 16);
 		XMMATRIX xmMat = XMLoadFloat4x4(&tempMat);
-		xmMat = XMMatrixTranspose(xmMat); // 행과 열을 뒤집어줌
+		xmMat = XMMatrixTranspose(xmMat);
 		XMStoreFloat4x4(&gpuData.worldMatrix, xmMat);
 
 		m_mInstanceGroups[modelIdx].vInstanceData.push_back(gpuData);
 		m_mInstanceGroups[modelIdx].nInstances++;
 	}
-
-	// 3. (중요) 이제 모인 vInstanceData를 GPU 버퍼(ID3D12Resource)로 만드는 함수 호출
-	// BuildInstanceBuffers();
 }
 
 // CPU 인스턴스 데이터를 GPU버퍼로 만든다
@@ -310,7 +307,7 @@ void Map::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
 
 		if (group.nInstances > 0 && group.pModel)
 		{
-			group.pModel->RenderInstanced(pd3dCommandList, pCamera, group.nInstances, group.pInstanceBuffer);
+			group.pModel->RenderInstanced(pd3dCommandList, pCamera, group.nInstances, group.pInstanceBuffer, &group.instanceBufferView);
 		}
 	}
 }
