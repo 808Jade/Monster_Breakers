@@ -131,7 +131,7 @@
       <Filter>소스 파일\Object</Filter>
     </ClCompile>
     <ClCompile Include="CFireballShader.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\Shader</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -226,7 +226,7 @@
       <Filter>소스 파일\Object</Filter>
     </ClInclude>
     <ClInclude Include="CFireballShader.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>소스 파일\Shader</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
