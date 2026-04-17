@@ -851,7 +851,6 @@ void CGameObject::RenderInstanced(ID3D12GraphicsCommandList* pd3dCommandList, CC
 			}
 		}
 	}
-
 	if (m_pSibling && m_pSibling->GetVisible())	m_pSibling->RenderInstanced(pd3dCommandList, pCamera, nInstances, pInstanceBuffer, pInstanceBufferView);
 	if (m_pChild && m_pChild->GetVisible())	m_pChild->RenderInstanced(pd3dCommandList, pCamera, nInstances, pInstanceBuffer, pInstanceBufferView);
 }

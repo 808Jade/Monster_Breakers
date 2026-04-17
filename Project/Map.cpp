@@ -47,6 +47,27 @@ string Map::ReadString(std::ifstream& inFile)
 	return str;
 }
 
+// Model/Map 안의 모든 .bin 파일을 불러와 m_vLoadedModelInfo에 저장
+void Map::LoadMapObjectsFromFile(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature)
+{
+	std::filesystem::path path{ "Model/Map" };
+
+	if (!std::filesystem::exists(path) || !std::filesystem::is_directory(path)) {
+		std::cerr << "Error: Directory not found -> " << path << endl;
+		return;
+	}
+
+	for (const auto& entry : std::filesystem::directory_iterator(path)) {
+		if (entry.path().extension() == ".bin") {
+			CLoadedModelInfo* pModelInfo = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, entry.path(), m_pInstancedShader);
+
+			if (pModelInfo) {
+				m_vLoadedModelInfo.push_back(pModelInfo->m_pModelRootObject);
+			}
+		}
+	}
+}
+
 // setter.bin 을 읽어와 m_vObjectInstances에 인스턴싱 데이터 저장
 void Map::LoadGeometryFromFile()
 {
@@ -163,62 +184,19 @@ void Map::LoadGeometryFromFile()
 		m_vObjectInstances.emplace_back(index, objectName, position, rotation, scale, quaternion, matrix);
 	}
 
+	for (int i = 0; i < m_vLoadedModelInfo.size(); i++)
+	{
+		CGameObject* pModel = m_vLoadedModelInfo[i];
+
+		pModel->UpdateTransform(NULL);
+	}
+
 	inFile.close();
 }
 
-// Model/Map 안의 모든 .bin 파일을 불러와 m_vLoadedModelInfo에 저장
-void Map::LoadMapObjectsFromFile(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature)
-{
-	std::filesystem::path path{ "Model/Map" };
-
-	if (!std::filesystem::exists(path) || !std::filesystem::is_directory(path)) {
-		std::cerr << "Error: Directory not found -> " << path << endl;
-		return;
-	}
-
-	for (const auto& entry : std::filesystem::directory_iterator(path)) {
-		if (entry.path().extension() == ".bin") {
-			CLoadedModelInfo* pModelInfo = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, entry.path(), m_pInstancedShader);
-
-			if (pModelInfo) {
-				m_vLoadedModelInfo.push_back(pModelInfo->m_pModelRootObject);
-			}
-		}
-	}
-}
-
-// m_vLoadedModelInfo과 m_vObjectInstances를 참조하여 m_vMapObjects에 오브젝트 리스트를 저장 
+// m_vLoadedModelInfo과 m_vObjectInstances를 참조하여 m_mInstanceGroups에 <index : 행렬 데이터> 쌍으로 리스트에 담는다
 void Map::SetInstanceData()
 {
-	// 기존 코드
-	//m_vMapObjects.clear();
-
-	//for (const auto& instance : m_vObjectInstances)
-	//{
-	//	if (instance.modelIndex < 0 || instance.modelIndex >= m_vLoadedModelInfo.size())
-	//	{
-	//		std::cerr << "Warning: Invalid modelIndex (" << instance.modelIndex << ") for object " << instance.objectName << std::endl;
-	//		cout << instance.position.x << instance.position.z << endl;
-	//		continue;
-	//	}
-
-	//	CGameObject* pModel = m_vLoadedModelInfo[instance.modelIndex];
-	//	if (!pModel) continue;
-
-	//	CGameObject* pNewObject = pModel->Clone();
-
-	//	pNewObject->SetPosition(instance.position);
-	//	pNewObject->Rotate(instance.rotation);
-	//	pNewObject->SetScale(instance.scale);
-
-	//	//std::cout << "Object: " << instance.objectName
-	//	//	<< " | Model Index: " << instance.modelIndex
-	//	//	<< " | Mesh Pointer: " << pNewObject->m_pMesh << std::endl;
-
-	//	m_vMapObjects.push_back(pNewObject);
-	//}
-
-
 	m_mInstanceGroups.clear();
 
 	// 1. 모든 인스턴스 데이터를 순회하며 그룹별로 묶기
@@ -255,7 +233,7 @@ void Map::SetInstanceData()
 	}
 }
 
-// CPU 인스턴스 데이터를 GPU버퍼로 만든다
+// CPU 인스턴스 데이터(m_mInstanceGroups)를 GPU버퍼로 만든다
 void Map::BuildInstanceBuffers(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
 {
 	for (auto& pair : m_mInstanceGroups)
@@ -265,42 +243,37 @@ void Map::BuildInstanceBuffers(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLi
 		if (group.nInstances == 0 || group.vInstanceData.empty())
 			continue;
 
-		// 전체 버퍼 크기 계산 = (행렬 1개 크기) * (인스턴스 개수)
+		// 전체 버퍼 크기 계산
 		UINT nBufferSize = group.nInstances * sizeof(VS_INSTANCE_DATA);
 
-		// GPU 메모리에 "진짜 버퍼(pInstanceBuffer)" 생성 및 데이터 복사
+		// GPU 메모리에 pInstanceBuffer 생성 및 데이터 복사
 		ID3D12Resource* pUploadBuffer = NULL;
 
 		group.pInstanceBuffer = ::CreateBufferResource(
 			pd3dDevice,
 			pd3dCommandList,
-			group.vInstanceData.data(),            // CPU 원본 데이터의 시작 주소 (명부)
-			nBufferSize,                           // 복사할 총 바이트 수
-			D3D12_HEAP_TYPE_DEFAULT,               // 목적지: GPU 전용 초고속 메모리
-			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, // 용도: 정점/상수 버퍼용
-			&pUploadBuffer                         // 배달부: 임시 업로드 버퍼
+			group.vInstanceData.data(),							// CPU 원본 데이터의 시작 주소 (명부)
+			nBufferSize,										// 복사할 총 바이트 수
+			D3D12_HEAP_TYPE_DEFAULT,							// 목적지: GPU 전용 초고속 메모리
+			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,	// 용도: 정점/상수 버퍼용
+			&pUploadBuffer										// 배달부: 임시 업로드 버퍼
 		);
 
-		// 생성된 업로드 버퍼를 허공에 날리지 말고 벡터에 안전하게 보관
+		// 생성된 업로드 버퍼를 벡터에 안전하게 보관
 		if (pUploadBuffer) {
 			m_vUploadBuffers.push_back(pUploadBuffer);
 		}
 
-		// GPU에게 이 버퍼를 설명해 줄 "명세서(View)" 작성
+		// GPU에게 이 버퍼를 설명해 줄 View 작성
 		group.instanceBufferView.BufferLocation = group.pInstanceBuffer->GetGPUVirtualAddress(); // 주소
 		group.instanceBufferView.StrideInBytes = sizeof(VS_INSTANCE_DATA);                       // 1개당 크기 (64바이트)
 		group.instanceBufferView.SizeInBytes = nBufferSize;                                      // 전체 크기
 	}
 }
 
-// m_vMapObjects를 참조하여 렌더링 -> m_mInstanceGroups 를 이용해 인스턴스 렌더링
+// m_mInstanceGroups 를 이용해 인스턴스 렌더링
 void Map::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
 {
-	//for (const auto& instance : m_vMapObjects)
-	//{
-	//	instance->Render(pd3dCommandList, pCamera);
-	//}
-
 	for (auto& pair : m_mInstanceGroups)
 	{
 		InstanceGroup& group = pair.second;

@@ -350,13 +350,23 @@ VS_STANDARD_OUTPUT VSInstancedStandard(VS_INSTANCED_STANDARD_INPUT input)
 {
     VS_STANDARD_OUTPUT output;
 	
-	// 상수 버퍼인 'gmtxGameObject' 대신, 1번 레일에서 들어온 'input.mtxInstanceTransform'을 곱한다
-    output.positionW = mul(float4(input.position, 1.0f), input.mtxInstanceTransform).xyz;
-    output.normalW = mul(input.normal, (float3x3) input.mtxInstanceTransform);
-    output.tangentW = mul(input.tangent, (float3x3) input.mtxInstanceTransform);
-    output.bitangentW = mul(input.bitangent, (float3x3) input.mtxInstanceTransform);
+	// [1단계] 자식 오브젝트의 로컬 오프셋 적용 (Local Space -> Prefab Root Space)
+	// gmtxGameObject는 루트를 기준으로 자식이 어디에 붙어있는지 알려줍니다.
+    float4 localPos = mul(float4(input.position, 1.0f), gmtxGameObject);
+    float3 localNormal = mul(input.normal, (float3x3) gmtxGameObject);
+    float3 localTangent = mul(input.tangent, (float3x3) gmtxGameObject);
+    float3 localBitangent = mul(input.bitangent, (float3x3) gmtxGameObject);
+
+	// [2단계] 인스턴스 1,000개의 실제 월드 위치 적용 (Prefab Root Space -> World Space)
+	// 1번 레일에서 들어온 mtxInstanceTransform을 곱해서 맵 전역으로 흩뿌립니다.
+    output.positionW = mul(localPos, input.mtxInstanceTransform).xyz;
+    output.normalW = mul(localNormal, (float3x3) input.mtxInstanceTransform);
+    output.tangentW = mul(localTangent, (float3x3) input.mtxInstanceTransform);
+    output.bitangentW = mul(localBitangent, (float3x3) input.mtxInstanceTransform);
+
+	// [3단계] 카메라 시점으로 변환 (World Space -> View -> Projection)
     output.position = mul(mul(float4(output.positionW, 1.0f), gmtxView), gmtxProjection);
     output.uv = input.uv;
-	
+
     return (output);
 }
