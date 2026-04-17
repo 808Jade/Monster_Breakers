@@ -542,3 +542,27 @@ float4 PSFireball(VS_FIREBALL_OUT input) : SV_TARGET
 
     return texColor;
 }
+
+float4 PSGreenSpirit(VS_FIREBALL_OUT input) : SV_TARGET
+{
+    float4 texColor = gtxtTexture.Sample(gssWrap, input.uv);
+    float life = input.lifeRatio;
+
+    float2 cellUV = frac(input.uv * float2(SPRITE_COLS, SPRITE_ROWS));
+    float2 c2 = cellUV - float2(0.5f, 0.5f);
+    float edgeFade = 1.0f - smoothstep(0.35f, 0.5f, length(c2));
+    float lifeFade = 1.0f - smoothstep(0.55f, 1.0f, life);
+    texColor.a *= edgeFade * lifeFade;
+
+    clip(texColor.a - 0.01f);
+
+    float3 cYoung = float3(0.1f, 1.5f, 0.2f); // 밝은 초록
+    float3 cMid = float3(0.05f, 0.9f, 0.1f); // 중간 초록
+    float3 cOld = float3(0.0f, 0.4f, 0.05f); // 어두운 초록
+
+    float3 spiritColor = lerp(cYoung, cMid, saturate(life * 2.0f));
+    spiritColor = lerp(spiritColor, cOld, saturate((life - 0.5f) * 2.0f));
+    texColor.rgb *= spiritColor;
+
+    return texColor;
+}

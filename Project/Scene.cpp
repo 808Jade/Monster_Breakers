@@ -215,6 +215,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	m_pMap = new Map(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 
 	m_pFireballSystem = new CFireballSystem(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	m_pGreenSpiritSystem = new CGreenSpiritSystem(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 
 	m_pKnightModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Knight.bin", NULL);
 	m_pWizardModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Wizard.bin", NULL);
@@ -587,6 +588,7 @@ void CScene::ReleaseObjects()
 	if (m_pTerrain) delete m_pTerrain;
 	if (m_pSkyBox) delete m_pSkyBox;
 	if (m_pFireballSystem) { delete m_pFireballSystem; m_pFireballSystem = nullptr; }
+	if (m_pGreenSpiritSystem) { delete m_pGreenSpiritSystem; m_pGreenSpiritSystem = nullptr; }
 
 	for (auto* monster : m_Monsters)
 	{
@@ -1050,11 +1052,12 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 	GetCursorPos(&pt);        // screen 좌표
 	ScreenToClient(hWnd, &pt); // client 좌표로 변환
 
+	auto* p = dynamic_cast<CTerrainPlayer*>(m_pPlayer);
+
 	switch (nMessageID)
 	{
 	case WM_LBUTTONDOWN:
 	{
-		auto* p = dynamic_cast<CTerrainPlayer*>(m_pPlayer);
 		if (!p) break;
 
 		int idx = -1;
@@ -1073,12 +1076,27 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 		}
 	}
 	break;
+	case WM_RBUTTONDOWN:
+	{
+		p->m_currentAnim = AnimationState::SKILL1;
+
+		if (!p || m_pModel != m_pWizardModel) break;
+
+		CGameObject* pHand = p->FindFrame("RightHand");
+
+		m_pFireballSystem->Emit(pHand->GetPosition(), p->GetLook(), 20.0f);
+
+		// SERVER!!
+		// send_skill_packet(SKILL_FIREBALL, m_pFireballSystem->GetPosition(), m_pFireballSystem->GetLook());
+
+	}
+	break;
 	}
 }
 
 void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
-			auto* pPlayer = dynamic_cast<CTerrainPlayer*>(m_pPlayer);
+	auto* pPlayer = dynamic_cast<CTerrainPlayer*>(m_pPlayer);
 	switch (nMessageID)
 	{
 
@@ -1087,18 +1105,26 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 		{
 		case 'Q':
 		{
-			pPlayer->m_currentAnim = AnimationState::SKILL1;
+			pPlayer->m_currentAnim = AnimationState::SKILL3;
 
-			if (!pPlayer || m_pModel != m_pWizardModel) break;
+			if (m_pGreenSpiritSystem)
+			{
+				XMFLOAT3 footPos = pPlayer->GetPosition();
+				footPos.y -= 0.5f;
+				m_pGreenSpiritSystem->Emit(footPos);
 
-			CGameObject* pHand = pPlayer->FindFrame("RightHand");
+				//SERVER!!
+			}
 
-			m_pFireballSystem->Emit(pHand->GetPosition(), pPlayer->GetLook(), 20.0f); 
-			
-			// SERVER!!
-			// send_skill_packet(SKILL_FIREBALL, m_pFireballSystem->GetPosition(), m_pFireballSystem->GetLook());
 			break;
 		}
+		break;
+		case 'E':
+		{
+			pPlayer->m_currentAnim = AnimationState::SKILL2;
+			break;
+		}
+		break;
 		default:
 			break;
 		}
@@ -1124,8 +1150,9 @@ void CScene::AnimateObjects(float fTimeElapsed)
 		}
 	}
 	
-	if (m_pFireballSystem) if (m_pFireballSystem)
-		m_pFireballSystem->Animate(fTimeElapsed);
+	if (m_pFireballSystem) m_pFireballSystem->Animate(fTimeElapsed);
+	if (m_pGreenSpiritSystem) m_pGreenSpiritSystem->Animate(fTimeElapsed);
+
 	for(auto* shader : m_Shaders) if(shader) shader->AnimateObjects(fTimeElapsed);
 }
 
@@ -1201,9 +1228,9 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 		auto* texShader = dynamic_cast<CTextureToScreenShader*>(shader);
 		if (texShader && texShader->visible) shader->Render(pd3dCommandList, pCamera);
 	}
-	if (m_pFireballSystem) if (m_pFireballSystem) {
-		m_pFireballSystem->Render(pd3dCommandList, pCamera);
-	}
+
+	if (m_pFireballSystem) m_pFireballSystem->Render(pd3dCommandList, pCamera);
+	if (m_pGreenSpiritSystem) m_pGreenSpiritSystem->Render(pd3dCommandList, pCamera);
 }
 
 void CScene::RenderShadowPass(ID3D12GraphicsCommandList* pd3dCommandList)
