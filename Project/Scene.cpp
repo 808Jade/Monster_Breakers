@@ -893,6 +893,7 @@ void CScene::ReleaseUploadBuffers()
 {
 	if (m_pSkyBox) m_pSkyBox->ReleaseUploadBuffers();
 	if (m_pTerrain) m_pTerrain->ReleaseUploadBuffers();
+	if (m_pMap) m_pMap->ReleaseUploadBuffers();
 
 	for (auto* shader : m_Shaders) if (shader) shader->ReleaseUploadBuffers();
 	for (auto* obj : m_GameObjects) if (obj) obj->ReleaseUploadBuffers();
