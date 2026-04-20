@@ -29,56 +29,41 @@ CParticle::CParticle(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCo
     SetMaterial(0, pMaterial);
 }
 
-void CParticle::Activate(XMFLOAT3 pos)
+void CParticle::Activate(XMFLOAT3 pos, XMFLOAT3 direction)
 {
-    //m_bActive = true;
-    //m_fElapsed = 0.0f;
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
-    std::uniform_real_distribution<float> alphaDist(0.3f, 1.0f);
-    m_activeCount = MAX_PARTICLES;
-    for (int i = 0; i < MAX_PARTICLES; ++i) {
-        XMFLOAT3 dir = { dist(gen), dist(gen), dist(gen) };
-        XMVECTOR v = XMVector3Normalize(XMLoadFloat3(&dir));
-        XMStoreFloat3(&dir, v);
+    XMVECTOR vDir = XMVector3Normalize(XMLoadFloat3(&direction));
+    const float speed = 15.0f;
+    XMStoreFloat3(&m_velocity, vDir * XMVectorReplicate(speed));
 
-        m_positions[i] = pos;
-        m_velocities[i] = { dir.x * 2.0f, dir.y * 2.0f, dir.z * 2.0f };
-        m_lifetimes[i] = 0.0f;
-        m_bActives[i] = true;
-        m_alphas[i] = alphaDist(gen);
-    }
-
+	SetPosition(pos);
+    m_lifetime = 0.0f;
     m_bActive = true;
 }
 
-void CParticle::Animate(float fTimeElapsed, XMFLOAT3 position)
+void CParticle::Animate(float fTimeElapsed)
 {
-    for (int i = 0; i < MAX_PARTICLES; ++i) {
-        if (!m_bActives[i]) continue;
+    if (!m_bActive) return;
 
-        m_lifetimes[i] += fTimeElapsed;
-        if (m_lifetimes[i] >= m_maxLifetime) {
-            m_bActives[i] = false;
-            continue;
-        }
-
-        m_positions[i].x += m_velocities[i].x * fTimeElapsed;
-        m_positions[i].y += m_velocities[i].y * fTimeElapsed;
-        m_positions[i].z += m_velocities[i].z * fTimeElapsed;
+    m_lifetime += fTimeElapsed;
+    if (m_lifetime >= m_maxLifetime)
+    {
+        m_bActive = false;
+        return;
     }
+
+	XMFLOAT3 position = GetPosition();
+    position.x += m_velocity.x * fTimeElapsed;
+    position.y += m_velocity.y * fTimeElapsed;
+    position.z += m_velocity.z * fTimeElapsed;
+    SetPosition(position);
 }
 
 void CParticle::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* camera)
 {
-    auto* mat = m_ppMaterials[0];
-    for (int i = 0; i < MAX_PARTICLES; ++i) {
-        if (!m_bActives[i]) continue;
+    if (!m_bActive) return;
 
-        SetPosition(m_positions[i]); // 위치 적용
-        //pd3dCommandList->SetGraphicsRoot32BitConstants(1, 1, &m_alphas[i], 33);
-        mat->m_xmf4AlbedoColor.w = m_alphas[i];
-        CGameObject::Render(pd3dCommandList, camera);
-    }
+    UpdateTransform(nullptr);
+    CGameObject::Render(pd3dCommandList, camera);
 }
+
+////////////////////////////////////////////////////////////////////////////////

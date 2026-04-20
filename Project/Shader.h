@@ -69,7 +69,6 @@ public:
 	virtual ~CTextureToScreenShader();
 
 	virtual D3D12_INPUT_LAYOUT_DESC CreateInputLayout();
-
 	virtual D3D12_DEPTH_STENCIL_DESC CreateDepthStencilState();
 
 	virtual D3D12_SHADER_BYTECODE CreateVertexShader();
@@ -92,6 +91,15 @@ public:
 	void SetTexture(CTexture* pTexture);
 
 	void SetVisible(bool b) { visible = b; }
+};
+
+class CScreenShader : public CTextureToScreenShader
+{
+public:
+	CScreenShader(int nMeshes) : CTextureToScreenShader(nMeshes) {}
+	virtual ~CScreenShader() {}
+
+	virtual D3D12_SHADER_BYTECODE CreatePixelShader() override;
 };
 
 class CShopShader : public CTextureToScreenShader
@@ -229,4 +237,30 @@ public:
 	virtual void BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, CLoadedModelInfo *pModel, void *pContext = NULL);
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+class CShadowShader : public CStandardShader
+{
+public:
+	CShadowShader() {}
+	virtual ~CShadowShader() {}
 
+	virtual D3D12_SHADER_BYTECODE CreateVertexShader();
+	virtual D3D12_SHADER_BYTECODE CreatePixelShader();
+
+	virtual D3D12_RASTERIZER_DESC CreateRasterizerState();
+	virtual void CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
+};
+
+class CSkinnedShadowShader : public CSkinnedAnimationStandardShader
+{
+public:
+	CSkinnedShadowShader() {}
+	virtual ~CSkinnedShadowShader() {}
+
+	virtual D3D12_SHADER_BYTECODE CreateVertexShader();
+	virtual D3D12_SHADER_BYTECODE CreatePixelShader();
+
+	virtual D3D12_RASTERIZER_DESC CreateRasterizerState();
+	virtual void CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
+};
