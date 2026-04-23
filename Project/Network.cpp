@@ -182,6 +182,20 @@ void send_packet(void* packet) {
     g_sendCV.notify_one();
 }
 
+void send_skill_packet(SkillType skillType, const XMFLOAT3& position, const XMFLOAT3& look)
+{
+    cs_packet_skill pkt{};
+    pkt.size = sizeof(pkt);
+    pkt.type = CS_P_SKILL;
+    pkt.skillType = skillType;
+    pkt.position = position;
+    pkt.look = look;
+    send_packet(&pkt);
+
+    std::cout << "[SKILL] cs_packet_skill 전송 | type=" << (int)pkt.type
+        << " size=" << (int)pkt.size << " skillType=" << (int)pkt.skillType << "\n";
+}
+
 void InitializeNetwork(char serverIP[]) {
     
     WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -321,6 +335,23 @@ void ProcessPacket(char* ptr)
         break;
     }
 
+    case SC_P_SKILL:
+    {
+        sc_packet_skill* packet = reinterpret_cast<sc_packet_skill*>(ptr);
+
+        std::cout << "[SKILL] SC_P_SKILL 수신 | playerID=" << packet->playerID
+            << " skillType=" << (int)packet->skillType
+            << " pos=(" << packet->position.x << ", " << packet->position.y << ", " << packet->position.z << ")\n";
+
+        if (packet->playerID == g_myid) {
+            std::cout << "[SKILL] 내 패킷 루프백 → 무시\n";
+            break;
+        }
+
+        // 여기에 랜더링해야함. (스킬 동기화)
+
+        break;
+    }
     
     case SC_P_MONSTER_SPAWN:
     {

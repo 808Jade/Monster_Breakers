@@ -1094,10 +1094,23 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 
 			CGameObject* pHand = pPlayer->FindFrame("RightHand");
 
-			m_pFireballSystem->Emit(pHand->GetPosition(), pPlayer->GetLook(), 20.0f); 
+			if (!pHand) break;
+
+			// 위치/방향 변수로 먼저 받아두기
+			XMFLOAT3 firePos = pHand->GetPosition();
+			XMFLOAT3 fireLook = pPlayer->GetLook();
+
+			// 로컬 이펙트 실행
+			m_pFireballSystem->Emit(firePos, fireLook, 20.0f);
+
+			std::cout << "[SKILL] 파이어볼 송신 | pos=("
+				<< firePos.x << ", " << firePos.y << ", " << firePos.z
+				<< ") look=(" << fireLook.x << ", " << fireLook.y << ", " << fireLook.z << ")\n";
+
+			/*m_pFireballSystem->Emit(pHand->GetPosition(), pPlayer->GetLook(), 20.0f); */
 			
-			// SERVER!!
-			// send_skill_packet(SKILL_FIREBALL, m_pFireballSystem->GetPosition(), m_pFireballSystem->GetLook());
+			// server!!
+			send_skill_packet(SkillType::SKILL_FIREBALL, firePos, fireLook);
 			break;
 		}
 		default:
