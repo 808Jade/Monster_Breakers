@@ -835,7 +835,7 @@ void CGameObject::RenderInstanced(ID3D12GraphicsCommandList* pd3dCommandList, CC
 		instanceBufferView.StrideInBytes = sizeof(VS_INSTANCE_DATA);
 		instanceBufferView.SizeInBytes = sizeof(VS_INSTANCE_DATA) * nInstances;
 
-		pd3dCommandList->IASetVertexBuffers(5, 1, &instanceBufferView);
+		pd3dCommandList->IASetVertexBuffers(13, 1, &instanceBufferView);
 
 		if (m_nMaterials > 0)
 		{

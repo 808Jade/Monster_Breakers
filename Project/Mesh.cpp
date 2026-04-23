@@ -91,7 +91,7 @@ void CMesh::RenderInstanced(ID3D12GraphicsCommandList* pd3dCommandList, int nSub
 
 	if (pInstanceBufferView != NULL)
 	{
-		pd3dCommandList->IASetVertexBuffers(5, 1, pInstanceBufferView);
+		pd3dCommandList->IASetVertexBuffers(13, 1, pInstanceBufferView);
 	}
 
 	if ((m_nSubMeshes > 0) && (nSubSet < m_nSubMeshes))
