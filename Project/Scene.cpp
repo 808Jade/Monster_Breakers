@@ -1085,11 +1085,23 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 
 		CGameObject* pHand = p->FindFrame("RightHand");
 
-		m_pFireballSystem->Emit(pHand->GetPosition(), p->GetLook(), 20.0f);
+		if (!pHand) break;
 
-		// SERVER!!
-		// send_skill_packet(SKILL_FIREBALL, m_pFireballSystem->GetPosition(), m_pFireballSystem->GetLook());
+		// 위치/방향 변수로 먼저 받아두기
+		XMFLOAT3 firePos = pHand->GetPosition();
+		XMFLOAT3 fireLook = p->GetLook();
 
+		// 로컬 이펙트 실행
+		m_pFireballSystem->Emit(firePos, fireLook, 20.0f);
+
+		std::cout << "[SKILL] 파이어볼 송신 | pos=("
+			<< firePos.x << ", " << firePos.y << ", " << firePos.z
+			<< ") look=(" << fireLook.x << ", " << fireLook.y << ", " << fireLook.z << ")\n";
+
+		/*m_pFireballSystem->Emit(pHand->GetPosition(), pPlayer->GetLook(), 20.0f); */
+
+		// server!!
+		send_skill_packet(SkillType::SKILL_FIREBALL, firePos, fireLook);
 	}
 	break;
 	}
@@ -1103,33 +1115,24 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 	case WM_KEYDOWN:
 		switch (wParam) {
 		case 'Q':
-		{
-			pPlayer->m_currentAnim = AnimationState::SKILL1;
-
-			if (!pPlayer || m_pModel != m_pWizardModel) break;
-
-			CGameObject* pHand = pPlayer->FindFrame("RightHand");
-
-			if (!pHand) break;
-
-			// 위치/방향 변수로 먼저 받아두기
-			XMFLOAT3 firePos = pHand->GetPosition();
-			XMFLOAT3 fireLook = pPlayer->GetLook();
-
-			// 로컬 이펙트 실행
-			m_pFireballSystem->Emit(firePos, fireLook, 20.0f);
-
-			std::cout << "[SKILL] 파이어볼 송신 | pos=("
-				<< firePos.x << ", " << firePos.y << ", " << firePos.z
-				<< ") look=(" << fireLook.x << ", " << fireLook.y << ", " << fireLook.z << ")\n";
-
-			/*m_pFireballSystem->Emit(pHand->GetPosition(), pPlayer->GetLook(), 20.0f); */
-			
-			// server!!
-			send_skill_packet(SkillType::SKILL_FIREBALL, firePos, fireLook);
-			break;
-		case 'E':
 			pPlayer->m_currentAnim = AnimationState::SKILL2;
+			//SERVER!!
+			// otherplayer 공격력 늘리기
+
+			break;
+
+		case 'E':
+			pPlayer->m_currentAnim = AnimationState::SKILL3;
+			if (!pPlayer || m_pModel != m_pWizardModel) break;
+			if (m_pGreenSpiritSystem)
+			{
+				XMFLOAT3 footPos = pPlayer->GetPosition();
+				footPos.y -= 0.5f;
+				m_pGreenSpiritSystem->Emit(footPos);
+
+				//SERVER!!
+				// otherplayer 둘다 체력 늘리기
+			}
 			break;	
 		}
 		break;
