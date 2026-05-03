@@ -13,6 +13,7 @@
 #include "CParticle.h"
 #include "CText.h"
 #include "CFireballSystem.h"
+#include "CGreenSpiritSystem.h"
 
 #define MAX_LIGHTS						16 
 
@@ -219,6 +220,8 @@ public:
 	CCollisionManager					m_CollisionManager;
 
 	CFireballSystem* m_pFireballSystem = nullptr;
+	CGreenSpiritSystem* m_pGreenSpiritSystem = nullptr;
+
 	POINT m_ptPos;
 
 public:

@@ -17,3 +17,12 @@ public:
 
 };
 
+class CGreenSpiritShader : public CFireballShader
+{
+public:
+    CGreenSpiritShader() = default;
+    ~CGreenSpiritShader() = default;
+
+    virtual D3D12_SHADER_BYTECODE CreateVertexShader() override;
+    virtual D3D12_SHADER_BYTECODE CreatePixelShader()  override;
+};

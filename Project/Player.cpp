@@ -370,8 +370,10 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 	m_pSkinnedAnimationController->SetTrackEnable(4, false); 
 	m_pSkinnedAnimationController->SetTrackEnable(5, false); 
 	m_pSkinnedAnimationController->SetTrackEnable(6, false); 
-	m_pSkinnedAnimationController->SetTrackType(3, 0);
-	m_pSkinnedAnimationController->SetTrackType(4, 0);
+	m_pSkinnedAnimationController->SetTrackType(3, ANIMATION_TYPE_ONCE);
+	m_pSkinnedAnimationController->SetTrackType(4, ANIMATION_TYPE_ONCE);
+	m_pSkinnedAnimationController->SetTrackType(5, ANIMATION_TYPE_ONCE);
+	m_pSkinnedAnimationController->SetTrackType(6, ANIMATION_TYPE_ONCE);
 
 	m_pSkinnedAnimationController->SetCallbackKeys(1, 2);
 #ifdef _WITH_SOUND_RESOURCE
@@ -517,14 +519,21 @@ void CTerrainPlayer::Move(DWORD dwDirection, float fDistance, bool bUpdateVeloci
 
 	bool isMoving = dwDirection & (DIR_FORWARD | DIR_BACKWARD | DIR_LEFT | DIR_RIGHT);
 	bool isRunning = dwDirection & DIR_DOWN;
-	bool isJumping = dwDirection & DIR_UP;
 
-	if (isRunning && isMoving)
-		m_currentAnim = AnimationState::RUN;
-	else if (isMoving)
-		m_currentAnim = AnimationState::WALK;
-	else
-		m_currentAnim = AnimationState::IDLE;
+	bool isSkillPlaying = (m_currentAnim == AnimationState::ATTACK ||
+		m_currentAnim == AnimationState::SKILL1 ||
+		m_currentAnim == AnimationState::SKILL2 ||
+		m_currentAnim == AnimationState::SKILL3);
+
+	if (!isSkillPlaying)
+	{
+		if (isRunning && isMoving)
+			m_currentAnim = AnimationState::RUN;
+		else if (isMoving)
+			m_currentAnim = AnimationState::WALK;
+		else
+			m_currentAnim = AnimationState::IDLE;
+	}
 
 	CPlayer::Move(dwDirection, fDistance, bUpdateVelocity);
 }
@@ -717,7 +726,7 @@ void CTerrainPlayer::StartAnimationBlend(int fromTrack, int toTrack, float blend
 	m_animBlend.elapsed = 0.0f;
 	m_animBlend.active = true;
 
-	for (int i = 0; i < 5; ++i)
+	for (int i = 0; i < 7; ++i)
 		m_pSkinnedAnimationController->SetTrackEnable(i, i == fromTrack || i == toTrack);
 
 	m_pSkinnedAnimationController->SetTrackWeight(fromTrack, 1.0f);
