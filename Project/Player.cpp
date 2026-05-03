@@ -374,6 +374,9 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 	m_pSkinnedAnimationController->SetTrackType(4, ANIMATION_TYPE_ONCE);
 	m_pSkinnedAnimationController->SetTrackType(5, ANIMATION_TYPE_ONCE);
 	m_pSkinnedAnimationController->SetTrackType(6, ANIMATION_TYPE_ONCE);
+	m_pSkinnedAnimationController->SetTrackSpeed(4, 1.5);
+	m_pSkinnedAnimationController->SetTrackSpeed(5, 1.5);
+	m_pSkinnedAnimationController->SetTrackSpeed(6, 1.5);
 
 	m_pSkinnedAnimationController->SetCallbackKeys(1, 2);
 #ifdef _WITH_SOUND_RESOURCE

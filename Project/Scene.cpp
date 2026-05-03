@@ -1131,7 +1131,18 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 				m_pGreenSpiritSystem->Emit(footPos);
 
 				//SERVER!!
-				// otherplayer 둘다 체력 늘리기
+				/* 소라카 궁마냥
+				pPlayer->hp += (pPlayer->level[3] * 5);
+				for(auto* otherPlayer : m_ppOtherPlayers)
+				{
+					if (!otherPlayer) continue;
+					otherPlayer->hp += (pPlayer->level[3] * 5); // 다른 플레이어 체력 회복
+					// 스킬 쓰면 다른 플레이어 발에서도 이펙트 보이게
+					XMFLOAT3 footPos = otherPlayer->GetPosition();
+					footPos.y -= 0.5f;
+					m_pGreenSpiritSystem->Emit(footPos);
+				}
+				*/
 			}
 			break;	
 		}
@@ -1200,8 +1211,8 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 	pd3dCommandList->SetGraphicsRootConstantBufferView(2, d3dcbLightsGpuVirtualAddress);
 
 	// Shadow 적용을 유지한다면(메인패스)
-	pd3dCommandList->SetGraphicsRootDescriptorTable(17, m_d3dShadowSRV);
-	pd3dCommandList->SetGraphicsRootConstantBufferView(18, m_pd3dcbShadow->GetGPUVirtualAddress());
+/*	pd3dCommandList->SetGraphicsRootDescriptorTable(17, m_d3dShadowSRV);
+	pd3dCommandList->SetGraphicsRootConstantBufferView(18, m_pd3dcbShadow->GetGPUVirtualAddress());*/
 
 	if (m_pSkyBox)  m_pSkyBox->Render(pd3dCommandList, pCamera);
 	if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
