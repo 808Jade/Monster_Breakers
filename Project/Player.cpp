@@ -393,6 +393,9 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 	
+	m_pGroundCrackEffect = new CGroundCrackEffect();
+	m_pGroundCrackEffect->Create(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
+
 	SetPlayerUpdatedContext(pContext);
 	SetCameraUpdatedContext(pContext);
 
@@ -422,6 +425,11 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 
 CTerrainPlayer::~CTerrainPlayer()
 {
+	if (m_pGroundCrackEffect)
+	{
+		delete m_pGroundCrackEffect;
+		m_pGroundCrackEffect = nullptr;
+	}
 }
 
 CCamera *CTerrainPlayer::ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed)
@@ -549,11 +557,17 @@ void CTerrainPlayer::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera*
 		if (m_plevel[i]) m_plevel[i]->Render(pd3dCommandList, pCamera);
 	// if (m_playerHP) m_playerHP->Render(pd3dCommandList, pCamera);
 	CPlayer::Render(pd3dCommandList, pCamera);
+	if (m_pGroundCrackEffect && m_pGroundCrackEffect->IsActive())
+		m_pGroundCrackEffect->Render(pd3dCommandList, pCamera);
 }
 
 void CTerrainPlayer::Update(float fTimeElapsed)
 {
 	CPlayer::Update(fTimeElapsed);
+
+	if (m_pGroundCrackEffect)
+		m_pGroundCrackEffect->Update(fTimeElapsed);
+
 	if (m_pSkinnedAnimationController)
 	{
 		if (m_animBlend.active)
@@ -595,9 +609,19 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 			break;
 		case AnimationState::SKILL2:
 			PlayAnimationTrack(5, 1.0f);
+			if (!m_bCrackTriggered) {
+				m_bCrackTriggered = true;
+
+				// 플레이어 발 위치 + Look 방향으로 균열 생성
+				XMFLOAT3 pos = GetPosition();
+				XMFLOAT3 look = GetLook();
+				m_pGroundCrackEffect->Trigger(pos, look);
+			}
+
 			if (IsAnimationFinished(5)) {
 				m_pSkinnedAnimationController->SetTrackPosition(5, 0.0f);
 				m_currentAnim = AnimationState::IDLE;
+				m_bCrackTriggered = false;  // 다음 발동 대기
 			}	
 			break;
 		case AnimationState::SKILL3:

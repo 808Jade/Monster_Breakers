@@ -156,6 +156,7 @@
     <ClCompile Include="GameFramework.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="CRectMesh.cpp" />
+    <ClCompile Include="GroundCrackEffect.cpp" />
     <ClCompile Include="Hpbar.cpp" />
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="Mesh.cpp" />
@@ -190,6 +191,7 @@
     <ClInclude Include="GameFramework.h" />
     <ClInclude Include="Client.h" />
     <ClInclude Include="CRectMesh.h" />
+    <ClInclude Include="GroundCrackEffect.h" />
     <ClInclude Include="Hpbar.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="Mesh.h" />

@@ -601,3 +601,51 @@ float4 PSGreenSpirit(VS_FIREBALL_OUT input) : SV_TARGET
 
     return texColor;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct VS_GROUNDCRACK_INPUT
+{
+    float3 position : POSITION;
+    float2 uv : TEXCOORD;
+    float alpha : COLOR; 
+};
+
+struct VS_GROUNDCRACK_OUTPUT
+{
+    float4 position : SV_POSITION;
+    float2 uv : TEXCOORD;
+    float alpha : COLOR;
+};
+
+VS_GROUNDCRACK_OUTPUT VSGroundCrack(VS_GROUNDCRACK_INPUT input)
+{
+    VS_GROUNDCRACK_OUTPUT output;
+
+    float4 posW = float4(input.position, 1.0f);
+    output.position = mul(mul(posW, gmtxView), gmtxProjection);
+    output.uv = input.uv;
+    output.alpha = input.alpha;
+
+    return output;
+}
+
+float4 PSGroundCrack(VS_GROUNDCRACK_OUTPUT input) : SV_TARGET
+{
+    float centerFactor = 1.0f - abs(input.uv.y * 2.0f - 1.0f);
+    centerFactor = pow(centerFactor, 0.6f); 
+
+    float tipFade = 1.0f - input.uv.x * 0.75f;
+
+    float alpha = centerFactor * tipFade * input.alpha;
+
+    float3 coreColor = float3(1.2f, 0.55f, 0.08f);
+    float3 edgeColor = float3(0.08f, 0.05f, 0.02f);
+    float3 crackColor = lerp(edgeColor, coreColor, centerFactor);
+
+    crackColor *= tipFade;
+
+    clip(alpha - 0.005f);
+
+    return float4(crackColor, alpha);
+}

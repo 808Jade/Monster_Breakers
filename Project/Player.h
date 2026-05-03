@@ -11,6 +11,7 @@
 #include "Camera.h"
 #include "Network.h"
 #include "CText.h"
+#include "GroundCrackEffect.h"
 
 struct BoundingCylinder
 {
@@ -152,7 +153,8 @@ public:
 
 	CText* m_pText = nullptr;
 	CText* m_plevel[3] = { nullptr, nullptr, nullptr };
-
+	CGroundCrackEffect* m_pGroundCrackEffect = nullptr;
+	bool                m_bCrackTriggered = false;
 	//server
 	AnimationState m_currentAnim = AnimationState::IDLE;
 
