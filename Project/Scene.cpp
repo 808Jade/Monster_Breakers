@@ -1099,14 +1099,10 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 	auto* pPlayer = dynamic_cast<CTerrainPlayer*>(m_pPlayer);
 	switch (nMessageID)
 	{
-
 	case WM_KEYDOWN:
-		switch (wParam)
-		{
+		switch (wParam) {
 		case 'Q':
-		{
 			pPlayer->m_currentAnim = AnimationState::SKILL3;
-
 			if (m_pGreenSpiritSystem)
 			{
 				XMFLOAT3 footPos = pPlayer->GetPosition();
@@ -1115,21 +1111,11 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 
 				//SERVER!!
 			}
-
 			break;
-		}
-		break;
 		case 'E':
-		{
 			pPlayer->m_currentAnim = AnimationState::SKILL2;
-			break;
+			break;	
 		}
-		break;
-		default:
-			break;
-		}
-		break;
-	default:
 		break;
 	}
 }
