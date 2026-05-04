@@ -526,7 +526,7 @@ void CTerrainPlayer::OnCameraUpdateCallback(float fTimeElapsed)
 
 void CTerrainPlayer::Move(DWORD dwDirection, float fDistance, bool bUpdateVelocity)
 {
-	if (dwDirection & DIR_DOWN) fDistance *= 2.0f;
+	if (dwDirection & DIR_DOWN) fDistance *= 1.5f;
 
 	bool isMoving = dwDirection & (DIR_FORWARD | DIR_BACKWARD | DIR_LEFT | DIR_RIGHT);
 	bool isRunning = dwDirection & DIR_DOWN;
