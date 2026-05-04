@@ -216,6 +216,8 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 
 	m_pFireballSystem = new CFireballSystem(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 	m_pGreenSpiritSystem = new CGreenSpiritSystem(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	m_pWeaponThrowSystem = new CWeaponThrowSystem();
+	m_pWeaponThrowSystem->Create(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 
 	m_pKnightModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Knight.bin", NULL);
 	m_pWizardModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Wizard.bin", NULL);
@@ -589,6 +591,7 @@ void CScene::ReleaseObjects()
 	if (m_pSkyBox) delete m_pSkyBox;
 	if (m_pFireballSystem) { delete m_pFireballSystem; m_pFireballSystem = nullptr; }
 	if (m_pGreenSpiritSystem) { delete m_pGreenSpiritSystem; m_pGreenSpiritSystem = nullptr; }
+	if (m_pWeaponThrowSystem) { delete m_pWeaponThrowSystem; m_pWeaponThrowSystem = nullptr; }
 
 	for (auto* monster : m_Monsters)
 	{
@@ -1081,27 +1084,50 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 	{
 		p->m_currentAnim = AnimationState::SKILL1;
 
-		if (!p || m_pModel != m_pWizardModel) break;
+		if (m_pModel == m_pWizardModel)
+		{
 
-		CGameObject* pHand = p->FindFrame("RightHand");
+			CGameObject* pHand = p->FindFrame("RightHand");
 
-		if (!pHand) break;
+			if (!pHand) break;
 
-		// 위치/방향 변수로 먼저 받아두기
-		XMFLOAT3 firePos = pHand->GetPosition();
-		XMFLOAT3 fireLook = p->GetLook();
+			// 위치/방향 변수로 먼저 받아두기
+			XMFLOAT3 firePos = pHand->GetPosition();
+			XMFLOAT3 fireLook = p->GetLook();
 
-		// 로컬 이펙트 실행
-		m_pFireballSystem->Emit(firePos, fireLook, 20.0f);
+			// 로컬 이펙트 실행
+			m_pFireballSystem->Emit(firePos, fireLook, 20.0f);
 
-		std::cout << "[SKILL] 파이어볼 송신 | pos=("
-			<< firePos.x << ", " << firePos.y << ", " << firePos.z
-			<< ") look=(" << fireLook.x << ", " << fireLook.y << ", " << fireLook.z << ")\n";
+			std::cout << "[SKILL] 파이어볼 송신 | pos=("
+				<< firePos.x << ", " << firePos.y << ", " << firePos.z
+				<< ") look=(" << fireLook.x << ", " << fireLook.y << ", " << fireLook.z << ")\n";
 
-		/*m_pFireballSystem->Emit(pHand->GetPosition(), pPlayer->GetLook(), 20.0f); */
+			/*m_pFireballSystem->Emit(pHand->GetPosition(), pPlayer->GetLook(), 20.0f); */
 
-		// server!!
-		send_skill_packet(SkillType::SKILL_FIREBALL, firePos, fireLook);
+			// server!!
+			send_skill_packet(SkillType::SKILL_FIREBALL, firePos, fireLook);
+		}
+		else if (m_pModel == m_pThiefModel)
+		{
+			if (m_pWeaponThrowSystem->IsActive()) break;
+
+			CGameObject* pWeapon = p->FindFrame("SM_Weapon_01");
+			if (!pWeapon) break;
+
+			XMFLOAT3 throwPos = pWeapon->GetPosition();
+			XMFLOAT3 throwDir = p->GetLook();
+
+			m_pWeaponThrowSystem->Emit(throwPos, throwDir, 30.0f, pWeapon);
+
+			std::cout << "[SKILL] 도적 무기 던지기 | pos=("
+				<< throwPos.x << ", " << throwPos.y << ", " << throwPos.z
+				<< ") dir=(" << throwDir.x << ", " << throwDir.y << ", " << throwDir.z << ")\n";
+
+			// send_skill_packet(SkillType::SKILL_WEAPON_THROW, throwPos, throwDir);
+		}
+		else {
+			// 기사 방패막기이므로 몬스터 공격 X 처리
+		}
 	}
 	break;
 	}
@@ -1117,32 +1143,40 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 		case 'Q':
 			pPlayer->m_currentAnim = AnimationState::SKILL2;
 			//SERVER!!
-			// otherplayer 공격력 늘리기
-
+			// 법사 otherplayer 공격력 늘리기
 			break;
 
 		case 'E':
 			pPlayer->m_currentAnim = AnimationState::SKILL3;
-			if (!pPlayer || m_pModel != m_pWizardModel) break;
-			if (m_pGreenSpiritSystem)
-			{
-				XMFLOAT3 footPos = pPlayer->GetPosition();
-				footPos.y -= 0.5f;
-				m_pGreenSpiritSystem->Emit(footPos);
-
-				//SERVER!!
-				/* 소라카 궁마냥
-				pPlayer->hp += (pPlayer->level[3] * 5);
-				for(auto* otherPlayer : m_ppOtherPlayers)
+			if (m_pModel == m_pWizardModel) {
+				if (m_pGreenSpiritSystem)
 				{
-					if (!otherPlayer) continue;
-					otherPlayer->hp += (pPlayer->level[3] * 5); // 다른 플레이어 체력 회복
-					// 스킬 쓰면 다른 플레이어 발에서도 이펙트 보이게
-					XMFLOAT3 footPos = otherPlayer->GetPosition();
+					XMFLOAT3 footPos = pPlayer->GetPosition();
 					footPos.y -= 0.5f;
 					m_pGreenSpiritSystem->Emit(footPos);
+
+					//SERVER!!
+					/* 소라카 궁마냥
+					pPlayer->hp += (pPlayer->level[3] * 5);
+					for(auto* otherPlayer : m_ppOtherPlayers)
+					{
+						if (!otherPlayer) continue;
+						otherPlayer->hp += (pPlayer->level[3] * 5); // 다른 플레이어 체력 회복
+						// 스킬 쓰면 다른 플레이어 발에서도 이펙트 보이게
+						XMFLOAT3 footPos = otherPlayer->GetPosition();
+						footPos.y -= 0.5f;
+						m_pGreenSpiritSystem->Emit(footPos);
+					}
+					*/
 				}
-				*/
+			}
+			else if (m_pModel == m_pKnightModel) {
+				// 기사 도발	
+				// 몬스터들 공격 멈추고 lookat = 기사 위치로
+				// m_pLevel[2]의 값에 따라 도발 지속시간 증가
+			}
+			else if(m_pModel == m_pThiefModel) {
+				// 도적 몬스터 뒤로 순보
 			}
 			break;	
 		}
@@ -1168,6 +1202,7 @@ void CScene::AnimateObjects(float fTimeElapsed)
 	
 	if (m_pFireballSystem) m_pFireballSystem->Animate(fTimeElapsed);
 	if (m_pGreenSpiritSystem) m_pGreenSpiritSystem->Animate(fTimeElapsed);
+	if (m_pWeaponThrowSystem) m_pWeaponThrowSystem->Animate(fTimeElapsed);
 
 	for(auto* shader : m_Shaders) if(shader) shader->AnimateObjects(fTimeElapsed);
 }
@@ -1247,6 +1282,7 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 
 	if (m_pFireballSystem) m_pFireballSystem->Render(pd3dCommandList, pCamera);
 	if (m_pGreenSpiritSystem) m_pGreenSpiritSystem->Render(pd3dCommandList, pCamera);
+	if (m_pWeaponThrowSystem) m_pWeaponThrowSystem->Render(pd3dCommandList, pCamera);
 }
 
 void CScene::RenderShadowPass(ID3D12GraphicsCommandList* pd3dCommandList)

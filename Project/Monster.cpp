@@ -10,7 +10,7 @@ Monster::Monster(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dComman
 	m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); // idle
 	m_pSkinnedAnimationController->SetTrackAnimationSet(1, 1); // walk
 	m_pSkinnedAnimationController->SetTrackAnimationSet(2, 2); // attack
-	m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); // attack
+	m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); // gethit
 	m_pSkinnedAnimationController->SetTrackAnimationSet(4, 4); // death
 	m_pSkinnedAnimationController->SetTrackEnable(1, false);
 	m_pSkinnedAnimationController->SetTrackEnable(2, false);

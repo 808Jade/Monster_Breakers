@@ -14,6 +14,7 @@
 #include "CText.h"
 #include "CFireballSystem.h"
 #include "CGreenSpiritSystem.h"
+#include "CWeaponThrowSystem.h"
 
 #define MAX_LIGHTS						16 
 
@@ -221,6 +222,7 @@ public:
 
 	CFireballSystem* m_pFireballSystem = nullptr;
 	CGreenSpiritSystem* m_pGreenSpiritSystem = nullptr;
+	CWeaponThrowSystem* m_pWeaponThrowSystem = nullptr;
 
 	POINT m_ptPos;
 
