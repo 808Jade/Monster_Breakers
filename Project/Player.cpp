@@ -587,7 +587,14 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 		}
 	}
 
+<<<<<<< Updated upstream
 	//if (m_pText) { m_pText->UpdateText(std::to_wstring(debt), L"debt : "); }
+=======
+	if (m_pText) { m_pText->UpdateText(std::to_wstring(Pgold), L"Gold : "); }
+
+	for (int i = 0; i < 3; ++i)
+		if (m_plevel[i]) m_plevel[i]->UpdateText(std::to_wstring(level[i]), L"LV.");
+>>>>>>> Stashed changes
 
 	//currentHP = g_myid.hp;
 

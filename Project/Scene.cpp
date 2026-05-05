@@ -920,7 +920,51 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 	{
 		cout << "Mouse Clicked at (" << pt.x << ", " << pt.y << ")" << endl;
 
+<<<<<<< Updated upstream
 		dynamic_cast<CTerrainPlayer*>(m_pPlayer)->m_currentAnim = AnimationState::SWING;
+=======
+		int idx = -1;
+		for (int i = 0; i < 3; ++i)
+			if (PtInRect(&rt[i], pt)) { idx = i; break; }
+
+		if (idx == -1) { p->m_currentAnim = AnimationState::ATTACK; break; }
+
+		int lv = p->level[idx];
+		int cost = 100 + lv * 50;
+		int prob = 80 - lv * 10; if (prob < 10) prob = 10;
+
+		if (p->Pgold >= cost) {
+			p->Pgold -= cost;
+			if (Chance(prob)) p->level[idx]++;
+		}
+	}
+	break;
+	case WM_RBUTTONDOWN:
+	{
+		p->m_currentAnim = AnimationState::SKILL1;
+
+		if (!p || m_pModel != m_pWizardModel) break;
+
+		CGameObject* pHand = p->FindFrame("RightHand");
+
+		if (!pHand) break;
+
+		// 위치/방향 변수로 먼저 받아두기
+		XMFLOAT3 firePos = pHand->GetPosition();
+		XMFLOAT3 fireLook = p->GetLook();
+
+		// 로컬 이펙트 실행
+		m_pFireballSystem->Emit(firePos, fireLook, 20.0f);
+
+		std::cout << "[SKILL] 파이어볼 송신 | pos=("
+			<< firePos.x << ", " << firePos.y << ", " << firePos.z
+			<< ") look=(" << fireLook.x << ", " << fireLook.y << ", " << fireLook.z << ")\n";
+
+		/*m_pFireballSystem->Emit(pHand->GetPosition(), pPlayer->GetLook(), 20.0f); */
+
+		// server!!
+		send_skill_packet(SkillType::SKILL_FIREBALL, firePos, fireLook);
+>>>>>>> Stashed changes
 	}
 	break;
 	}

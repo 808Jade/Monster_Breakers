@@ -62,7 +62,8 @@ public:
 
 	bool	m_isMonsterHit = false;
 	bool	alreadyHeld = false;
-	float currentHP = 100.f;
+	float	currentHP = 100.f;
+	int		Pgold = 1000;
 
 	int level[3] = { 1,1,1 };
 
@@ -166,8 +167,11 @@ public:
 
 	virtual void Update(float fTimeElapsed);
 
+<<<<<<< Updated upstream
 	int debt = 10000;
 
+=======
+>>>>>>> Stashed changes
 	CTextureToScreenShader* m_playerHP = NULL;
 	ID3D12Device* device = nullptr; 
 	ID3D12GraphicsCommandList* cmdList = nullptr;

@@ -324,19 +324,55 @@ void ProcessPacket(char* ptr)
     
     case SC_P_MONSTER_SPAWN:
     {
-       
+        sc_packet_monster_spawn* packet = reinterpret_cast<sc_packet_monster_spawn*>(ptr);
+
+        std::cout << "[몬스터] SC_P_MONSTER_SPAWN 수신 | ID=" << packet->monsterID
+            << " pos=(" << packet->position.x << ", "
+            << packet->position.y << ", "
+            << packet->position.z << ")\n";
+
+
+        break;
+    }
+
+    case SC_P_MONSTER_MOVE:
+    {
+        sc_packet_monster_move* packet = reinterpret_cast<sc_packet_monster_move*>(ptr);
+
         break;
     }
 
     case SC_P_UPDATE_MONSTER_HP:
     {
-       
+        sc_packet_update_monster_hp* packet = reinterpret_cast<sc_packet_update_monster_hp*>(ptr);
+
+        cout << "[몬스터] SC_P_UPDATE_MONSTER_HP 수신 | ID=" << packet->monsterID
+            << " HP=" << packet->hp << "\n";
+
+        break;
+    }
+
+    case SC_P_MONSTER_DIE:
+    {
+        sc_packet_monster_die* packet = reinterpret_cast<sc_packet_monster_die*>(ptr);
+
+        std::cout << "[몬스터] SC_P_MONSTER_DIE 수신 | ID=" << packet->monsterID
+            << " 처치자=" << packet->killerID << "\n";
+
+        break;
     }
     
-    case SC_P_MONSTER_MOVE:
+    case SC_P_GOLD_REWARD:
     {
-        
+        sc_packet_gold_reward* packet = reinterpret_cast<sc_packet_gold_reward*>(ptr);
+
+        gGameFramework.UpdatePlayerGold(packet->totalGold);
+
+        std::cout << "[골드] SC_P_GOLD_REWARD 수신 | +" << packet->amount
+            << "G (현재=" << packet->totalGold << "G)\n";
+
         break;
+
     }
 
     default:
