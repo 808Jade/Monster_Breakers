@@ -257,12 +257,12 @@ CHeightMapGridMesh::CHeightMapGridMesh(ID3D12Device *pd3dDevice, ID3D12GraphicsC
 	m_d3dTextureCoord1BufferView.SizeInBytes = sizeof(XMFLOAT2) * m_nVertices;
 
 	m_nSubMeshes = 1;
-	m_pnSubSetIndices = new int[m_nSubMeshes];
-	m_ppnSubSetIndices = new UINT*[m_nSubMeshes];
+	m_pnSubSetIndices = new int[m_nSubMeshes] {};
+	m_ppnSubSetIndices = new UINT * [m_nSubMeshes] {};
 
-	m_ppd3dSubSetIndexBuffers = new ID3D12Resource*[m_nSubMeshes];
-	m_ppd3dSubSetIndexUploadBuffers = new ID3D12Resource*[m_nSubMeshes];
-	m_pd3dSubSetIndexBufferViews = new D3D12_INDEX_BUFFER_VIEW[m_nSubMeshes];
+	m_ppd3dSubSetIndexBuffers = new ID3D12Resource * [m_nSubMeshes] {};
+	m_ppd3dSubSetIndexUploadBuffers = new ID3D12Resource * [m_nSubMeshes] {};
+	m_pd3dSubSetIndexBufferViews = new D3D12_INDEX_BUFFER_VIEW[m_nSubMeshes]{};
 
 	m_pnSubSetIndices[0] = ((nWidth * 2)*(nLength - 1)) + ((nLength - 1) - 1);
 	m_ppnSubSetIndices[0] = new UINT[m_pnSubSetIndices[0]];
@@ -585,12 +585,12 @@ void CStandardMesh::LoadMeshFromFile(ID3D12Device *pd3dDevice, ID3D12GraphicsCom
 			nReads = (UINT)::fread(&(m_nSubMeshes), sizeof(int), 1, pInFile);
 			if (m_nSubMeshes > 0)
 			{
-				m_pnSubSetIndices = new int[m_nSubMeshes];
-				m_ppnSubSetIndices = new UINT*[m_nSubMeshes];
+				m_pnSubSetIndices = new int[m_nSubMeshes] {};
+				m_ppnSubSetIndices = new UINT*[m_nSubMeshes] {};
 
-				m_ppd3dSubSetIndexBuffers = new ID3D12Resource*[m_nSubMeshes];
-				m_ppd3dSubSetIndexUploadBuffers = new ID3D12Resource*[m_nSubMeshes];
-				m_pd3dSubSetIndexBufferViews = new D3D12_INDEX_BUFFER_VIEW[m_nSubMeshes];
+				m_ppd3dSubSetIndexBuffers = new ID3D12Resource * [m_nSubMeshes] {};
+				m_ppd3dSubSetIndexUploadBuffers = new ID3D12Resource * [m_nSubMeshes] {};
+				m_pd3dSubSetIndexBufferViews = new D3D12_INDEX_BUFFER_VIEW[m_nSubMeshes]{};
 
 				for (int i = 0; i < m_nSubMeshes; i++)
 				{

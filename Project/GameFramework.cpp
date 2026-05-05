@@ -412,8 +412,9 @@ void CGameFramework::BuildObjects()
 	m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
 
 	m_nScenes = 4; // 총 Scene 개수
-	m_ppScenes = new CScene * [m_nScenes];
-
+	if (!m_ppScenes) {
+		m_ppScenes = new CScene * [m_nScenes] {};  // 딱 한 번만 할당, NULL로 초기화
+	}
 
 	bool b = false;
 	if (m_nCurrentScene == 0) {
@@ -662,7 +663,7 @@ void CGameFramework::FrameAdvance()
 
 	AnimateObjects();
 
-	WaitForGpuComplete();
+	//WaitForGpuComplete();
 	if (m_pScene) m_pScene->UpdateUI(m_pd3dCommandList);
 
 	if (m_pScene) m_pScene->Render(m_pd3dCommandList, m_pCamera, d3dRtvCPUDescriptorHandle, d3dDsvCPUDescriptorHandle);
