@@ -633,8 +633,8 @@ VS_GROUNDCRACK_OUTPUT VSGroundCrack(VS_GROUNDCRACK_INPUT input)
 float4 PSGroundCrack(VS_GROUNDCRACK_OUTPUT input) : SV_TARGET
 {
     float centerFactor = 1.0f - abs(input.uv.y * 2.0f - 1.0f);
-    centerFactor = pow(centerFactor, 0.6f); 
-
+    centerFactor = pow(abs(centerFactor), 0.6f);
+    
     float tipFade = 1.0f - input.uv.x * 0.75f;
 
     float alpha = centerFactor * tipFade * input.alpha;

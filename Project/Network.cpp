@@ -37,8 +37,8 @@ std::mutex g_item_mutex;
 //           몬스터 렌더링을 위한 몬스터 오브젝트 및 관리 
 // =================================================================
 
-// 아래의 저장소는 몬스터(CSpider) 고유ID를 저장
-std::unordered_map<long long, CSpider*> g_monsters;
+// 아래의 저장소는 몬스터(CMonster) 고유ID를 저장
+std::unordered_map<long long, CMonster*> g_monsters;
 std::mutex g_monster_mutex;
 
 

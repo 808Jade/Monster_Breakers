@@ -5,6 +5,7 @@
 #include "Scene.h"
 #include "OtherPlayer.h" 
 #include "Object_Items.h"
+#include "CMonster.h"
 
 
 // 클라이언트에서 서버로 가야할것 -----------
@@ -53,7 +54,7 @@ extern std::queue<std::vector<char>> g_sendQueue;
 extern std::mutex g_sendMutex;
 extern std::condition_variable g_sendCV;
 
-extern std::unordered_map<long long, CSpider*> g_monsters;
+extern std::unordered_map<long long, CMonster*> g_monsters;
 extern std::mutex g_monster_mutex;
 
 

@@ -8,6 +8,7 @@
 #include "Player.h"
 #include "Object_Items.h"
 #include "OtherPlayer.h"
+#include "CMonster.h"
 #include "Map.h"
 #include "CollisionManager.h"
 #include "CParticle.h"
@@ -102,6 +103,7 @@ public:
 	void GenerateGameObjectsBoundingBox();
 
 	void BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
+	void UpdateUI(ID3D12GraphicsCommandList* pd3dCommandList);
 
 protected:
 	// 실제 렌더 본문(공통). 자식들은 이걸 override하면 됨.
@@ -196,7 +198,7 @@ public:
 	float								m_fElapsedTime = 0.0f;
 
 	std::vector<CGameObject*> m_GameObjects;  
-	std::vector<CGameObject*> m_Monsters;     
+	std::vector<CMonster*>	  m_Monsters;
 	std::vector<CShader*>     m_Shaders;
 
 	CLoadedModelInfo* m_pModel = NULL; // 플레이어 모델

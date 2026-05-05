@@ -660,6 +660,8 @@ void CSkinnedMesh::CreateShaderVariables(ID3D12Device *pd3dDevice, ID3D12Graphic
 
 void CSkinnedMesh::UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList)
 {
+	if (!pd3dCommandList) return;
+
 	if (m_pd3dcbBindPoseBoneOffsets)
 	{
 		D3D12_GPU_VIRTUAL_ADDRESS d3dcbBoneOffsetsGpuVirtualAddress = m_pd3dcbBindPoseBoneOffsets->GetGPUVirtualAddress();

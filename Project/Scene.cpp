@@ -16,6 +16,26 @@ static bool Chance(int percent) { // 0~100
 	return dist(rng) <= percent;
 }
 
+// 몬스터 종류별 정보: { 모델 파일명, 서버 시작ID, HP, 스케일 }
+struct MonsterDesc {
+	const char* modelPath;
+	int         startID;
+	float       hp;
+	float       scale;
+};
+
+static const MonsterDesc MONSTER_DESCS[] = {
+	{ "Model/Monster/BattleBeePA.bin",      10001, 100.0f, 2.0f },
+	{ "Model/Monster/BishopKnightPA.bin",   10004, 150.0f, 2.0f },
+	{ "Model/Monster/CactusPA.bin",         10007, 100.0f, 2.0f },
+	{ "Model/Monster/CyclopsPA.bin",        10010, 200.0f, 2.0f },
+	{ "Model/Monster/FishmanPA.bin",        10013, 100.0f, 2.0f },
+	{ "Model/Monster/MushroomAngryPA.bin",  10016, 100.0f, 2.0f },
+	{ "Model/Monster/NagaWizardPA.bin",     10019, 120.0f, 2.0f },
+	{ "Model/Monster/SalamanderPA.bin",     10022, 100.0f, 2.0f },
+	{ "Model/Monster/StingRayPA.bin",       10025, 100.0f, 2.0f },
+};
+
 extern CGameFramework gGameFramework;
 
 ID3D12DescriptorHeap *CScene::m_pd3dCbvSrvDescriptorHeap = NULL;
@@ -195,6 +215,17 @@ void CScene::BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 	}
 }
 
+void CScene::UpdateUI(ID3D12GraphicsCommandList* pd3dCommandList)
+{
+	for (auto* obj : m_GameObjects) {
+		if (auto* textObj = dynamic_cast<CText*>(obj)) {
+			textObj->UpdateText(std::to_wstring(m_pPlayer->level[0]), L"LV. ");
+			textObj->UpdateText(std::to_wstring(m_pPlayer->level[1]), L"LV. ");
+			textObj->UpdateText(std::to_wstring(m_pPlayer->level[2]), L"LV. ");
+		}
+	}
+}
+
 void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList)
 {
 	m_pd3dGraphicsRootSignature = CreateGraphicsRootSignature(pd3dDevice);
@@ -224,43 +255,24 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	m_pThiefModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Thief.bin", NULL);
 	
 	m_Monsters.clear();
-	m_Monsters.resize(4);
-	int monsterIDs[4] = { 10001,10002,10003,10004 };
 
-	CLoadedModelInfo* pSpiderModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/SalamanderPA.bin", NULL);
-	XMFLOAT3 monsterPos[4] = {
-		{-14.4431, 0, 97.5215},
-		{-9.05774, 0, 122.508},
-		{13.721, 0, 117.925},
-		{4.82955, 0, 96.9888}
-	};
-	for (int i = 0; i < static_cast<int>(m_Monsters.size()); ++i)
+	for (const auto& desc : MONSTER_DESCS)
 	{
-		m_Monsters[i] = new CSpider(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pSpiderModel, 5);
-		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); //idle
-		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(1, 1); //walk
-		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(2, 2); //attack
-		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); //gethit
-		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(4, 4); //death
-		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(1, false);
-		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(2, false);
-		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(3, false);
-		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(4, false);
+		auto group = CMonster::SpawnGroup(
+			pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, desc.modelPath,
+			3,              // 종류마다 3마리
+			desc.startID, desc.hp, desc.scale);
 
-		m_Monsters[i]->SetPosition(monsterPos[i]);
-		m_Monsters[i]->Rotate(0, rand(), 0);
-		m_Monsters[i]->SetScale(2, 2, 2);
+		// server!! 위치 받아야함
+		for (CMonster* pMonster : group)
+		{
+			pMonster->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
+			pMonster->Rotate(0, rand() % 360, 0);
+			pMonster->SetPlayer(m_pPlayer);
 
-		//std::string spiderName = "SalamanderPA" + std::to_string(i);
-		//m_Monsters[i]->SetFrameName(spiderName.c_str());
-
-		static_cast<CSpider*>(m_Monsters[i])->SetMonsterID(monsterIDs[i]);
-		g_monsters[monsterIDs[i]] = static_cast<CSpider*>(m_Monsters[i]);
-
+			m_Monsters.push_back(pMonster);
+		}
 	}
-
-	if (pSpiderModel) delete pSpiderModel;
-
 //
 //	m_GameObjects.clear();
 //	m_GameObjects.resize(8);
@@ -1193,11 +1205,11 @@ void CScene::AnimateObjects(float fTimeElapsed)
 {
 	for (auto* obj : m_GameObjects) {
 		if (obj) obj->Animate(fTimeElapsed);
-		if (auto* textObj = dynamic_cast<CText*>(obj)) {
+		/*if (auto* textObj = dynamic_cast<CText*>(obj)) {
 			textObj->UpdateText(std::to_wstring(m_pPlayer->level[0]), L"LV. ");
 			textObj->UpdateText(std::to_wstring(m_pPlayer->level[1]), L"LV. ");
 			textObj->UpdateText(std::to_wstring(m_pPlayer->level[2]), L"LV. ");
-		}
+		}*/
 	}
 	
 	if (m_pFireballSystem) m_pFireballSystem->Animate(fTimeElapsed);

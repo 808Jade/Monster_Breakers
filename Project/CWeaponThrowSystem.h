@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Object.h"
 
 class CTerrainPlayer;
@@ -24,6 +24,7 @@ public:
 
 private:
     static constexpr float MAX_LIFETIME = 3.0f;
+    static constexpr float ROTATION_SPEED = 360.0f;
 
     // 발사체 상태
     bool      m_bActive = false;
@@ -31,6 +32,7 @@ private:
     XMFLOAT3  m_Direction = {};
     float     m_Speed = 0.0f;
     float     m_Lifetime = 0.0f;
+    float     m_fRotationY = 0.0f;
 
     // 플레이어 손의 SM_Weapon_01 참조 (수명 만료 시 복원)
     CGameObject* m_pWeaponFrame = nullptr;

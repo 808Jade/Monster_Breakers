@@ -1,4 +1,4 @@
-#include "CFireballSystem.h"
+﻿#include "CFireballSystem.h"
 #include "CFireballShader.h"
 #include "Scene.h"
 #include "d3dx12.h"        // 추가: CD3DX12_* 헬퍼 타입 정의 포함

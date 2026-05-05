@@ -721,8 +721,7 @@ void CTerrainPlayer::SetHPWidth(float newWidth)
 	if (m_playerHP)
 	{
 		// 새 mesh 생성
-		CScreenRectMeshTextured* newMesh = new CScreenRectMeshTextured(device, cmdList, 0.25f, newWidth, 0.9f, 0.1f);
-
+		CScreenRectMeshTextured* newMesh = new CScreenRectMeshTextured(device, cmdList, 0.25f, newWidth, 0.85f, 0.1f);
 		// 기존 메시 교체
 		m_playerHP->SetMesh(0, newMesh);
 	}

@@ -89,7 +89,7 @@ void CCollisionManager::HandleCollision(CPlayer* player, CGameObject* obj)
     //if (frameCounter % 60 == 0)
     //    cout << "ObjectFrameName: " << ObjectFrameName << endl;
 
-    bool isMonster = (dynamic_cast<CSpider*>(obj) != nullptr);
+    bool isMonster = (dynamic_cast<CMonster*>(obj) != nullptr);
     bool isAttacking = (dynamic_cast<CTerrainPlayer*>(player)->m_currentAnim == AnimationState::ATTACK);
     bool isSwordHit = player->GetSwordAttackBoundingBox().Intersects(obj->GetBoundingBox());
 

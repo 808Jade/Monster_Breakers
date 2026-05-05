@@ -7,6 +7,7 @@
 #include "Timer.h"
 #include "Player.h"
 #include "Scene.h"
+#include "CMonster.h"
 
 enum class EPlayerModelType
 {
@@ -77,7 +78,7 @@ public:
 	}
 
 	void OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int state);
-	void UpdateMonsterState(CSpider* pMonster, int state);
+	void UpdateMonsterState(CMonster* pMonster, int state);
 	void UpdateMonsterPosition(int monsterID, const XMFLOAT3& pos, const XMFLOAT3& rot, int state);
 
 	void ItemSpawned(long long itemID, const XMFLOAT3& pos, int type, int price);

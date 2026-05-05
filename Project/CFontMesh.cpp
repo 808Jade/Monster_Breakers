@@ -9,8 +9,9 @@ CFontMesh::CFontMesh(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCo
     const int count = static_cast<int>(m_text.length());
     if (count == 0) return;
 
-    if (m_pd3dPositionBuffer) m_pd3dPositionBuffer->Release();
-    if (m_pd3dPositionUploadBuffer) m_pd3dPositionUploadBuffer->Release();
+    // 아래 때문에 오류 발생 의심
+/*    if (m_pd3dPositionBuffer) m_pd3dPositionBuffer->Release();
+    if (m_pd3dPositionUploadBuffer) m_pd3dPositionUploadBuffer->Release();*/
 
     const float charSize = 0.1f;
     const float spacing = 0.025f;

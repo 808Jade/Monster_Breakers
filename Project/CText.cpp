@@ -47,9 +47,14 @@ CText::~CText()
 
 void CText::UpdateText(const std::wstring& text, const std::wstring& fixtext)
 {
-    m_text = fixtext + text;
+    std::wstring newText = fixtext + text;
+
+    // 텍스트가 바뀔 때만 재생성
+    if (newText == m_text) return;
+    m_text = newText;
 
     if (!commandlist) return;
+
     CFontMesh* pMesh = new CFontMesh(device, commandlist, m_text, m_fX, m_fY);
     SetMesh(pMesh);
 }

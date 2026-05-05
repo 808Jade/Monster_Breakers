@@ -1,4 +1,4 @@
-#include "CGreenSpiritSystem.h"
+﻿#include "CGreenSpiritSystem.h"
 #include "CFireballShader.h"
 #include "Scene.h"
 #include "d3dx12.h"

@@ -5,7 +5,7 @@
 #include "stdafx.h"
 #include "GameFramework.h"
 #include "Network.h"
-#include "Hpbar.h"
+#include "CMonster.h"
 
 CGameFramework::CGameFramework()
 {
@@ -662,6 +662,9 @@ void CGameFramework::FrameAdvance()
 
 	AnimateObjects();
 
+	WaitForGpuComplete();
+	if (m_pScene) m_pScene->UpdateUI(m_pd3dCommandList);
+
 	if (m_pScene) m_pScene->Render(m_pd3dCommandList, m_pCamera, d3dRtvCPUDescriptorHandle, d3dDsvCPUDescriptorHandle);
 
 #ifdef _WITH_PLAYER_TOP
@@ -766,7 +769,7 @@ void CGameFramework::OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int st
 	}
 }
 
-void CGameFramework::UpdateMonsterState(CSpider* pMonster, int state)
+void CGameFramework::UpdateMonsterState(CMonster* pMonster, int state)
 {
 	// 애니메이션 트랙 설정 등
 	for (int i = 0; i < 5; ++i)
@@ -792,7 +795,7 @@ void CGameFramework::UpdateMonsterPosition(int monsterID, const XMFLOAT3& pos, c
 		return;
 	}
 
-	CSpider* pMonster = it->second;
+	CMonster* pMonster = it->second;
 	pMonster->SetPosition(pos);
 	pMonster->Rotate(rot);
 	UpdateMonsterState(pMonster, state);

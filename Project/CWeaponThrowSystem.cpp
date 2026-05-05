@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "CWeaponThrowSystem.h"
 #include "Scene.h"
 
@@ -25,9 +25,7 @@ void CWeaponThrowSystem::Create(
     }
 }
 
-void CWeaponThrowSystem::Emit(
-    const XMFLOAT3& pos, const XMFLOAT3& dir, float speed,
-    CGameObject* pWeaponFrame)
+void CWeaponThrowSystem::Emit(const XMFLOAT3& pos, const XMFLOAT3& dir, float speed, CGameObject* pWeaponFrame)
 {
     // 이미 날아가는 중이면 무시
     if (m_bActive) return;
@@ -37,6 +35,7 @@ void CWeaponThrowSystem::Emit(
     XMStoreFloat3(&m_Direction, vDir);
     m_Speed = speed;
     m_Lifetime = MAX_LIFETIME;
+    m_fRotationY = 0.0f;
     m_bActive = true;
 
     // 플레이어 손의 무기 숨기기
@@ -54,6 +53,10 @@ void CWeaponThrowSystem::Animate(float fTimeElapsed)
     XMVECTOR vDir = XMLoadFloat3(&m_Direction);
     vPos = XMVectorAdd(vPos, XMVectorScale(vDir, m_Speed * fTimeElapsed));
     XMStoreFloat3(&m_Position, vPos);
+    
+    // 회전
+    m_fRotationY += ROTATION_SPEED * fTimeElapsed;
+    if (m_fRotationY >= 360.0f) m_fRotationY -= 360.0f;
 
     // 수명 감소
     m_Lifetime -= fTimeElapsed;
@@ -77,5 +80,10 @@ void CWeaponThrowSystem::Render(
 
     m_pWeaponObj->SetPosition(m_Position);
     m_pWeaponObj->UpdateTransform(nullptr);
+
+    XMMATRIX matWorld = XMLoadFloat4x4(&m_pWeaponObj->m_xmf4x4World);
+    XMMATRIX matRot = XMMatrixRotationX(XMConvertToRadians(m_fRotationY));
+    XMStoreFloat4x4(&m_pWeaponObj->m_xmf4x4World, matRot * matWorld);
+
     m_pWeaponObj->Render(pd3dCommandList, pCamera);
 }
