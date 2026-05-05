@@ -645,7 +645,7 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 		}
 	}
 
-	if (m_pText) { m_pText->UpdateText(std::to_wstring(gold), L"Gold : "); }
+	if (m_pText) { m_pText->UpdateText(std::to_wstring(Pgold), L"Gold : "); }
 
 	for (int i = 0; i < 3; ++i)
 		if (m_plevel[i]) m_plevel[i]->UpdateText(std::to_wstring(level[i]), L"LV.");

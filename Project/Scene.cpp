@@ -1086,8 +1086,8 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 		int cost = 100 + lv * 50;
 		int prob = 80 - lv * 10; if (prob < 10) prob = 10;
 
-		if (p->gold >= cost) {
-			p->gold -= cost;
+		if (m_pPlayer->Pgold >= cost) {
+			m_pPlayer->Pgold -= cost;
 			if (Chance(prob)) p->level[idx]++;
 		}
 	}
