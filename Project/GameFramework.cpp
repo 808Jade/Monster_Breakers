@@ -433,8 +433,12 @@ void CGameFramework::BuildObjects()
 		m_ppScenes[2]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
 		if (GetSelectedPlayerModel() == EPlayerModelType::Wizard)
 			m_ppScenes[2]->m_pModel = m_ppScenes[2]->m_pWizardModel;
-		else
+		else if (GetSelectedPlayerModel() == EPlayerModelType::Knight)
 			m_ppScenes[2]->m_pModel = m_ppScenes[2]->m_pKnightModel;
+		else
+			m_ppScenes[2]->m_pModel = m_ppScenes[2]->m_pThiefModel;
+		m_ppScenes[2]->BuildSimpleUI(m_pd3dDevice, m_pd3dCommandList);
+
 		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[2]->GetGraphicsRootSignature(), NULL, m_ppScenes[2]->m_pModel);
 
 		m_ppScenes[2]->SetPlayer(pPlayer);
@@ -507,7 +511,6 @@ void CGameFramework::ProcessInput()
 		if (pKeysBuffer[VK_SHIFT] & 0xF0) dwDirection |= DIR_DOWN;
 		bool bCurrA = (pKeysBuffer['A'] & 0xF0);
 		bool bCurrD = (pKeysBuffer['D'] & 0xF0);
-		bool bCurrSpace = (pKeysBuffer[VK_SPACE] & 0xF0);      // jump
 
 		CTerrainPlayer* terrainPlayer = dynamic_cast<CTerrainPlayer*>(m_pPlayer);
 		if (!terrainPlayer) return;
@@ -529,16 +532,16 @@ void CGameFramework::ProcessInput()
 
 		AnimationState currentState = terrainPlayer->m_currentAnim;
 
-		if (currentState != AnimationState::SWING && currentState != AnimationState::JUMP)
+		if (currentState != AnimationState::ATTACK &&
+			currentState != AnimationState::SKILL1 &&
+			currentState != AnimationState::SKILL2 &&
+			currentState != AnimationState::SKILL3)
 		{
+			
 			bool isMoving = dwDirection & (DIR_FORWARD | DIR_BACKWARD);
 			bool isRunning = dwDirection & DIR_DOWN;
 
-			if (bCurrSpace && !bPrevSpace)
-			{
-				terrainPlayer->m_currentAnim = AnimationState::JUMP;
-			}
-			else if (isRunning && isMoving)
+		if (isRunning && isMoving)
 			{
 				terrainPlayer->m_currentAnim = AnimationState::RUN;
 				terrainPlayer->Move(dwDirection, 4.0f, true);
@@ -553,8 +556,6 @@ void CGameFramework::ProcessInput()
 				terrainPlayer->m_currentAnim = AnimationState::IDLE;
 			}
 		}
-
-		bPrevSpace = bCurrSpace;
 	}
 	m_pPlayer->Update(m_GameTimer.GetTimeElapsed());
 }
@@ -631,7 +632,7 @@ void CGameFramework::FrameAdvance()
 		return;
 	}
 
-	m_GameTimer.Tick(60.0f);
+	m_GameTimer.Tick(0.0f);
 	
 	HRESULT hResult = m_pd3dCommandAllocator->Reset();
 	hResult = m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
@@ -661,7 +662,7 @@ void CGameFramework::FrameAdvance()
 
 	AnimateObjects();
 
-	if (m_pScene) m_pScene->Render(m_pd3dCommandList, m_pCamera);
+	if (m_pScene) m_pScene->Render(m_pd3dCommandList, m_pCamera, d3dRtvCPUDescriptorHandle, d3dDsvCPUDescriptorHandle);
 
 #ifdef _WITH_PLAYER_TOP
 	m_pd3dCommandList->ClearDepthStencilView(d3dDsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);

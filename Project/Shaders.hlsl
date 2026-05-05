@@ -20,6 +20,16 @@ cbuffer cbGameObjectInfo : register(b2)
 	uint					gnTexturesMask : packoffset(c8);
 };
 
+cbuffer cbShadowInfo : register(b5)
+{
+    matrix gmtxLightView : packoffset(c0); // 4 registers
+    matrix gmtxLightProj : packoffset(c4); // 4 registers
+    float gShadowBias : packoffset(c8.x); // bias
+    float3 _padShadow0 : packoffset(c8.y);
+    float2 gShadowTexel : packoffset(c9.x); // (1/width, 1/height)
+    float2 _padShadow1 : packoffset(c9.z);
+};
+
 #include "Light.hlsl"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -44,6 +54,46 @@ Texture2D gtxtDetailNormalTexture : register(t12);
 
 SamplerState gssWrap : register(s0);
 
+Texture2D<float> gtxtShadowMap : register(t5);
+SamplerComparisonState gssShadow : register(s3);
+
+float2 ClipToUV(float4 lightH)
+{
+    float3 ndc = lightH.xyz / lightH.w; // [-1,1]
+    float2 uv;
+    uv.x = ndc.x * 0.5f + 0.5f;
+    uv.y = -ndc.y * 0.5f + 0.5f;
+    return uv;
+}
+
+float ShadowFactor(float4 lightH)
+{
+    float3 ndc = lightH.xyz / lightH.w;
+
+    // 라이트 frustum 밖이면 그림자 적용 X
+    if (ndc.x < -1 || ndc.x > 1 || ndc.y < -1 || ndc.y > 1 || ndc.z < 0 || ndc.z > 1)
+        return 1.0f;
+
+    float2 uv = ClipToUV(lightH);
+
+    float currentDepth = ndc.z;
+    float depth = currentDepth - gShadowBias;
+
+    // 3x3 PCF
+    float sum = 0.0f;
+    [unroll]
+    for (int y = -1; y <= 1; ++y)
+    {
+        [unroll]
+        for (int x = -1; x <= 1; ++x)
+        {
+            float2 uvo = uv + float2(x, y) * gShadowTexel;
+            sum += gtxtShadowMap.SampleCmpLevelZero(gssShadow, uvo, depth);
+        }
+    }
+    return sum / 9.0f;
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct VS_STANDARD_INPUT
 {
 	float3 position : POSITION;
@@ -61,6 +111,8 @@ struct VS_STANDARD_OUTPUT
 	float3 tangentW : TANGENT;
 	float3 bitangentW : BITANGENT;
 	float2 uv : TEXCOORD;
+	
+    float4 positionLightH : TEXCOORD2;
 };
 
 VS_STANDARD_OUTPUT VSStandard(VS_STANDARD_INPUT input)
@@ -73,6 +125,9 @@ VS_STANDARD_OUTPUT VSStandard(VS_STANDARD_INPUT input)
 	output.bitangentW = mul(input.bitangent, (float3x3)gmtxGameObject);
 	output.position = mul(mul(float4(output.positionW, 1.0f), gmtxView), gmtxProjection);
 	output.uv = input.uv;
+
+    float4 posW = float4(output.positionW, 1.0f);
+    output.positionLightH = mul(mul(posW, gmtxLightView), gmtxLightProj);
 
 	return(output);
 }
@@ -100,15 +155,44 @@ float4 PSStandard(VS_STANDARD_OUTPUT input) : SV_TARGET
     if (gnTexturesMask & MATERIAL_NORMAL_MAP)
     {
         float3x3 TBN = float3x3(normalize(input.tangentW), normalize(input.bitangentW), normalize(input.normalW));
-        float3 vNormal = normalize(cNormalColor.rgb * 2.0f - 1.0f); //[0, 1] �� [-1, 1]
+        float3 vNormal = normalize(cNormalColor.rgb * 2.0f - 1.0f); //[0, 1] → [-1, 1]
         normalW = normalize(mul(vNormal, TBN));
     }
     else
     {
         normalW = normalize(input.normalW);
     }
+    
     float4 cIllumination = Lighting(input.positionW, normalW);
-    return (lerp(cColor, cIllumination, 0.5f));
+    float shadow = ShadowFactor(input.positionLightH);
+    cIllumination.rgb *= shadow;
+
+    return lerp(cColor, cIllumination, 0.5f);
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+struct VS_SHADOW_INPUT
+{
+    float3 position : POSITION;
+};
+
+struct VS_SHADOW_OUTPUT
+{
+    float4 position : SV_POSITION;
+};
+
+VS_SHADOW_OUTPUT VSShadow(VS_SHADOW_INPUT input)
+{
+    VS_SHADOW_OUTPUT output;
+
+    float3 posW = mul(float4(input.position, 1.0f), gmtxGameObject).xyz;
+    output.position = mul(mul(float4(posW, 1.0f), gmtxLightView), gmtxLightProj);
+
+    return output;
+}
+
+float4 PSShadow(VS_SHADOW_OUTPUT input) : SV_TARGET
+{
+    return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -165,6 +249,9 @@ VS_STANDARD_OUTPUT VSSkinnedAnimationStandard(VS_SKINNED_STANDARD_INPUT input)
 	output.tangentW = mul(input.tangent, (float3x3)mtxVertexToBoneWorld).xyz;
 	output.bitangentW = mul(input.bitangent, (float3x3)mtxVertexToBoneWorld).xyz;
 
+    float4 posW = float4(output.positionW, 1.0f);
+    output.positionLightH = mul(mul(posW, gmtxLightView), gmtxLightProj);
+	
 //	output.positionW = mul(float4(input.position, 1.0f), gmtxGameObject).xyz;
 
 	output.position = mul(mul(float4(output.positionW, 1.0f), gmtxView), gmtxProjection);
@@ -173,6 +260,20 @@ VS_STANDARD_OUTPUT VSSkinnedAnimationStandard(VS_SKINNED_STANDARD_INPUT input)
 	return(output);
 }
 
+VS_SHADOW_OUTPUT VSSkinnedShadow(VS_SKINNED_STANDARD_INPUT input)
+{
+    VS_SHADOW_OUTPUT o;
+
+    float4x4 mtxVertexToBoneWorld = (float4x4) 0.0f;
+    for (int i = 0; i < MAX_VERTEX_INFLUENCES; i++)
+    {
+        mtxVertexToBoneWorld += input.weights[i] * mul(gpmtxBoneOffsets[input.indices[i]], gpmtxBoneTransforms[input.indices[i]]);
+    }
+
+    float3 posW = mul(float4(input.position, 1.0f), mtxVertexToBoneWorld).xyz;
+    o.position = mul(mul(float4(posW, 1.0f), gmtxLightView), gmtxLightProj);
+    return o;
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 Texture2D gtxtTexture : register(t0);
@@ -215,14 +316,22 @@ VS_TEXTURED_OUTPUT VSTextureToScreen(VS_TEXTURED_INPUT input)
 
     return (output);
 }
-
+// HP 바 전용 - discard 없이 그냥 출력
+float4 PSTextureToScreenHP(VS_TEXTURED_OUTPUT input) : SV_TARGET
+{
+    float4 cColor = gtxtTexture.Sample(gssWrap, input.uv);
+    return (cColor);
+}
 float4 PSTextureToScreen(VS_TEXTURED_OUTPUT input) : SV_TARGET
 {
     float4 cColor = gtxtTexture.Sample(gssWrap, input.uv);
 
-    if ((cColor.r >= 0.9f) && (cColor.g == 0.f) && (cColor.b == 0.f))
+    float maxGB = max(cColor.g, cColor.b);
+    if (cColor.r > 0.3f && cColor.r > maxGB * 3.0f)
         discard;
-	
+   //if (cColor.a < 0.1f)
+   //    discard;
+    
     return (cColor);
 }
 
@@ -330,4 +439,165 @@ float4 PSSkyBox(VS_SKYBOX_CUBEMAP_OUTPUT input) : SV_TARGET
 	float4 cColor = gtxtSkyCubeTexture.Sample(gssClamp, input.positionL);
 
 	return(cColor);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+struct VS_INSTANCED_STANDARD_INPUT
+{
+    float3 position : POSITION;
+    float2 uv : TEXCOORD;
+    float3 normal : NORMAL;
+    float3 tangent : TANGENT;
+    float3 bitangent : BITANGENT;
+    
+    matrix mtxInstanceTransform : INSTANCE_TRANSFORM;
+};
+
+VS_STANDARD_OUTPUT VSInstancedStandard(VS_INSTANCED_STANDARD_INPUT input)
+{
+    VS_STANDARD_OUTPUT output;
+	
+    float4 localPos = mul(float4(input.position, 1.0f), gmtxGameObject);
+    float3 localNormal = mul(input.normal, (float3x3) gmtxGameObject);
+    float3 localTangent = mul(input.tangent, (float3x3) gmtxGameObject);
+    float3 localBitangent = mul(input.bitangent, (float3x3) gmtxGameObject);
+    
+    output.positionW = mul(localPos, input.mtxInstanceTransform).xyz;
+    output.normalW = mul(localNormal, (float3x3) input.mtxInstanceTransform);
+    output.tangentW = mul(localTangent, (float3x3) input.mtxInstanceTransform);
+    output.bitangentW = mul(localBitangent, (float3x3) input.mtxInstanceTransform);
+    
+    output.position = mul(mul(float4(output.positionW, 1.0f), gmtxView), gmtxProjection);
+    output.uv = input.uv;
+
+    return (output);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+#define SPRITE_COLS  4
+#define SPRITE_ROWS  4
+
+struct FireballParticle
+{
+    float3 position;
+    float size;
+    float3 velocity;
+    float lifetime;
+    float maxLifetime;
+    float uvOffset;
+    uint active;
+    float pad;
+};
+
+StructuredBuffer<FireballParticle> gFireballParticles : register(t4);
+
+struct VS_FIREBALL_IN
+{
+    float3 posL : POSITION;
+    float2 uv : TEXCOORD;
+};
+
+struct VS_FIREBALL_OUT
+{
+    float4 posH : SV_POSITION;
+    float2 uv : TEXCOORD0;
+    float lifeRatio : TEXCOORD1;
+};
+
+VS_FIREBALL_OUT VSFireball(VS_FIREBALL_IN input, uint instanceID : SV_InstanceID)
+{
+    VS_FIREBALL_OUT output;
+
+    FireballParticle p = gFireballParticles[instanceID];
+
+    if (!p.active)
+    {
+        output.posH = float4(0.0f, 0.0f, 2.0f, 1.0f);
+        output.uv = float2(0.0f, 0.0f);
+        output.lifeRatio = 0.0f;
+        return output;
+    }
+
+    float3 camRight = normalize(float3(gmtxView[0][0], gmtxView[1][0], gmtxView[2][0]));
+    float3 camUp = normalize(float3(gmtxView[0][1], gmtxView[1][1], gmtxView[2][1]));
+
+    float3 worldPos = p.position
+                    + camRight * input.posL.x * p.size
+                    + camUp * input.posL.y * p.size;
+
+    float4 posV = mul(float4(worldPos, 1.0f), gmtxView);
+    output.posH = mul(posV, gmtxProjection);
+
+    float frameF = fmod(p.uvOffset * (SPRITE_COLS * SPRITE_ROWS), (float) (SPRITE_COLS * SPRITE_ROWS));
+    uint frameI = (uint) frameF % (SPRITE_COLS * SPRITE_ROWS);
+    uint col = frameI % SPRITE_COLS;
+    uint row = frameI / SPRITE_COLS;
+
+    float cellW = 1.0f / SPRITE_COLS;
+    float cellH = 1.0f / SPRITE_ROWS;
+
+    float2 spriteUV;
+    spriteUV.x = ((float) col + input.uv.x) * cellW;
+    spriteUV.y = ((float) row + input.uv.y) * cellH;
+
+    spriteUV.x += sin(input.uv.y * 6.0f + p.uvOffset * 3.14f) * 0.015f;
+
+    output.uv = spriteUV;
+    output.lifeRatio = saturate(p.lifetime / p.maxLifetime);
+
+    return output;
+}
+
+float4 PSFireball(VS_FIREBALL_OUT input) : SV_TARGET
+{
+    float4 texColor = gtxtTexture.Sample(gssWrap, input.uv);
+    float life = input.lifeRatio;
+
+    float3 cYoung = float3(1.0f, 0.95f, 0.55f);
+    float3 cMid = float3(1.0f, 0.40f, 0.05f);
+    float3 cOld = float3(0.55f, 0.05f, 0.0f);
+
+    float3 fireColor = lerp(cYoung, cMid, saturate(life * 2.0f));
+    fireColor = lerp(fireColor, cOld, saturate((life - 0.5f) * 2.0f));
+    texColor.rgb *= fireColor;
+
+    float2 center = input.uv - float2(0.5f, 0.5f);
+
+    float2 cellUV = frac(input.uv * float2(SPRITE_COLS, SPRITE_ROWS));
+    float2 c2 = cellUV - float2(0.5f, 0.5f);
+    float edgeFade = 1.0f - smoothstep(0.35f, 0.5f, length(c2));
+
+    float lifeFade = 1.0f - smoothstep(0.55f, 1.0f, life);
+
+    texColor.a *= edgeFade * lifeFade;
+
+    clip(texColor.a - 0.01f);
+
+    return texColor;
+}
+
+float4 PSGreenSpirit(VS_FIREBALL_OUT input) : SV_TARGET
+{
+    float4 texColor = gtxtTexture.Sample(gssWrap, input.uv);
+    float life = input.lifeRatio;
+
+    float2 cellUV = frac(input.uv * float2(SPRITE_COLS, SPRITE_ROWS));
+    float2 c2 = cellUV - float2(0.5f, 0.5f);
+    float edgeFade = 1.0f - smoothstep(0.35f, 0.5f, length(c2));
+    float lifeFade = 1.0f - smoothstep(0.55f, 1.0f, life);
+    texColor.a *= edgeFade * lifeFade;
+
+    clip(texColor.a - 0.01f);
+
+    float3 cYoung = float3(0.1f, 1.5f, 0.2f); // 밝은 초록
+    float3 cMid = float3(0.05f, 0.9f, 0.1f); // 중간 초록
+    float3 cOld = float3(0.0f, 0.4f, 0.05f); // 어두운 초록
+
+    float3 spiritColor = lerp(cYoung, cMid, saturate(life * 2.0f));
+    spiritColor = lerp(spiritColor, cOld, saturate((life - 0.5f) * 2.0f));
+    texColor.rgb *= spiritColor;
+
+    return texColor;
 }

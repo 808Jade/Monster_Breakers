@@ -819,6 +819,58 @@ void CGameObject::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pC
 	if (m_pChild && m_pChild->GetVisible()) m_pChild->Render(pd3dCommandList, pCamera);
 }
 
+void CGameObject::RenderInstanced(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, UINT nInstances, ID3D12Resource* pInstanceBuffer, D3D12_VERTEX_BUFFER_VIEW* pInstanceBufferView)
+{
+	if (!pInstanceBuffer || nInstances == 0) return;
+
+	if (m_pSkinnedAnimationController) m_pSkinnedAnimationController->UpdateShaderVariables(pd3dCommandList);
+
+	if (m_pMesh)
+	{
+		UpdateShaderVariable(pd3dCommandList, &m_xmf4x4World);
+
+		// GPU에게 명부(Instance Buffer)의 위치를 알려줌
+		D3D12_VERTEX_BUFFER_VIEW instanceBufferView;
+		instanceBufferView.BufferLocation = pInstanceBuffer->GetGPUVirtualAddress();
+		instanceBufferView.StrideInBytes = sizeof(VS_INSTANCE_DATA);
+		instanceBufferView.SizeInBytes = sizeof(VS_INSTANCE_DATA) * nInstances;
+
+		pd3dCommandList->IASetVertexBuffers(13, 1, &instanceBufferView);
+
+		if (m_nMaterials > 0)
+		{
+			for (int i = 0; i < m_nMaterials; i++)
+			{
+				if (m_ppMaterials[i])
+				{
+					if (m_ppMaterials[i]->m_pShader) m_ppMaterials[i]->m_pShader->Render(pd3dCommandList, pCamera);
+					m_ppMaterials[i]->UpdateShaderVariable(pd3dCommandList);
+				}
+
+				m_pMesh->RenderInstanced(pd3dCommandList, i, nInstances, pInstanceBufferView);
+			}
+		}
+	}
+	if (m_pSibling && m_pSibling->GetVisible())	m_pSibling->RenderInstanced(pd3dCommandList, pCamera, nInstances, pInstanceBuffer, pInstanceBufferView);
+	if (m_pChild && m_pChild->GetVisible())	m_pChild->RenderInstanced(pd3dCommandList, pCamera, nInstances, pInstanceBuffer, pInstanceBufferView);
+}
+
+void CGameObject::RenderShadow(ID3D12GraphicsCommandList* pd3dCommandList)
+{
+	if (m_pSkinnedAnimationController)
+		m_pSkinnedAnimationController->UpdateShaderVariables(pd3dCommandList); // b7/b8
+
+	if (m_pMesh)
+	{
+		UpdateShaderVariable(pd3dCommandList, &m_xmf4x4World);
+
+		m_pMesh->Render(pd3dCommandList, 0);
+	}
+
+	if (m_pSibling && m_pSibling->GetVisible()) m_pSibling->RenderShadow(pd3dCommandList);
+	if (m_pChild && m_pChild->GetVisible()) m_pChild->RenderShadow(pd3dCommandList);
+}
+
 void CGameObject::CreateShaderVariables(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList)
 {
 }
@@ -1062,6 +1114,10 @@ void CGameObject::LoadMaterialsFromFile(ID3D12Device *pd3dDevice, ID3D12Graphics
 						pMaterial->SetStandardShader();
 					}
 				}
+			}
+			else
+			{
+				pMaterial->SetShader(pShader);
 			}
 			SetMaterial(nMaterial, pMaterial);
 		}

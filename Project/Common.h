@@ -21,6 +21,10 @@ constexpr char CS_P_LOGIN = 5;
 constexpr char CS_P_MOVE = 6;
 constexpr char SC_P_LOGIN_FAIL = 7;
 
+// skill
+constexpr char CS_P_SKILL = 11;
+constexpr char SC_P_SKILL = 12;
+
 constexpr char MAX_ID_LENGTH = 20;
 
 
@@ -55,10 +59,10 @@ enum class AnimationState : uint8_t {
 	IDLE,         // 0
 	WALK,         // 1
 	RUN,          // 2 
-	JUMP,         // 3
-	SWING,        // 4
-	CROUCH,       // 5
-	CROUCH_WALK   // 6
+	ATTACK,       // 3
+	SKILL1,       // 4
+	SKILL2,       // 5
+	SKILL3        // 6
 };
 
 enum PLAYER_JOB {
@@ -144,6 +148,28 @@ struct cs_packet_move {
 	uint8_t				animState;
 };
 
+
+// skill
+enum class SkillType : uint8_t {
+	SKILL_FIREBALL = 0
+};
+
+struct cs_packet_skill {
+	unsigned char		size;
+	char				type;
+	SkillType			skillType;
+	XMFLOAT3			position;
+	XMFLOAT3			look;
+};
+
+struct sc_packet_skill {
+	unsigned char		size;
+	char				type;
+	long long			playerID;
+	SkillType			skillType;
+	XMFLOAT3			position;
+	XMFLOAT3			look;
+};
 
 
 // Monster

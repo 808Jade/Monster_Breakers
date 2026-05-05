@@ -419,6 +419,7 @@ public:
 
 	virtual void OnPrepareRender() { }
 	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = NULL);
+	virtual void RenderInstanced(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, UINT nInstances, ID3D12Resource* pInstanceBuffer, D3D12_VERTEX_BUFFER_VIEW* pInstanceBufferView);
 
 	virtual void OnLateUpdate() { }
 
@@ -486,6 +487,9 @@ public:
 	UINT GetMeshType() { return((m_pMesh) ? m_pMesh->GetType() : 0x00); }
 
 public:
+	virtual void RenderShadow(ID3D12GraphicsCommandList* pd3dCommandList);
+	bool IsSkinned() const { return (m_pSkinnedAnimationController != nullptr); }
+
 	void FindAndSetSkinnedMesh(CSkinnedMesh** ppSkinnedMeshes, int* pnSkinnedMesh);
 
 	void SetTrackAnimationSet(int nAnimationTrack, int nAnimationSet);

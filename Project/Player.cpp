@@ -219,8 +219,9 @@ BoundingBox CPlayer::GetSwordAttackBoundingBox()
 	CGameObject* pWeapon = FindFrame("SM_Weapon_04");
 	if (!pWeapon)
 	{
-		// 디버깅용 로그 (처음엔 켜두고, 나중에 되면 주석처리해도 됨)
-		std::cout << "Weapon frame SM_Weapon_04 not found!\n";
+		// 디버깅용 로그 플레이어마다 다르게 해야함
+		// 법사 - 화염구, 도적 - SM_Weapon_01
+		// std::cout << "Weapon frame SM_Weapon_04 not found!\n";
 		return emptyBox;
 	}
 
@@ -355,18 +356,24 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 	}
 	SetChild(pPlayerModel->m_pModelRootObject, true);
 
-	m_pSkinnedAnimationController = new CAnimationController(pd3dDevice, pd3dCommandList, 5, pPlayerModel);
+	m_pSkinnedAnimationController = new CAnimationController(pd3dDevice, pd3dCommandList, 7, pPlayerModel);
 	m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); // 기본
 	m_pSkinnedAnimationController->SetTrackAnimationSet(1, 1); // 걷기
 	m_pSkinnedAnimationController->SetTrackAnimationSet(2, 2); // 뛰기
-	m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); // 점프
-	m_pSkinnedAnimationController->SetTrackAnimationSet(4, 4); // 휘두르기
+	m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); // 기본공격
+	m_pSkinnedAnimationController->SetTrackAnimationSet(4, 4); // skill 1
+	m_pSkinnedAnimationController->SetTrackAnimationSet(5, 5); // skill 2
+	m_pSkinnedAnimationController->SetTrackAnimationSet(6, 6); // skill 3
 	m_pSkinnedAnimationController->SetTrackEnable(1, false); 
 	m_pSkinnedAnimationController->SetTrackEnable(2, false); 
 	m_pSkinnedAnimationController->SetTrackEnable(3, false); 
 	m_pSkinnedAnimationController->SetTrackEnable(4, false); 
-	m_pSkinnedAnimationController->SetTrackType(3, 0);
-	m_pSkinnedAnimationController->SetTrackType(4, 0);
+	m_pSkinnedAnimationController->SetTrackEnable(5, false); 
+	m_pSkinnedAnimationController->SetTrackEnable(6, false); 
+	m_pSkinnedAnimationController->SetTrackType(3, ANIMATION_TYPE_ONCE);
+	m_pSkinnedAnimationController->SetTrackType(4, ANIMATION_TYPE_ONCE);
+	m_pSkinnedAnimationController->SetTrackType(5, ANIMATION_TYPE_ONCE);
+	m_pSkinnedAnimationController->SetTrackType(6, ANIMATION_TYPE_ONCE);
 
 	m_pSkinnedAnimationController->SetCallbackKeys(1, 2);
 #ifdef _WITH_SOUND_RESOURCE
@@ -386,15 +393,17 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 	SetPlayerUpdatedContext(pContext);
 	SetCameraUpdatedContext(pContext);
 
-	m_pText = new CText(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, L"debt : ", -0.9f, 0.9f);
-	
-	m_playerHP = new CTextureToScreenShader(1);
+	m_pText = new CText(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, L"Gold : ", -0.9f, 0.9f);
+	for (int i = 0; i < 3; ++i)
+		m_plevel[i] = new CText(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, L"LV.", 0.3f + i * 0.25f, -0.375f);
+
+	m_playerHP = new CScreenShader(1);
 	m_playerHP->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
 	CTexture* pTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
 	pTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/hp.dds", RESOURCE_TEXTURE2D, 0);
 	CScene::CreateShaderResourceViews(pd3dDevice, pTexture, 0, 15);
 	
-	CScreenRectMeshTextured* pMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.25f, 0.5f, 0.9f, 0.1f);
+	CScreenRectMeshTextured* pMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.25f, 0.55f, 0.85f, 0.1f);
 	m_playerHP->SetMesh(0, pMesh);
 	m_playerHP->SetTexture(pTexture);
 
@@ -510,16 +519,21 @@ void CTerrainPlayer::Move(DWORD dwDirection, float fDistance, bool bUpdateVeloci
 
 	bool isMoving = dwDirection & (DIR_FORWARD | DIR_BACKWARD | DIR_LEFT | DIR_RIGHT);
 	bool isRunning = dwDirection & DIR_DOWN;
-	bool isJumping = dwDirection & DIR_UP;
 
-	if (isJumping)
-		m_currentAnim = AnimationState::JUMP;
-	else if (isRunning && isMoving)
-		m_currentAnim = AnimationState::RUN;
-	else if (isMoving)
-		m_currentAnim = AnimationState::WALK;
-	else
-		m_currentAnim = AnimationState::IDLE;
+	bool isSkillPlaying = (m_currentAnim == AnimationState::ATTACK ||
+		m_currentAnim == AnimationState::SKILL1 ||
+		m_currentAnim == AnimationState::SKILL2 ||
+		m_currentAnim == AnimationState::SKILL3);
+
+	if (!isSkillPlaying)
+	{
+		if (isRunning && isMoving)
+			m_currentAnim = AnimationState::RUN;
+		else if (isMoving)
+			m_currentAnim = AnimationState::WALK;
+		else
+			m_currentAnim = AnimationState::IDLE;
+	}
 
 	CPlayer::Move(dwDirection, fDistance, bUpdateVelocity);
 }
@@ -528,7 +542,9 @@ void CTerrainPlayer::Move(DWORD dwDirection, float fDistance, bool bUpdateVeloci
 void CTerrainPlayer::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
 {
 	if (m_pText) m_pText->Render(pd3dCommandList, pCamera);
-	if (m_playerHP) m_playerHP->Render(pd3dCommandList, pCamera);
+	for (int i = 0; i < 3; ++i)
+		if (m_plevel[i]) m_plevel[i]->Render(pd3dCommandList, pCamera);
+	// if (m_playerHP) m_playerHP->Render(pd3dCommandList, pCamera);
 	CPlayer::Render(pd3dCommandList, pCamera);
 }
 
@@ -560,20 +576,35 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 
 		switch (m_currentAnim)
 		{
-		case AnimationState::JUMP:
-			PlayAnimationTrack(3, 2.0f);
+		case AnimationState::ATTACK:
+			PlayAnimationTrack(3, 1.0f);
 			if (IsAnimationFinished(3)) {
 				m_pSkinnedAnimationController->SetTrackPosition(3, 0.0f);
 				m_currentAnim = AnimationState::IDLE;
 			}
 			break;
-		case AnimationState::SWING:
+		case AnimationState::SKILL1:
 			PlayAnimationTrack(4, 1.0f);
 			if (IsAnimationFinished(4)) {
 				m_pSkinnedAnimationController->SetTrackPosition(4, 0.0f);
 				m_currentAnim = AnimationState::IDLE;
 			}
 			break;
+		case AnimationState::SKILL2:
+			PlayAnimationTrack(5, 1.0f);
+			if (IsAnimationFinished(5)) {
+				m_pSkinnedAnimationController->SetTrackPosition(5, 0.0f);
+				m_currentAnim = AnimationState::IDLE;
+			}	
+			break;
+		case AnimationState::SKILL3:
+			PlayAnimationTrack(6, 1.0f);
+			if (IsAnimationFinished(6)) {
+				m_pSkinnedAnimationController->SetTrackPosition(6, 0.0f);
+				m_currentAnim = AnimationState::IDLE;
+			}
+			break;
+
 		case AnimationState::RUN:
 			PlayAnimationTrack(2);
 			break;
@@ -587,14 +618,11 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 		}
 	}
 
-<<<<<<< Updated upstream
-	//if (m_pText) { m_pText->UpdateText(std::to_wstring(debt), L"debt : "); }
-=======
-	if (m_pText) { m_pText->UpdateText(std::to_wstring(Pgold), L"Gold : "); }
+	if (m_pText) { m_pText->UpdateText(std::to_wstring(gold), L"Gold : "); }
 
 	for (int i = 0; i < 3; ++i)
 		if (m_plevel[i]) m_plevel[i]->UpdateText(std::to_wstring(level[i]), L"LV.");
->>>>>>> Stashed changes
+
 
 	//currentHP = g_myid.hp;
 
@@ -699,7 +727,7 @@ void CTerrainPlayer::StartAnimationBlend(int fromTrack, int toTrack, float blend
 	m_animBlend.elapsed = 0.0f;
 	m_animBlend.active = true;
 
-	for (int i = 0; i < 5; ++i)
+	for (int i = 0; i < 7; ++i)
 		m_pSkinnedAnimationController->SetTrackEnable(i, i == fromTrack || i == toTrack);
 
 	m_pSkinnedAnimationController->SetTrackWeight(fromTrack, 1.0f);

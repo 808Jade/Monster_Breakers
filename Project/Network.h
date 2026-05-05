@@ -70,4 +70,6 @@ void CleanupNetwork();
 
 void LoadingDoneToServer();
 
+void send_skill_packet(SkillType skillType, const XMFLOAT3& position, const XMFLOAT3& look);
+
 
