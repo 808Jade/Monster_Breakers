@@ -623,6 +623,7 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 	for (int i = 0; i < 3; ++i)
 		if (m_plevel[i]) m_plevel[i]->UpdateText(std::to_wstring(level[i]), L"LV.");
 
+
 	//currentHP = g_myid.hp;
 
 	float hpRatio = currentHP / 100.f;

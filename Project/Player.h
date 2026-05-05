@@ -46,7 +46,7 @@ protected:
 
 	CCamera						*m_pCamera = NULL;
 
-	XMFLOAT3			m_lastPushDirection; // ¸¶Áö¸· Ãæµ¹ ¹æÇâ ÀúÀå
+	XMFLOAT3			m_lastPushDirection; // ë§ˆì§€ë§‰ ì¶©ëŒ ë°©í–¥ ì €ì¥
 	BoundingCylinder	m_BoundingCylinder;
 
 	BoundingBox			m_swordAttackBoundingBox;
@@ -62,12 +62,13 @@ public:
 
 	bool	m_isMonsterHit = false;
 	bool	alreadyHeld = false;
-	float currentHP = 100.f;
+	float	currentHP = 100.f;
+	int		Pgold = 1000;
 
 	int level[3] = { 1,1,1 };
 
-	// ¾ÆÀÌÅÛ
-	int m_nSelectedInventoryIndex = -1;  // ±âº»°ªÀº 0¹ø (1¹ø ½½·Ô)
+	// ì•„ì´í…œ
+	int m_nSelectedInventoryIndex = -1;  // ê¸°ë³¸ê°’ì€ 0ë²ˆ (1ë²ˆ ìŠ¬ë¡¯)
 	/*std::vector<CGameObject*> m_pHeldItems;*/
 	CGameObject* m_pHeldItems[4] = { nullptr };
 	CGameObject* m_pHand = NULL;
@@ -167,7 +168,6 @@ public:
 
 	virtual void Update(float fTimeElapsed);
 
-	int gold = 10000;
 
 	CTextureToScreenShader* m_playerHP = NULL;
 	ID3D12Device* device = nullptr;
