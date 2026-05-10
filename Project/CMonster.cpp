@@ -50,7 +50,7 @@ std::vector<CMonster*> CMonster::SpawnGroup(ID3D12Device* pd3dDevice, ID3D12Grap
     {
         CMonster* pMonster = new CMonster(
             pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, pstrModelPath, 5, pSharedModel, fMaxHP);
-        //pMonster->m_pHpbar = new Hpbar(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
+        pMonster->m_pHpbar = new Hpbar(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
         const int id = startID + i;
         pMonster->SetMonsterID(id);
         pMonster->SetScale(fScale, fScale, fScale);

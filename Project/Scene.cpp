@@ -226,13 +226,13 @@ void CScene::UpdateUI(ID3D12GraphicsCommandList* pd3dCommandList)
 	}
 }
 
-void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList)
+void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
 {
 	m_pd3dGraphicsRootSignature = CreateGraphicsRootSignature(pd3dDevice);
 
 	CreateCbvSrvDescriptorHeaps(pd3dDevice, 100, 1000);
 
-	CMaterial::PrepareShaders(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature); 
+	CMaterial::PrepareShaders(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 
 	BuildDefaultLightsAndMaterials(true);
 
@@ -253,9 +253,8 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	m_pKnightModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Knight.bin", NULL);
 	m_pWizardModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Wizard.bin", NULL);
 	m_pThiefModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Thief.bin", NULL);
-	
-	m_Monsters.clear();
 
+	m_Monsters.clear();
 	for (const auto& desc : MONSTER_DESCS)
 	{
 		auto group = CMonster::SpawnGroup(
@@ -268,17 +267,16 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 		{
 			pMonster->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
 			pMonster->Rotate(0, rand() % 360, 0);
-			pMonster->SetPlayer(m_pPlayer);
 
 			m_Monsters.push_back(pMonster);
 		}
 	}
 
-//
-//	m_GameObjects.clear();
-//	m_GameObjects.resize(8);
- 
-//
+	//
+	//	m_GameObjects.clear();
+	//	m_GameObjects.resize(8);
+
+	//
 #pragma region Items
 //	long long itemIDs[8] = { 20000, 20001, 20002,
 //							 30000, 30001, 30002, 30003, 30004};
@@ -1587,7 +1585,7 @@ void CSelectScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandL
 	CTexture* pTexture1 = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
 	pTexture1->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/loading.dds", RESOURCE_TEXTURE2D, 0);
 
-	CreateShaderResourceViews(pd3dDevice, pTexture1, 0, 15);
+	CreateShaderResourceViews(pd3dDevice, pTexture1, 1, 15);
 
 	pTextureToScreenShader1->SetMesh(0, pMesh);
 	pTextureToScreenShader1->SetTexture(pTexture1);

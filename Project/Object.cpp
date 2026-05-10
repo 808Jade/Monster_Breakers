@@ -226,6 +226,7 @@ void CMaterial::ReleaseUploadBuffers()
 
 CShader *CMaterial::m_pSkinnedAnimationShader = NULL;
 CShader *CMaterial::m_pStandardShader = NULL;
+CShader* CMaterial::m_pHpbarShader = NULL;
 
 void CMaterial::PrepareShaders(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature)
 {
@@ -236,6 +237,12 @@ void CMaterial::PrepareShaders(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 	m_pSkinnedAnimationShader = new CSkinnedAnimationStandardShader();
 	m_pSkinnedAnimationShader->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
 	m_pSkinnedAnimationShader->CreateShaderVariables(pd3dDevice, pd3dCommandList);
+
+	OutputDebugStringA("[DEBUG] CHpbarShader 생성 시작\n");
+	m_pHpbarShader = new CHpbarShader();
+	m_pHpbarShader->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
+	m_pHpbarShader->CreateShaderVariables(pd3dDevice, pd3dCommandList);
+	OutputDebugStringA("[DEBUG] CHpbarShader 생성 완료\n");
 }
 
 void CMaterial::UpdateShaderVariable(ID3D12GraphicsCommandList *pd3dCommandList)

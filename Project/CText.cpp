@@ -1,4 +1,4 @@
-#include "CText.h"
+﻿#include "CText.h"
 #include "CFontMesh.h"
 #include "CFontShader.h"
 #include "Scene.h"
