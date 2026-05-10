@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Network.h"
+#include "CMonster.h"
 #include "GameFramework.h"
 #include <iostream>
 
@@ -42,16 +43,17 @@ std::unordered_map<long long, CMonster*> g_monsters;
 std::mutex g_monster_mutex;
 
 
-// 몬스터 hp 줄어듬
-//void SendHitMonster(long long monsterID)
-//{
-//    cs_packet_shovel_damage psd;
-//    psd.size = sizeof(psd);
-//    psd.type = CS_P_SHOVEL_DAMAGE;
-//    psd.monsterID = monsterID;
-//    psd.damage = 10;
-//    send_packet(&psd);
-//}
+void send_hit_damage(long long monsterID, int damage) // 이 함수를 플레이어가 공격하는 곳에 넣으면 된다. 일단 한번 해보고 안되면 수정ㄱㄱ
+{
+    cs_packet_hit_damage pkt{};
+    pkt.size = sizeof(pkt);
+    pkt.type = CS_P_HIT_DAMAGE;
+    pkt.monsterID = monsterID;
+    pkt.damage = damage;
+    send_packet(&pkt);
+
+    std::cout << "[HIT] 몬스터 ID=" << monsterID << " 데미지=" << damage << " 전송\n";
+}
 
 
 // =================================================================
@@ -264,13 +266,13 @@ void ProcessPacket(char* ptr)
         cout << "myid: " << packet->id << endl;
         
 
-        /*std::cout << "[Client] My Player : " << packet->id << std::endl;
-        std::cout << "[Client] My Player Information ID:" << packet->id
-            << " Positino(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")"
-            << " Look(" << packet->look.x << "," << packet->look.y << "," << packet->look.z << ")"
-            << " Right(" << packet->right.x << "," << packet->right.y << "," << packet->right.z << ")"
-            << "Animation : " << static_cast<int>(packet->animState) << ", HP : " << packet->hp
-            << std::endl;*/
+        //std::cout << "[Client] My Player : " << packet->id << std::endl;
+        //std::cout << "[Client] My Player Information ID:" << packet->id
+        //    << " Positino(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")"
+        //    << " Look(" << packet->look.x << "," << packet->look.y << "," << packet->look.z << ")"
+        //    << " Right(" << packet->right.x << "," << packet->right.y << "," << packet->right.z << ")"
+        //    << "Animation : " << static_cast<int>(packet->animState) << ", HP : " << packet->hp
+        //    << std::endl;
         break;
     }
     
@@ -377,8 +379,7 @@ void ProcessPacket(char* ptr)
     {
         sc_packet_update_monster_hp* packet = reinterpret_cast<sc_packet_update_monster_hp*>(ptr);
 
-        cout << "[몬스터] SC_P_UPDATE_MONSTER_HP 수신 | ID=" << packet->monsterID
-            << " HP=" << packet->hp << "\n";
+        cout << "[몬스터] HP 갱신 수신 | ID=" << packet->monsterID << " HP=" << packet->hp << "\n";
 
         break;
     }

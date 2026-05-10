@@ -59,8 +59,7 @@ extern std::mutex g_monster_mutex;
 
 
 // Monster
-void SendHitSpider(long long monsterID);
-
+void send_hit_damage(long long monsterID, int damage);
 
 void ProcessPacket(char* ptr);
 //void process_data(char* net_buf, size_t io_byte); // ???
