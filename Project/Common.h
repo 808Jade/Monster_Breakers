@@ -31,11 +31,11 @@ constexpr char MAX_ID_LENGTH = 20;
 constexpr char SC_P_MONSTER_SPAWN = 8;
 constexpr char SC_P_MONSTER_MOVE = 9;
 constexpr char SC_P_MONSTER_DIE = 10;
-constexpr char SC_P_GOLD_REWARD = 11;
+constexpr char SC_P_GOLD_REWARD = 13;
 
 constexpr char SC_P_UPDATE_MONSTER_HP = 27;
 
-
+constexpr char CS_P_HIT_DAMAGE = 30;
 
 constexpr char CS_P_LOADING_DONE = 25;
 
@@ -233,20 +233,15 @@ struct sc_packet_gold_reward {
 	int           totalGold;
 };
 
-//particle
-struct cs_packet_flashlight {
-	unsigned char		size;
-	char				type;
-	long long			player_id;
-	bool				flashlight_on;
+struct cs_packet_hit_damage {
+	unsigned char size;
+	char          type;
+	long long     monsterID;
+	int           damage;
 };
 
-struct sc_packet_flashlight {
-	unsigned char		size;
-	char				type; 
-	long long			player_id;
-	bool				flashlight_on;
-};
+
+//particle
 
 struct cs_packet_particle_impact {
 	unsigned char		size;
