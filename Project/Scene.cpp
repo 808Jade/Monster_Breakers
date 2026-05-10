@@ -273,6 +273,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 			m_Monsters.push_back(pMonster);
 		}
 	}
+
 //
 //	m_GameObjects.clear();
 //	m_GameObjects.resize(8);

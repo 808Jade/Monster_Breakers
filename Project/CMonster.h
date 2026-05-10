@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Object.h"
+#include "Hpbar.h"
 
 class CPlayer;
 
@@ -55,4 +56,6 @@ private:
     float        m_fHpRatio = 1.0f;
 
     MonsterState m_eState = MonsterState::Idle;
+
+    Hpbar* m_pHpbar = nullptr;
 };

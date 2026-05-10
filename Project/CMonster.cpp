@@ -29,7 +29,9 @@ CMonster::CMonster(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dComm
 }
 
 CMonster::~CMonster()
-{}
+{
+    if (m_pHpbar) delete m_pHpbar;
+}
 
 std::vector<CMonster*> CMonster::SpawnGroup(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList,
     ID3D12RootSignature* pd3dGraphicsRootSignature, const char* pstrModelPath,
@@ -48,7 +50,7 @@ std::vector<CMonster*> CMonster::SpawnGroup(ID3D12Device* pd3dDevice, ID3D12Grap
     {
         CMonster* pMonster = new CMonster(
             pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, pstrModelPath, 5, pSharedModel, fMaxHP);
-
+        //pMonster->m_pHpbar = new Hpbar(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
         const int id = startID + i;
         pMonster->SetMonsterID(id);
         pMonster->SetScale(fScale, fScale, fScale);
@@ -107,4 +109,14 @@ void CMonster::Animate(float fTimeElapsed)
 void CMonster::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
 {
     CGameObject::Render(pd3dCommandList, pCamera);
+    if (m_pHpbar && !IsDead())
+    {
+        XMFLOAT3 pos = GetPosition();
+
+        m_pHpbar->SetPosition(pos.x, pos.y + 2.5f, pos.z);
+        m_pHpbar->LookAt(pCamera->GetPosition(), XMFLOAT3(0.0f, 1.0f, 0.0f));
+        m_pHpbar->SetHpRatio(m_fHpRatio);
+
+        m_pHpbar->Render(pd3dCommandList, pCamera);
+    }
 }
