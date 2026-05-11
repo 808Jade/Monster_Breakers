@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Object.h"
+#include "Hpbar.h"
 
 class CPlayer;
 
@@ -46,6 +47,7 @@ public:
         float                      fMaxHP = 100.0f,
         float                      fScale = 1.0f);
 
+    Hpbar* m_pHpbar = nullptr;
 private:
     CPlayer* m_pPlayer = nullptr;
     int          m_nMonsterID = -1;
@@ -55,4 +57,5 @@ private:
     float        m_fHpRatio = 1.0f;
 
     MonsterState m_eState = MonsterState::Idle;
+
 };

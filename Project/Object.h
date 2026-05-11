@@ -131,6 +131,7 @@ public:
 	XMFLOAT4						m_xmf4SpecularColor = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	XMFLOAT4						m_xmf4AmbientColor = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 
+	CShader* GetShader() const { return m_pShader; }
 	void SetShader(CShader* pShader);
 	void SetMaterialType(UINT nType) { m_nType |= nType; }
 	void SetTexture(CTexture* pTexture, UINT nTexture = 0);
@@ -159,6 +160,7 @@ public:
 public:
 	static CShader* m_pStandardShader;
 	static CShader* m_pSkinnedAnimationShader;
+	static CShader* m_pHpbarShader;
 
 	static void CMaterial::PrepareShaders(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
 

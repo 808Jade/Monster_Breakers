@@ -768,3 +768,63 @@ D3D12_SHADER_BYTECODE CScreenShader::CreatePixelShader()
 {
 	return CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSTextureToScreenHP", "ps_5_1", &m_pd3dPixelShaderBlob);
 }
+
+D3D12_INPUT_LAYOUT_DESC CHpbarShader::CreateInputLayout()
+{
+	UINT n = 2;
+	D3D12_INPUT_ELEMENT_DESC* p = new D3D12_INPUT_ELEMENT_DESC[n];
+
+	// ★ 둘 다 InputSlot 0, TEXCOORD는 AlignedByteOffset 12 (POSITION 뒤)
+	p[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	p[1] = { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+
+	D3D12_INPUT_LAYOUT_DESC d;
+	d.pInputElementDescs = p;
+	d.NumElements = n;
+	return d;
+}
+
+D3D12_DEPTH_STENCIL_DESC CHpbarShader::CreateDepthStencilState()
+{
+	// 캐릭터에 가려져도 항상 보이게 깊이 테스트 끔. 가려지게 하고 싶으면 LESS로 두면 됨.
+	D3D12_DEPTH_STENCIL_DESC d;
+	::ZeroMemory(&d, sizeof(d));
+	d.DepthEnable = FALSE;
+	d.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+	d.StencilEnable = FALSE;
+	return d;
+}
+
+D3D12_BLEND_DESC CHpbarShader::CreateBlendState()
+{
+	// 알파 블렌딩 (alpha=1이면 그냥 안 켜져도 됨)
+	D3D12_BLEND_DESC d;
+	::ZeroMemory(&d, sizeof(d));
+	d.RenderTarget[0].BlendEnable = TRUE;
+	d.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+	d.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+	d.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+	d.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+	d.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+	d.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+	d.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOOP;
+	d.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+	return d;
+}
+
+D3D12_RASTERIZER_DESC CHpbarShader::CreateRasterizerState()
+{
+	auto rs = CShader::CreateRasterizerState();
+	rs.CullMode = D3D12_CULL_MODE_NONE;   // 빌보드 양면 다 보이게
+	return rs;
+}
+
+D3D12_SHADER_BYTECODE CHpbarShader::CreateVertexShader()
+{
+	return CShader::CompileShaderFromFile(L"Shaders.hlsl", "VSHpbar", "vs_5_1", &m_pd3dVertexShaderBlob);
+}
+
+D3D12_SHADER_BYTECODE CHpbarShader::CreatePixelShader()
+{
+	return CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSHpbar", "ps_5_1", &m_pd3dPixelShaderBlob);
+}

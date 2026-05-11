@@ -33,6 +33,8 @@ CGameFramework::CGameFramework()
 	m_pScene = NULL;
 	m_pPlayer = NULL;
 
+	m_nPendingScene = -1;
+
 	_tcscpy_s(m_pszFrameRate, _T("Monster Breakers "));
 }
 
@@ -411,7 +413,7 @@ void CGameFramework::BuildObjects()
 
 	m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
 
-	m_nScenes = 4; // 총 Scene 개수
+	m_nScenes = 5; // 총 Scene 개수
 	if (!m_ppScenes) {
 		m_ppScenes = new CScene * [m_nScenes] {};  // 딱 한 번만 할당, NULL로 초기화
 	}
@@ -449,10 +451,31 @@ void CGameFramework::BuildObjects()
 		m_ppScenes[2]->InitializeCollisionSystem();
 	}
 	else if (m_nCurrentScene == 3) {
-		m_ppScenes[3] = new CEndScene();
+		// Boss Cscene
+
+/*		m_ppScenes[3] = new CScene();
 		m_ppScenes[3]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
-		CPlayer* pPlayer = new CPlayer();
+		if (GetSelectedPlayerModel() == EPlayerModelType::Wizard)
+			m_ppScenes[3]->m_pModel = m_ppScenes[3]->m_pWizardModel;
+		else if (GetSelectedPlayerModel() == EPlayerModelType::Knight)
+			m_ppScenes[3]->m_pModel = m_ppScenes[3]->m_pKnightModel;
+		else
+			m_ppScenes[3]->m_pModel = m_ppScenes[3]->m_pThiefModel;
+		m_ppScenes[3]->BuildSimpleUI(m_pd3dDevice, m_pd3dCommandList);*/
+
+		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[3]->GetGraphicsRootSignature(), NULL, m_ppScenes[3]->m_pModel);
+
 		m_ppScenes[3]->SetPlayer(pPlayer);
+		//m_pPlayer->SetPosition(XMFLOAT3(3, 0, 20));
+
+		m_ppScenes[3]->GenerateGameObjectsBoundingBox();
+		m_ppScenes[3]->InitializeCollisionSystem();
+	}
+	else if (m_nCurrentScene == 4) {
+		m_ppScenes[4] = new CEndScene();
+		m_ppScenes[4]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
+		CPlayer* pPlayer = new CPlayer();
+		m_ppScenes[4]->SetPlayer(pPlayer);
 	}
 
 //#ifdef _WITH_TERRAIN_PLAYER
@@ -634,7 +657,6 @@ void CGameFramework::FrameAdvance()
 	}
 
 	m_GameTimer.Tick(0.0f);
-	
 	HRESULT hResult = m_pd3dCommandAllocator->Reset();
 	hResult = m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
 
@@ -660,12 +682,10 @@ void CGameFramework::FrameAdvance()
 	m_pd3dCommandList->OMSetRenderTargets(1, &d3dRtvCPUDescriptorHandle, TRUE, &d3dDsvCPUDescriptorHandle);
 
 	if(!isStartScene) ProcessInput();
-
 	AnimateObjects();
 
 	//WaitForGpuComplete();
 	if (m_pScene) m_pScene->UpdateUI(m_pd3dCommandList);
-
 	if (m_pScene) m_pScene->Render(m_pd3dCommandList, m_pCamera, d3dRtvCPUDescriptorHandle, d3dDsvCPUDescriptorHandle);
 
 #ifdef _WITH_PLAYER_TOP
@@ -679,11 +699,8 @@ void CGameFramework::FrameAdvance()
 	m_pd3dCommandList->ResourceBarrier(1, &d3dResourceBarrier);
 
 	hResult = m_pd3dCommandList->Close();
-	
 	ID3D12CommandList *ppd3dCommandLists[] = { m_pd3dCommandList };
 	m_pd3dCommandQueue->ExecuteCommandLists(1, ppd3dCommandLists);
-
-	WaitForGpuComplete();
 
 #ifdef _WITH_PRESENT_PARAMETERS
 	DXGI_PRESENT_PARAMETERS dxgiPresentParameters;
@@ -699,6 +716,7 @@ void CGameFramework::FrameAdvance()
 	m_pdxgiSwapChain->Present(0, 0);
 #endif
 #endif
+	WaitForGpuComplete();
 
 	MoveToNextFrame();
 

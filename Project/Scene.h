@@ -13,6 +13,7 @@
 #include "CollisionManager.h"
 #include "CParticle.h"
 #include "CText.h"
+#include "Hpbar.h"
 #include "CFireballSystem.h"
 #include "CGreenSpiritSystem.h"
 #include "CWeaponThrowSystem.h"
@@ -132,8 +133,6 @@ public:
 	void SetPlayer(CPlayer* pPlayer) { m_pPlayer = pPlayer; }
 	CPlayer* GetPlayer() { return(m_pPlayer); }
  
-	bool isShop = false;
-
 	ID3D12RootSignature						*m_pd3dGraphicsRootSignature = NULL;
 	ID3D12Device* Device = NULL;
 	ID3D12GraphicsCommandList* Commandlist = NULL;
@@ -200,7 +199,7 @@ public:
 	std::vector<CGameObject*> m_GameObjects;  
 	std::vector<CMonster*>	  m_Monsters;
 	std::vector<CShader*>     m_Shaders;
-
+	
 	CLoadedModelInfo* m_pModel = NULL; // 플레이어 모델
 	CLoadedModelInfo* m_pKnightModel = NULL; // 기사
 	CLoadedModelInfo* m_pWizardModel = NULL; // 법사

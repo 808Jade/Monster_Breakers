@@ -649,3 +649,41 @@ float4 PSGroundCrack(VS_GROUNDCRACK_OUTPUT input) : SV_TARGET
 
     return float4(crackColor, alpha);
 }
+
+// ===== HP Bar (3D billboard, world-space) =====
+struct VS_HPBAR_IN
+{
+    float3 position : POSITION;
+    float2 uv : TEXCOORD;
+};
+struct VS_HPBAR_OUT
+{
+    float4 position : SV_POSITION;
+    float2 uv : TEXCOORD;
+};
+
+VS_HPBAR_OUT VSHpbar(VS_HPBAR_IN input)
+{
+    VS_HPBAR_OUT o;
+
+    float3 worldCenter = float3(gmtxGameObject._41, gmtxGameObject._42, gmtxGameObject._43);
+    float scaleX = gmtxGameObject._11;
+    float scaleY = gmtxGameObject._22;
+
+    // normalize 추가 (VSFireball 방식과 동일하게)
+    float3 camRight = normalize(float3(gmtxView._11, gmtxView._21, gmtxView._31));
+    float3 camUp = normalize(float3(gmtxView._12, gmtxView._22, gmtxView._32));
+
+    float3 worldPos = worldCenter
+                    + camRight * (input.position.x * scaleX)
+                    + camUp * (input.position.y * scaleY);
+
+    o.position = mul(mul(float4(worldPos, 1.0f), gmtxView), gmtxProjection);
+    o.uv = input.uv;
+    return o;
+}
+
+float4 PSHpbar(VS_HPBAR_OUT input) : SV_TARGET
+{
+    return gMaterial.m_cDiffuse;
+}
