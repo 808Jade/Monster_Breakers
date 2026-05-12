@@ -445,6 +445,9 @@ void CGameFramework::BuildObjects()
 		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[2]->GetGraphicsRootSignature(), NULL, m_ppScenes[2]->m_pModel);
 
 		m_ppScenes[2]->SetPlayer(pPlayer);
+		for (auto* monster : m_ppScenes[2]->m_Monsters) {
+			monster->SetPlayer(pPlayer);
+		}
 		//m_pPlayer->SetPosition(XMFLOAT3(3, 0, 20));
 
 		m_ppScenes[2]->GenerateGameObjectsBoundingBox();
