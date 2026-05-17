@@ -834,7 +834,6 @@ void CGameObject::RenderInstanced(ID3D12GraphicsCommandList* pd3dCommandList, CC
 	{
 		UpdateShaderVariable(pd3dCommandList, &m_xmf4x4World);
 
-		m_pMesh->OnPreRender(pd3dCommandList, nullptr);
 		// GPU에게 명부(Instance Buffer)의 위치를 알려줌
 		D3D12_VERTEX_BUFFER_VIEW instanceBufferView;
 		instanceBufferView.BufferLocation = pInstanceBuffer->GetGPUVirtualAddress();
@@ -848,7 +847,7 @@ void CGameObject::RenderInstanced(ID3D12GraphicsCommandList* pd3dCommandList, CC
 			{
 				if (m_ppMaterials[i])
 				{
-					if (m_ppMaterials[i]->m_pShader) m_ppMaterials[i]->m_pShader->Render(pd3dCommandList, pCamera);
+					//if (m_ppMaterials[i]->m_pShader) m_ppMaterials[i]->m_pShader->Render(pd3dCommandList, pCamera);
 					m_ppMaterials[i]->UpdateShaderVariable(pd3dCommandList);
 				}
 

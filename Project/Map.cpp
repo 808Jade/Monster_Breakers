@@ -11,6 +11,7 @@ Map::Map(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, I
 	LoadGeometryFromFile();
 	SetInstanceData();
 	BuildInstanceBuffers(pd3dDevice, pd3dCommandList);
+	BuildWorldBoundingBoxes();
 
 	//cout << "[ m_vLoadedModelInfo ]" << endl;
 	//for (auto& a : m_vLoadedModelInfo) {
@@ -290,4 +291,77 @@ void Map::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
 			group.pModel->RenderInstanced(pd3dCommandList, pCamera, group.nInstances, group.pInstanceBuffer, &group.instanceBufferView);
 		}
 	}
+}
+
+void Map::BuildWorldBoundingBoxes()
+{
+	for (auto& [idx, group] : m_mInstanceGroups)
+	{
+		if (!group.pModel) continue;
+		group.vWorldBoundingBoxes.clear();
+		group.vWorldBoundingBoxes.reserve(group.nInstances);
+
+		// 모델 계층 전체를 순회해 로컬 공간 AABB를 머지
+		BoundingBox localBox{};
+		bool hasBox = false;
+
+		std::vector<CGameObject*> queue = { group.pModel };
+		while (!queue.empty())
+		{
+			CGameObject* pObj = queue.back();
+			queue.pop_back();
+
+			if (pObj->m_pMesh)
+			{
+				BoundingBox lb = pObj->m_pMesh->GetBoundingBox();
+				BoundingBox wb;
+				lb.Transform(wb, XMLoadFloat4x4(&pObj->m_xmf4x4World));
+				if (!hasBox) { localBox = wb; hasBox = true; }
+				else          BoundingBox::CreateMerged(localBox, localBox, wb);
+			}
+			if (pObj->m_pChild)
+			{
+				CGameObject* child = pObj->m_pChild;
+				queue.push_back(child);
+				while (child->m_pSibling) { child = child->m_pSibling; queue.push_back(child); }
+			}
+		}
+
+		if (!hasBox) continue;
+
+		// 각 인스턴스의 월드 행렬로 변환 후 캐시에 저장
+		for (const auto& inst : group.vInstanceData)
+		{
+			// gpuData.worldMatrix는 GPU용으로 이미 transpose됐으므로 원래 행렬로 복원
+			XMMATRIX worldMat = XMMatrixTranspose(XMLoadFloat4x4(&inst.worldMatrix));
+			BoundingBox worldBox;
+			localBox.Transform(worldBox, worldMat);
+			group.vWorldBoundingBoxes.push_back(worldBox);
+		}
+	}
+}
+
+// 플레이어 XZ 위치에서 가장 높은 오브젝트 상단 Y를 반환
+float Map::GetHeight(float x, float z) const
+{
+	float maxHeight = 0.0f;
+	bool  found = false;
+
+	for (const auto& [idx, group] : m_mInstanceGroups)
+	{
+		for (const BoundingBox& wb : group.vWorldBoundingBoxes)
+		{
+			float minX = wb.Center.x - wb.Extents.x;
+			float maxX = wb.Center.x + wb.Extents.x;
+			float minZ = wb.Center.z - wb.Extents.z;
+			float maxZ = wb.Center.z + wb.Extents.z;
+
+			if (x >= minX && x <= maxX && z >= minZ && z <= maxZ)
+			{
+				float topY = wb.Center.y + wb.Extents.y;
+				if (!found || topY > maxHeight) { maxHeight = topY; found = true; }
+			}
+		}
+	}
+	return maxHeight;
 }

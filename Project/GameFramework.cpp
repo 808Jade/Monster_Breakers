@@ -442,7 +442,7 @@ void CGameFramework::BuildObjects()
 			m_ppScenes[2]->m_pModel = m_ppScenes[2]->m_pThiefModel;
 		m_ppScenes[2]->BuildSimpleUI(m_pd3dDevice, m_pd3dCommandList);
 
-		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[2]->GetGraphicsRootSignature(), NULL, m_ppScenes[2]->m_pModel);
+		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[2]->GetGraphicsRootSignature(), m_ppScenes[2]->m_pMap, m_ppScenes[2]->m_pModel);
 
 		m_ppScenes[2]->SetPlayer(pPlayer);
 		for (auto* monster : m_ppScenes[2]->m_Monsters) {
@@ -568,15 +568,15 @@ void CGameFramework::ProcessInput()
 			bool isMoving = dwDirection & (DIR_FORWARD | DIR_BACKWARD);
 			bool isRunning = dwDirection & DIR_DOWN;
 
-		if (isRunning && isMoving)
+			if (isRunning && isMoving)
 			{
 				terrainPlayer->m_currentAnim = AnimationState::RUN;
-				terrainPlayer->Move(dwDirection, 4.0f, true);
+				terrainPlayer->Move(dwDirection, 1.5f, true);
 			}
 			else if (isMoving)
 			{
 				terrainPlayer->m_currentAnim = AnimationState::WALK;
-				terrainPlayer->Move(dwDirection, 4.0f, true);
+				terrainPlayer->Move(dwDirection, 1.5f, true);
 			}
 			else
 			{

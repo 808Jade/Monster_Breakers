@@ -37,6 +37,8 @@ struct InstanceGroup
     // TODO: 이게 뒤에 필요하게 되는데, 어떻게 설계를 할건지.. 임시로 둔다
     ID3D12Resource* pInstanceBuffer;               // GPU 메모리에 올라간 실제 버퍼 (완성품)
     D3D12_VERTEX_BUFFER_VIEW instanceBufferView;   // GPU에게 이 버퍼를 설명해주는 명세서
+
+    std::vector<BoundingBox> vWorldBoundingBoxes;  // 인스턴스별 월드 AABB 캐시
 };
 
 class Map : public CGameObject
@@ -57,6 +59,9 @@ public:
 
 	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = NULL);
     //virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = NULL, UINT n);
+
+	void BuildWorldBoundingBoxes();
+	float GetHeight(float x, float z) const;
 
 public:
     CInstancedStandardShader* m_pInstancedShader = NULL;
