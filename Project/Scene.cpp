@@ -575,7 +575,7 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 #pragma endregion
 
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
-	//CreateShadowResources(pd3dDevice, pd3dCommandList);
+	CreateShadowResources(pd3dDevice, pd3dCommandList);
 }
 
 void CScene::ReleaseObjects()
@@ -1257,9 +1257,10 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 	pd3dCommandList->SetGraphicsRootConstantBufferView(2, d3dcbLightsGpuVirtualAddress);
 
 	// Shadow 적용을 유지한다면(메인패스)
-/*	pd3dCommandList->SetGraphicsRootDescriptorTable(17, m_d3dShadowSRV);
-	pd3dCommandList->SetGraphicsRootConstantBufferView(18, m_pd3dcbShadow->GetGPUVirtualAddress());*/
-
+	if (m_bEnableShadow && m_pd3dcbShadow){
+		pd3dCommandList->SetGraphicsRootDescriptorTable(17, m_d3dShadowSRV);
+		pd3dCommandList->SetGraphicsRootConstantBufferView(18, m_pd3dcbShadow->GetGPUVirtualAddress());
+	}
 	if (m_pSkyBox)  m_pSkyBox->Render(pd3dCommandList, pCamera);
 	if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
 	if (m_pMap)     m_pMap->Render(pd3dCommandList, pCamera);
