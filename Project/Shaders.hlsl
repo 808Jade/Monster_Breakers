@@ -407,7 +407,52 @@ float4 PSTerrain(VS_TERRAIN_OUTPUT input) : SV_TARGET
 
 	return(cColor);
 }
+struct VS_INSTANCED_STANDARD_INPUT
+{
+    float3 position : POSITION;
+    float2 uv : TEXCOORD;
+    float3 normal : NORMAL;
+    float3 tangent : TANGENT;
+    float3 bitangent : BITANGENT;
+    
+    matrix mtxInstanceTransform : INSTANCE_TRANSFORM;
+};
 
+/*VS_STANDARD_OUTPUT VSInstancedStandard(VS_INSTANCED_STANDARD_INPUT input)
+{
+    VS_STANDARD_OUTPUT output;
+	
+    float4 localPos = mul(float4(input.position, 1.0f), gmtxGameObject);
+    float3 localNormal = mul(input.normal, (float3x3) gmtxGameObject);
+    float3 localTangent = mul(input.tangent, (float3x3) gmtxGameObject);
+    float3 localBitangent = mul(input.bitangent, (float3x3) gmtxGameObject);
+    
+    output.positionW = mul(localPos, input.mtxInstanceTransform).xyz;
+    output.normalW = mul(localNormal, (float3x3) input.mtxInstanceTransform);
+    output.tangentW = mul(localTangent, (float3x3) input.mtxInstanceTransform);
+    output.bitangentW = mul(localBitangent, (float3x3) input.mtxInstanceTransform);
+    
+    output.position = mul(mul(float4(output.positionW, 1.0f), gmtxView), gmtxProjection);
+    output.uv = input.uv;
+
+    return (output);
+}*/
+VS_STANDARD_OUTPUT VSInstancedStandard(VS_INSTANCED_STANDARD_INPUT input)
+{
+    VS_STANDARD_OUTPUT output;
+
+    // gmtxGameObject 제거 — instanceTransform이 곧 월드 행렬
+    output.positionW = mul(float4(input.position, 1.0f), input.mtxInstanceTransform).xyz;
+    output.normalW = mul(input.normal, (float3x3) input.mtxInstanceTransform);
+    output.tangentW = mul(input.tangent, (float3x3) input.mtxInstanceTransform);
+    output.bitangentW = mul(input.bitangent, (float3x3) input.mtxInstanceTransform);
+    // 초기화 추가
+    output.positionLightH = mul(mul(float4(output.positionW, 1.0f), gmtxLightView), gmtxLightProj);
+    output.position = mul(mul(float4(output.positionW, 1.0f), gmtxView), gmtxProjection);
+    output.uv = input.uv;
+
+    return output;
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 struct VS_SKYBOX_CUBEMAP_INPUT
@@ -443,36 +488,6 @@ float4 PSSkyBox(VS_SKYBOX_CUBEMAP_OUTPUT input) : SV_TARGET
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-struct VS_INSTANCED_STANDARD_INPUT
-{
-    float3 position : POSITION;
-    float2 uv : TEXCOORD;
-    float3 normal : NORMAL;
-    float3 tangent : TANGENT;
-    float3 bitangent : BITANGENT;
-    
-    matrix mtxInstanceTransform : INSTANCE_TRANSFORM;
-};
-
-VS_STANDARD_OUTPUT VSInstancedStandard(VS_INSTANCED_STANDARD_INPUT input)
-{
-    VS_STANDARD_OUTPUT output;
-	
-    float4 localPos = mul(float4(input.position, 1.0f), gmtxGameObject);
-    float3 localNormal = mul(input.normal, (float3x3) gmtxGameObject);
-    float3 localTangent = mul(input.tangent, (float3x3) gmtxGameObject);
-    float3 localBitangent = mul(input.bitangent, (float3x3) gmtxGameObject);
-    
-    output.positionW = mul(localPos, input.mtxInstanceTransform).xyz;
-    output.normalW = mul(localNormal, (float3x3) input.mtxInstanceTransform);
-    output.tangentW = mul(localTangent, (float3x3) input.mtxInstanceTransform);
-    output.bitangentW = mul(localBitangent, (float3x3) input.mtxInstanceTransform);
-    
-    output.position = mul(mul(float4(output.positionW, 1.0f), gmtxView), gmtxProjection);
-    output.uv = input.uv;
-
-    return (output);
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //

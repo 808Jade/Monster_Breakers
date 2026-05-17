@@ -238,11 +238,9 @@ void CMaterial::PrepareShaders(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 	m_pSkinnedAnimationShader->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
 	m_pSkinnedAnimationShader->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
-	OutputDebugStringA("[DEBUG] CHpbarShader 생성 시작\n");
 	m_pHpbarShader = new CHpbarShader();
 	m_pHpbarShader->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
 	m_pHpbarShader->CreateShaderVariables(pd3dDevice, pd3dCommandList);
-	OutputDebugStringA("[DEBUG] CHpbarShader 생성 완료\n");
 }
 
 void CMaterial::UpdateShaderVariable(ID3D12GraphicsCommandList *pd3dCommandList)
@@ -836,12 +834,12 @@ void CGameObject::RenderInstanced(ID3D12GraphicsCommandList* pd3dCommandList, CC
 	{
 		UpdateShaderVariable(pd3dCommandList, &m_xmf4x4World);
 
+		m_pMesh->OnPreRender(pd3dCommandList, nullptr);
 		// GPU에게 명부(Instance Buffer)의 위치를 알려줌
 		D3D12_VERTEX_BUFFER_VIEW instanceBufferView;
 		instanceBufferView.BufferLocation = pInstanceBuffer->GetGPUVirtualAddress();
 		instanceBufferView.StrideInBytes = sizeof(VS_INSTANCE_DATA);
 		instanceBufferView.SizeInBytes = sizeof(VS_INSTANCE_DATA) * nInstances;
-
 		pd3dCommandList->IASetVertexBuffers(13, 1, &instanceBufferView);
 
 		if (m_nMaterials > 0)
