@@ -31,6 +31,9 @@
     <Filter Include="소스 파일\Shader">
       <UniqueIdentifier>{6cb13c5c-2903-4b69-a521-f7f63cbe4170}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\Object\Effect">
+      <UniqueIdentifier>{264a5aa7-a08c-4344-80e5-98bdfc35077c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Client.rc">
@@ -124,22 +127,25 @@
     <ClCompile Include="CFontMesh.cpp">
       <Filter>소스 파일\Mesh</Filter>
     </ClCompile>
-    <ClCompile Include="CFireballSystem.cpp">
-      <Filter>소스 파일\Object</Filter>
-    </ClCompile>
     <ClCompile Include="CFireballShader.cpp">
       <Filter>소스 파일\Shader</Filter>
-    </ClCompile>
-    <ClCompile Include="CGreenSpiritSystem.cpp">
-      <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="CMonster.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="CFireballSystem.cpp">
+      <Filter>소스 파일\Object\Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="CGreenSpiritSystem.cpp">
+      <Filter>소스 파일\Object\Effect</Filter>
+    </ClCompile>
     <ClCompile Include="CWeaponThrowSystem.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\Object\Effect</Filter>
     </ClCompile>
     <ClCompile Include="GroundCrackEffect.cpp">
+      <Filter>소스 파일\Object\Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="CBeamSystem.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -228,22 +234,25 @@
     <ClInclude Include="CFontMesh.h">
       <Filter>소스 파일\Mesh</Filter>
     </ClInclude>
-    <ClInclude Include="CFireballSystem.h">
-      <Filter>소스 파일\Object</Filter>
-    </ClInclude>
     <ClInclude Include="CFireballShader.h">
       <Filter>소스 파일\Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="CGreenSpiritSystem.h">
-      <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="CMonster.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="CFireballSystem.h">
+      <Filter>소스 파일\Object\Effect</Filter>
+    </ClInclude>
     <ClInclude Include="CWeaponThrowSystem.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>소스 파일\Object\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="CGreenSpiritSystem.h">
+      <Filter>소스 파일\Object\Effect</Filter>
     </ClInclude>
     <ClInclude Include="GroundCrackEffect.h">
+      <Filter>소스 파일\Object\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="CBeamSystem.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

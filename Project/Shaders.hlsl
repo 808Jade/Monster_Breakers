@@ -705,3 +705,38 @@ float4 PSHpbar(VS_HPBAR_OUT input) : SV_TARGET
 {
     return gMaterial.m_cDiffuse;
 }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+struct VS_BEAM_INPUT
+{
+    float3 position : POSITION;
+    float2 uv : TEXCOORD;
+};
+
+struct VS_BEAM_OUTPUT
+{
+    float4 position : SV_POSITION;
+    float2 uv : TEXCOORD;
+};
+
+VS_BEAM_OUTPUT VSBeam(VS_BEAM_INPUT input)
+{
+    VS_BEAM_OUTPUT output;
+
+    float4 worldPos = float4(input.position, 1.0f);
+    output.position = mul(mul(worldPos, gmtxView), gmtxProjection);
+    output.uv = input.uv;
+
+    return output;
+}
+
+float4 PSBeam(VS_BEAM_OUTPUT input) : SV_TARGET
+{
+    float center = abs(input.uv.y - 0.5f) * 2.0f;
+    float glow = 1.0f - center;
+
+    glow = saturate(glow);
+
+    float3 color = float3(0.35f, 0.75f, 1.0f);
+
+    return float4(color * glow * 2.5f, glow);
+}

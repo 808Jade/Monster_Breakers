@@ -142,6 +142,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="CBeamSystem.cpp" />
     <ClCompile Include="CCubeMesh.cpp" />
     <ClCompile Include="CCubeShader.cpp" />
     <ClCompile Include="CFireballShader.cpp" />
@@ -176,6 +177,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="CBeamSystem.h" />
     <ClInclude Include="CCubeMesh.h" />
     <ClInclude Include="CCubeShader.h" />
     <ClInclude Include="CFireballShader.h" />
