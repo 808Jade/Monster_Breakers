@@ -847,7 +847,7 @@ void CGameObject::RenderInstanced(ID3D12GraphicsCommandList* pd3dCommandList, CC
 			{
 				if (m_ppMaterials[i])
 				{
-					//if (m_ppMaterials[i]->m_pShader) m_ppMaterials[i]->m_pShader->Render(pd3dCommandList, pCamera);
+					if (m_ppMaterials[i]->m_pShader) m_ppMaterials[i]->m_pShader->Render(pd3dCommandList, pCamera);
 					m_ppMaterials[i]->UpdateShaderVariable(pd3dCommandList);
 				}
 

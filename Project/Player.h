@@ -13,6 +13,14 @@
 #include "CText.h"
 #include "GroundCrackEffect.h"
 
+enum class PlayerClass
+{
+	KNIGHT,   // 기사  - 강타(Q): 바닥 균열
+	MAGE,     // 법사  - 화염구 등 별도 이펙트
+	ROGUE,    // 도적  - SM_Weapon_01
+	UNKNOWN
+};
+
 struct BoundingCylinder
 {
 	XMFLOAT3 Center;
@@ -156,6 +164,7 @@ public:
 	CText* m_plevel[3] = { nullptr, nullptr, nullptr };
 	CGroundCrackEffect* m_pGroundCrackEffect = nullptr;
 	bool                m_bCrackTriggered = false;
+	PlayerClass          m_ePlayerClass = PlayerClass::UNKNOWN;
 	//server
 	AnimationState m_currentAnim = AnimationState::IDLE;
 

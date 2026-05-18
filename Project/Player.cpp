@@ -355,7 +355,28 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 		bOwnModel = true;
 	}
 	SetChild(pPlayerModel->m_pModelRootObject, true);
+	if (!pModel)
+	{
+		m_ePlayerClass = PlayerClass::KNIGHT;
+	}
+	else
+	{
+		// FindFrame으로 직업 전용 본 유무를 판별
+		// (프로젝트에 모델 이름 멤버가 있다면 그 방식을 우선 사용)
+		if (FindFrame("SM_Weapon_04"))       // 기사 전용 무기 본
+			m_ePlayerClass = PlayerClass::KNIGHT;
+		else if (FindFrame("SM_Weapon_01"))  // 도적 전용 무기 본
+			m_ePlayerClass = PlayerClass::ROGUE;
+		else
+			m_ePlayerClass = PlayerClass::MAGE;
+	}
 
+	// 기사일 때만 이펙트 객체 생성 (메모리 절약)
+	if (m_ePlayerClass == PlayerClass::KNIGHT)
+	{
+		m_pGroundCrackEffect = new CGroundCrackEffect();
+		m_pGroundCrackEffect->Create(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
+	}
 	m_pSkinnedAnimationController = new CAnimationController(pd3dDevice, pd3dCommandList, 7, pPlayerModel);
 	m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); // 기본
 	m_pSkinnedAnimationController->SetTrackAnimationSet(1, 1); // 걷기
@@ -587,8 +608,13 @@ void CTerrainPlayer::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera*
 		if (m_plevel[i]) m_plevel[i]->Render(pd3dCommandList, pCamera);
 	// if (m_playerHP) m_playerHP->Render(pd3dCommandList, pCamera);
 	CPlayer::Render(pd3dCommandList, pCamera);
-	if (m_pGroundCrackEffect && m_pGroundCrackEffect->IsActive())
+	// 기사이고 이펙트가 활성화된 경우에만 렌더
+	if (m_ePlayerClass == PlayerClass::KNIGHT &&
+		m_pGroundCrackEffect &&
+		m_pGroundCrackEffect->IsActive())
+	{
 		m_pGroundCrackEffect->Render(pd3dCommandList, pCamera);
+	}
 }
 
 void CTerrainPlayer::Update(float fTimeElapsed)
@@ -639,20 +665,24 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 			break;
 		case AnimationState::SKILL2:
 			PlayAnimationTrack(5, 1.0f);
-			if (!m_bCrackTriggered) {
+			// 기사일 때만 균열 이펙트 발동
+			if (m_ePlayerClass == PlayerClass::KNIGHT &&
+				m_pGroundCrackEffect != nullptr &&
+				!m_bCrackTriggered)
+			{
 				m_bCrackTriggered = true;
 
-				// 플레이어 발 위치 + Look 방향으로 균열 생성
 				XMFLOAT3 pos = GetPosition();
 				XMFLOAT3 look = GetLook();
 				m_pGroundCrackEffect->Trigger(pos, look);
 			}
 
-			if (IsAnimationFinished(5)) {
+			if (IsAnimationFinished(5))
+			{
 				m_pSkinnedAnimationController->SetTrackPosition(5, 0.0f);
 				m_currentAnim = AnimationState::IDLE;
-				m_bCrackTriggered = false;  // 다음 발동 대기
-			}	
+				m_bCrackTriggered = false;
+			}
 			break;
 		case AnimationState::SKILL3:
 			PlayAnimationTrack(6, 1.0f);
@@ -680,7 +710,8 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 	for (int i = 0; i < 3; ++i)
 		if (m_plevel[i]) m_plevel[i]->UpdateText(std::to_wstring(level[i]), L"LV.");
 
-
+	if (m_pGroundCrackEffect)
+		m_pGroundCrackEffect->Update(fTimeElapsed);
 	//currentHP = g_myid.hp;
 
 	float hpRatio = currentHP / 100.f;
