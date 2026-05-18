@@ -29,10 +29,6 @@ Map::Map(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, I
 
 Map::~Map()
 {
-	for (auto* p : m_vModelInfos) {
-		if (p) delete p;
-	}
-		m_vModelInfos.clear();
 }
 
 void Map::ReleaseUploadBuffers()
@@ -67,7 +63,6 @@ void Map::LoadMapObjectsFromFile(ID3D12Device* pd3dDevice, ID3D12GraphicsCommand
 			CLoadedModelInfo* pModelInfo = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, entry.path(), m_pInstancedShader);
 
 			if (pModelInfo) {
-				m_vModelInfos.push_back(pModelInfo);
 				m_vLoadedModelInfo.push_back(pModelInfo->m_pModelRootObject);
 			}
 		}
