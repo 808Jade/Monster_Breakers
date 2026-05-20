@@ -1198,22 +1198,15 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 			//SERVER!!
 			// 법사 otherplayer 공격력 늘리기
 			if (m_pModel == m_pWizardModel) {
-				XMFLOAT3 start = pPlayer->GetPosition();
-				start.y += 1.0f;
 
-				XMFLOAT3 end = XMFLOAT3(0.0f, 0.0f, 0.0f); // 이걸 다른 플레이어 위치로 바꿔야할듯
 
-				if (m_pBeamSystem)
-					m_pBeamSystem->Emit(start, end);
-
-				for (auto* otherPlayer : m_vPlayers)
+				for (auto& kv : g_other_player_slots)
 				{
+					long long player_id = kv.first;
+					int slot = kv.second;
+					OtherPlayer* otherPlayer = m_ppOtherPlayers[slot];
 					if (!otherPlayer) continue;
-					otherPlayer += (pPlayer->level[1] * 5); // 다른 플레이어 공격력 증가
-					// 스킬 쓰면 다른 플레이어 머리 위에도 이펙트 보이게
-					XMFLOAT3 headPos = otherPlayer->GetPosition();
-					headPos.y += 1.0f;
-					m_pBeamSystem->Emit(headPos, headPos);
+					
 				}
 			}
 			break;
