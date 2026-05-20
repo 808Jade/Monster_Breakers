@@ -593,7 +593,19 @@ void CGameFramework::AnimateObjects()
 
 	if (m_pScene) { 
 		m_pScene->AnimateObjects(fTimeElapsed);
-		if (m_pScene->m_ppOtherPlayers) m_pScene->m_ppOtherPlayers[0]->Animate(m_pScene->m_ppOtherPlayers[0]->targetAnim, fTimeElapsed);
+		if (m_pScene->m_vPlayers.size() > 0) 
+			for (auto& kv : g_other_player_slots)
+			{
+				long long player_id = kv.first;
+				int slot = kv.second;
+				OtherPlayer* otherPlayer = m_pScene->m_ppOtherPlayers[slot];
+				if (!otherPlayer) continue;
+/*				cout << "[RENDER] id=" << player_id << " slot=" << slot
+					<< " pos=(" << otherPlayer->m_xmf3Position.x << ", "
+					<< otherPlayer->m_xmf3Position.y << ", "
+					<< otherPlayer->m_xmf3Position.z << ")\n";*/
+				m_pScene->m_ppOtherPlayers[slot]->Animate(otherPlayer->targetAnim, fTimeElapsed);
+			}
 		if (m_pScene->m_Monsters.size() > 0)
 			for (auto* monster : m_pScene->m_Monsters)
 				monster->Animate(fTimeElapsed);

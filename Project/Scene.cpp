@@ -274,6 +274,38 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 		}
 	}
 
+	// otherplayer 설정
+	m_nOtherPlayers = 6;
+	m_ppOtherPlayers = new OtherPlayer * [m_nOtherPlayers];
+	for (int i = 0; i < m_nOtherPlayers; ++i) m_ppOtherPlayers[i] = nullptr;
+	m_vPlayers.clear();
+	m_vPlayers.reserve(m_nOtherPlayers);
+
+	g_knightIndex = 0;
+	g_wizardIndex = 2;
+	g_thiefIndex = 4;
+	g_other_players.clear();
+
+	for(int i = 0; i < 2; ++i) {
+		m_ppOtherPlayers[i] = new OtherPlayer(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, m_pKnightModel);
+		m_vPlayers.push_back(m_ppOtherPlayers[i]);
+	}
+	for(int i = 2; i < 4; ++i) {
+		m_ppOtherPlayers[i] = new OtherPlayer(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, m_pWizardModel);
+		m_vPlayers.push_back(m_ppOtherPlayers[i]);
+	}
+	for(int i = 4; i < 6; ++i) {
+		m_ppOtherPlayers[i] = new OtherPlayer(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, m_pThiefModel);
+		m_vPlayers.push_back(m_ppOtherPlayers[i]);
+	}
+
+	for (int i = 0; i < m_nOtherPlayers; ++i) {
+		for (int j = 0; j < 7; ++j) {
+			m_ppOtherPlayers[i]->m_pSkinnedAnimationController->SetTrackEnable(j, false);
+			m_ppOtherPlayers[i]->m_pSkinnedAnimationController->SetTrackPosition(j, 0.0f);
+		}
+		m_ppOtherPlayers[i]->m_pSkinnedAnimationController->SetTrackEnable(0, true);
+	}
 	//
 	//	m_GameObjects.clear();
 	//	m_GameObjects.resize(8);
@@ -613,6 +645,12 @@ void CScene::ReleaseObjects()
 	}
 	m_Monsters.clear();
 
+	for (auto* player : m_vPlayers)
+	{
+		if (player) player->Release();
+	}
+	m_vPlayers.clear();
+
 	for (auto* pTex : m_UITextures)
 	{
 		if (pTex) delete pTex;
@@ -917,6 +955,7 @@ void CScene::ReleaseUploadBuffers()
 	for (auto* shader : m_Shaders) if (shader) shader->ReleaseUploadBuffers();
 	for (auto* obj : m_GameObjects) if (obj) obj->ReleaseUploadBuffers();
 	for (auto* monster : m_Monsters) if (monster) monster->ReleaseUploadBuffers();
+	for (auto* otherplayer : m_vPlayers) if (otherplayer) otherplayer->ReleaseUploadBuffers();
 }
 
 void CScene::CreateCbvSrvDescriptorHeaps(ID3D12Device *pd3dDevice, int nConstantBufferViews, int nShaderResourceViews)
@@ -1162,10 +1201,20 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 				XMFLOAT3 start = pPlayer->GetPosition();
 				start.y += 1.0f;
 
-				XMFLOAT3 end = XMFLOAT3(0.0f, 0.0f, 0.0f);
+				XMFLOAT3 end = XMFLOAT3(0.0f, 0.0f, 0.0f); // 이걸 다른 플레이어 위치로 바꿔야할듯
 
 				if (m_pBeamSystem)
 					m_pBeamSystem->Emit(start, end);
+
+				for (auto* otherPlayer : m_vPlayers)
+				{
+					if (!otherPlayer) continue;
+					otherPlayer += (pPlayer->level[1] * 5); // 다른 플레이어 공격력 증가
+					// 스킬 쓰면 다른 플레이어 머리 위에도 이펙트 보이게
+					XMFLOAT3 headPos = otherPlayer->GetPosition();
+					headPos.y += 1.0f;
+					m_pBeamSystem->Emit(headPos, headPos);
+				}
 			}
 			break;
 
@@ -1181,7 +1230,7 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 					//SERVER!!
 					/* 소라카 궁마냥
 					pPlayer->hp += (pPlayer->level[3] * 5);
-					for(auto* otherPlayer : m_ppOtherPlayers)
+					for(auto* otherPlayer : m_vPlayers)
 					{
 						if (!otherPlayer) continue;
 						otherPlayer->hp += (pPlayer->level[3] * 5); // 다른 플레이어 체력 회복
@@ -1290,9 +1339,10 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 
 	m_CollisionManager.Update(m_pPlayer);
 
-
-	for (int i = 0; i < m_nOtherPlayers; ++i)
-		if (m_ppOtherPlayers[i] && m_ppOtherPlayers[i]->visible) m_ppOtherPlayers[i]->Render(pd3dCommandList, pCamera);
+/*	for (int i = 0; i < m_nOtherPlayers; ++i)
+		if (m_ppOtherPlayers[i] && m_ppOtherPlayers[i]->visible) m_ppOtherPlayers[i]->Render(pd3dCommandList, pCamera);*/
+	for (auto* otherPlayer : m_vPlayers)
+		if (otherPlayer && otherPlayer->GetVisible()) otherPlayer->Render(pd3dCommandList, pCamera);
 
 	CTerrainPlayer* pTerrainPlayer = dynamic_cast<CTerrainPlayer*>(m_pPlayer);
 	if (pTerrainPlayer && pTerrainPlayer->m_playerHP) 
@@ -1397,14 +1447,14 @@ void CScene::RenderShadowPass(ID3D12GraphicsCommandList* pd3dCommandList)
 		}
 	}
 
-	for (int i = 0; i < m_nOtherPlayers; ++i)
+/*	for (int i = 0; i < m_nOtherPlayers; ++i)
 	{
 		if (m_ppOtherPlayers[i] && m_ppOtherPlayers[i]->visible)
 		{
 			m_pSkinnedShadowShader->OnPrepareRender(pd3dCommandList);
 			m_ppOtherPlayers[i]->RenderShadow(pd3dCommandList);
 		}
-	}
+	}*/
 
 	{
 		D3D12_RESOURCE_BARRIER barrier = {};

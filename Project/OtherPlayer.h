@@ -10,8 +10,9 @@ public:
 	//void SetMovement(bool isMoving);
 	OtherPlayer(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature, CLoadedModelInfo* pModel);
 	virtual ~OtherPlayer();
-
-    bool isJump = false;
+    
+    float	currentHP = 100.f;
+    int     level[3] = { 1,1,1 };
 
     int currentAnim = 0; // 현재 재생 애니메이션
     int targetAnim = 0; // 서버에서 받은 애니메이션
@@ -47,16 +48,7 @@ public:
         XMStoreFloat3(&m_xmf3Up, upVector);
     }
 
-    virtual void OnPrepareRender()
-    {
-        m_xmf4x4ToParent._11 = m_xmf3Right.x; m_xmf4x4ToParent._12 = m_xmf3Right.y; m_xmf4x4ToParent._13 = m_xmf3Right.z;
-        m_xmf4x4ToParent._21 = m_xmf3Up.x; m_xmf4x4ToParent._22 = m_xmf3Up.y; m_xmf4x4ToParent._23 = m_xmf3Up.z;
-        m_xmf4x4ToParent._31 = m_xmf3Look.x; m_xmf4x4ToParent._32 = m_xmf3Look.y; m_xmf4x4ToParent._33 = m_xmf3Look.z;
-        //m_xmf4x4ToParent._41 = m_xmf3Position.x; m_xmf4x4ToParent._42 = m_xmf3Position.y; m_xmf4x4ToParent._43 = m_xmf3Position.z;
-
-        m_xmf4x4ToParent = Matrix4x4::Multiply(XMMatrixScaling(m_xmf3Scale.x, m_xmf3Scale.y, m_xmf3Scale.z), m_xmf4x4ToParent);
-    }
-
+    virtual void OnPrepareRender();
     void PlayAnimationTrack(int trackIndex, float speed = 1.0f);
     bool IsAnimationFinished(int trackIndex);
 

@@ -91,6 +91,8 @@ public:
 
 	void OnOtherClientConnected()
 	{
+		if (!m_ppScenes || !m_ppScenes[m_nCurrentScene]) return;
+		if (isLoading || isStartScene) return;
 		m_ppScenes[m_nCurrentScene]->OnOtherClientConnedted();
 	}
 	void UpdateOtherPlayerPosition(int clinetnum, XMFLOAT3 position)
@@ -121,7 +123,11 @@ public:
 		}
 	}*/
 
-
+	CScene* GetCurrentScene() {
+		if (!m_ppScenes) return nullptr;
+		if (m_nCurrentScene < 0 || m_nCurrentScene >= m_nScenes) return nullptr;
+		return m_ppScenes[m_nCurrentScene];
+	}
 
 	bool isLoading = false;
 	bool isStartScene = true;

@@ -235,6 +235,7 @@ public:
 	
 	void OnOtherClientConnedted()
 	{
+		if (!m_ppOtherPlayers) return;
 		for (int i = 0; i < m_nOtherPlayers; ++i)
 		{
 			m_ppOtherPlayers[i]->isConnedted = true;
@@ -243,20 +244,32 @@ public:
 
 	void UpdateOtherPlayerPosition(int clientnum, XMFLOAT3 position)
 	{
+		if (!m_ppOtherPlayers) return;
+		if (clientnum < 0 || clientnum >= m_nOtherPlayers) return;
+		if (!m_ppOtherPlayers[clientnum]) return;
 		m_ppOtherPlayers[clientnum]->SetPosition(position);
 	}
 	void UpdateOtherPlayerLook(int clientnum, XMFLOAT3 look, XMFLOAT3 right)
 	{
+		if (!m_ppOtherPlayers) return;
+		if (clientnum < 0 || clientnum >= m_nOtherPlayers) return;
+		if (!m_ppOtherPlayers[clientnum]) return; 
 		m_ppOtherPlayers[clientnum]->Rotate(look, right);
 	}
 	void UpdateOtherPlayerAnimation(int clientnum, int animNum)
 	{
+		if (!m_ppOtherPlayers) return;
+		if (clientnum < 0 || clientnum >= m_nOtherPlayers) return;
+		if (!m_ppOtherPlayers[clientnum]) return; 
 		m_ppOtherPlayers[clientnum]->targetAnim = animNum;
 	}
-	void UpdateOtherPlayerRotate(int clinetnum, XMFLOAT3 right, XMFLOAT3 look)
+	void UpdateOtherPlayerRotate(int clientnum, XMFLOAT3 right, XMFLOAT3 look)
 	{
-		m_ppOtherPlayers[clinetnum]->m_xmf3Look = look;
-		m_ppOtherPlayers[clinetnum]->m_xmf3Right = right;
+		if (!m_ppOtherPlayers) return;
+		if (clientnum < 0 || clientnum >= m_nOtherPlayers) return;
+		if (!m_ppOtherPlayers[clientnum]) return; 
+		m_ppOtherPlayers[clientnum]->m_xmf3Look = look;
+		m_ppOtherPlayers[clientnum]->m_xmf3Right = right;
 	}
 };
 

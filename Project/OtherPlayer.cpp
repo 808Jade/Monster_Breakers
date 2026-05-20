@@ -8,19 +8,24 @@ OtherPlayer::OtherPlayer(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd
 
 	SetChild(pPlayerModel->m_pModelRootObject, true);
 
-	m_pSkinnedAnimationController = new CAnimationController(pd3dDevice, pd3dCommandList, 5, pPlayerModel);
+	m_pSkinnedAnimationController = new CAnimationController(pd3dDevice, pd3dCommandList, 7, pPlayerModel);
 	m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); // ±âº»
 	m_pSkinnedAnimationController->SetTrackAnimationSet(1, 1); // °È±â
 	m_pSkinnedAnimationController->SetTrackAnimationSet(2, 2); // ¶Ù±â
-	m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); // Á¡ÇÁ
-	m_pSkinnedAnimationController->SetTrackAnimationSet(4, 4); // ÈÖµÎ¸£±â
+	m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); // ±âº»°ø°Ý
+	m_pSkinnedAnimationController->SetTrackAnimationSet(4, 4); // skill 1
+	m_pSkinnedAnimationController->SetTrackAnimationSet(5, 5); // skill 2
+	m_pSkinnedAnimationController->SetTrackAnimationSet(6, 6); // skill 3
 
-	m_pSkinnedAnimationController->SetTrackEnable(1, false);
-	m_pSkinnedAnimationController->SetTrackEnable(2, false);
-	m_pSkinnedAnimationController->SetTrackEnable(3, false);
-	m_pSkinnedAnimationController->SetTrackEnable(4, false);
-	m_pSkinnedAnimationController->SetTrackEnable(5, false);
-	m_pSkinnedAnimationController->SetTrackEnable(6, false);
+	m_pSkinnedAnimationController->SetTrackType(3, ANIMATION_TYPE_ONCE);
+	m_pSkinnedAnimationController->SetTrackType(4, ANIMATION_TYPE_ONCE);
+	m_pSkinnedAnimationController->SetTrackType(5, ANIMATION_TYPE_ONCE);
+	m_pSkinnedAnimationController->SetTrackType(6, ANIMATION_TYPE_ONCE);
+	m_pSkinnedAnimationController->SetTrackSpeed(4, 1.5);
+	m_pSkinnedAnimationController->SetTrackSpeed(5, 1.5);
+	m_pSkinnedAnimationController->SetTrackSpeed(6, 1.5);
+
+	SetPosition(-1000, -1000, -1000);
 
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
@@ -77,10 +82,18 @@ void OtherPlayer::Animate(int animation, float fTimeElapsed)
 			}
 			break;
 		case 5:
-			PlayAnimationTrack(5);
+			PlayAnimationTrack(5, 2.0f);
+			if (IsAnimationFinished(5)) {
+				m_pSkinnedAnimationController->SetTrackPosition(5, 0.0f);
+				animation = 0;
+			}			
 			break;
 		case 6:
-			PlayAnimationTrack(6);
+			PlayAnimationTrack(6, 2.0f);
+			if (IsAnimationFinished(6)) {
+				m_pSkinnedAnimationController->SetTrackPosition(6, 0.0f);
+				animation = 0;
+			}
 			break;
 		case 2:
 			PlayAnimationTrack(2);
@@ -95,6 +108,16 @@ void OtherPlayer::Animate(int animation, float fTimeElapsed)
 		}
 	}
 	CGameObject::Animate(fTimeElapsed);
+}
+
+void OtherPlayer::OnPrepareRender()
+{
+	m_xmf4x4ToParent._11 = m_xmf3Right.x; m_xmf4x4ToParent._12 = m_xmf3Right.y; m_xmf4x4ToParent._13 = m_xmf3Right.z;
+	m_xmf4x4ToParent._21 = m_xmf3Up.x; m_xmf4x4ToParent._22 = m_xmf3Up.y; m_xmf4x4ToParent._23 = m_xmf3Up.z;
+	m_xmf4x4ToParent._31 = m_xmf3Look.x; m_xmf4x4ToParent._32 = m_xmf3Look.y; m_xmf4x4ToParent._33 = m_xmf3Look.z;
+	//m_xmf4x4ToParent._41 = m_xmf3Position.x; m_xmf4x4ToParent._42 = m_xmf3Position.y; m_xmf4x4ToParent._43 = m_xmf3Position.z;
+
+	m_xmf4x4ToParent = Matrix4x4::Multiply(XMMatrixScaling(m_xmf3Scale.x, m_xmf3Scale.y, m_xmf3Scale.z), m_xmf4x4ToParent);
 }
 
 void OtherPlayer::PlayAnimationTrack(int trackIndex, float speed)

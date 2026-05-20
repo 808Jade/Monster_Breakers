@@ -35,6 +35,43 @@ std::mutex g_item_mutex;
 
 
 // =================================================================
+//           otherplayer player 렌더링을 위한 other player 오브젝트 및 관리
+// =================================================================
+int g_knightIndex = 0; // 0~1
+int g_wizardIndex = 2; // 2~3
+int g_thiefIndex = 4; // 4~5
+std::unordered_map<long long, int> g_other_player_slots;
+struct PendingEnterInfo {
+    long long player_id;
+    uint8_t   job;
+};
+std::vector<PendingEnterInfo> g_pendingEnters;
+std::mutex g_pendingEnterMutex;
+void ProcessEnterPacket(long long player_id, uint8_t job)
+{
+    CScene* scene = gGameFramework.GetCurrentScene();
+    if (!scene || !scene->m_ppOtherPlayers) return;
+    if (g_other_players.find(player_id) != g_other_players.end()) return;
+
+    int slot = -1;
+    switch (job)
+    {
+    case 0: if (g_knightIndex < 2) slot = g_knightIndex++; break;
+    case 1: if (g_wizardIndex < 4) slot = g_wizardIndex++; break;
+    case 2: if (g_thiefIndex < 6) slot = g_thiefIndex++;  break;
+    }
+    if (slot == -1) return;
+
+    OtherPlayer* target = scene->m_ppOtherPlayers[slot];
+    if (!target) return;
+
+    target->isConnedted = true;
+    g_other_players[player_id] = target;
+    g_other_player_slots[player_id] = slot;
+
+    cout << "[ENTER] success: id=" << player_id << " slot=" << slot << "\n";
+}
+// =================================================================
 //           몬스터 렌더링을 위한 몬스터 오브젝트 및 관리 
 // =================================================================
 
@@ -280,12 +317,16 @@ void ProcessPacket(char* ptr)
     {
         sc_packet_enter* packet = reinterpret_cast<sc_packet_enter*>(ptr);
         long long player_id = packet->id;
-
-        // 이부분에서 다른 플레이어의 직업을 받아야 하지 않을까?
-
-
-
         if (player_id == g_myid) break;
+
+        // 로딩 중이면 버리지 말고 보관
+        if (gGameFramework.isLoading || gGameFramework.isStartScene) {
+            std::lock_guard<std::mutex> lock(g_pendingEnterMutex);
+            g_pendingEnters.push_back({ player_id, packet->job });
+            cout << "[ENTER] loadinging: id=" << player_id << "\n";
+            break;
+        }
+        ProcessEnterPacket(player_id, packet->job);
 
         std::cout << "[Client] New Player " << player_id << "Connect " << "\n";
         /*std::cout << "[Client] New Player Information Recv "
@@ -298,7 +339,6 @@ void ProcessPacket(char* ptr)
         // 씬에 OtherPlayer가 딱 나타난다
         // 그리고 이제 if문 써서 직업에 따라 렌더링 다르게 하는걸로?
         //gGameFramework.OnOtherClientConnected();
-
         break;
     }
 
@@ -309,20 +349,29 @@ void ProcessPacket(char* ptr)
 
         if (other_id == g_myid) break;
 
-        // OtherPlayer의 위치를 반영한다
- /*       if (!gGameFramework.isLoading && !gGameFramework.isStartScene) {
-            gGameFramework.UpdateOtherPlayerPosition(0, packet->position);
-            gGameFramework.UpdateOtherPlayerLook(0, packet->look, packet->right);
-            gGameFramework.UpdateOtherPlayerAnimation(0, packet->animState);
-            gGameFramework.UpdateOtherPlayerRotate(0, packet->right, packet->look);
-        }*/
+        cout << "[MOVE] other_id=" << other_id << " / currently registered ids: ";
+        for (auto& kv : g_other_player_slots)
+            cout << kv.first << " ";
+        cout << "\n";
 
-        std::cout << "[Client] New Player Information Recv " << "PlayerNo : " << other_id << ", "
+        // OtherPlayer의 위치를 반영한다
+        auto it = g_other_player_slots.find(other_id);
+        if (it == g_other_player_slots.end()) break;
+        
+
+        int slot = it->second;
+
+        gGameFramework.UpdateOtherPlayerPosition(slot, packet->position);
+        gGameFramework.UpdateOtherPlayerLook(slot, packet->look, packet->right);
+        gGameFramework.UpdateOtherPlayerAnimation(slot, packet->animState);
+        gGameFramework.UpdateOtherPlayerRotate(slot, packet->right, packet->look);
+
+/*        std::cout << "[Client] New Player Information Recv " << "PlayerNo : " << packet->id << ", "
             << " Position(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")"
             << " Look(" << packet->look.x << "," << packet->look.y << "," << packet->look.z << ")"
             << " Right(" << packet->right.x << "," << packet->right.y << "," << packet->right.z << ")"
             << "Animation : " << static_cast<int>(packet->animState)
-            << std::endl;
+            << std::endl;*/
 
         break;
     }
@@ -467,5 +516,13 @@ void LoadingDoneToServer()
     pkt.size = sizeof(pkt);
     pkt.type = CS_P_LOADING_DONE;
     send_packet(&pkt);
+    cout << "[Client] LoadingDone send\n";
+    // 로딩 중에 못 처리한 ENTER 패킷 재처리
+    std::lock_guard<std::mutex> lock(g_pendingEnterMutex);
+    for (auto& p : g_pendingEnters) {
+        cout << "[ENTER] Queue reprocessing: id=" << p.player_id << "\n";
+        ProcessEnterPacket(p.player_id, p.job);
+    }
+    g_pendingEnters.clear();
     std::cout << "[Client] LodingDone ! " << std::endl;
 }

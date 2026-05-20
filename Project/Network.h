@@ -34,6 +34,13 @@ class Item;
 //    IO_OPERATION operation;
 //};
 
+// otherplayer
+extern std::unordered_map<long long, OtherPlayer*> g_other_players;
+extern std::unordered_map<long long, int> g_other_player_slots;
+
+extern int g_knightIndex;
+extern int g_wizardIndex;
+extern int g_thiefIndex;
 
 extern HANDLE g_hIOCP;
 extern SOCKET ConnectSocket;
