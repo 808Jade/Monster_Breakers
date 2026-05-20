@@ -94,9 +94,95 @@ void send_hit_damage(long long monsterID, int damage) // 이 함수를 플레이
 
 
 // =================================================================
-//                           상점 관리
+//                           스킬 관리
 // =================================================================
 
+
+
+// 기사
+void send_shield_block_packet(bool isBlocking)
+{
+    cs_packet_shield_block pkt{};
+    pkt.size = sizeof(pkt);
+    pkt.type = CS_P_SHIELD_BLOCK;
+    pkt.isBlocking = isBlocking;
+    send_packet(&pkt);
+
+    std::cout << "[SHIELD] 방패막기 전송 | isBlocking=" << isBlocking << "\n";
+}
+
+void send_strike_packet(const XMFLOAT3& position, const XMFLOAT3& look)
+{
+    cs_packet_skill_strike pkt{};
+    pkt.size = sizeof(pkt);
+    pkt.type = CS_P_SKILL_STRIKE;
+    pkt.position = position;
+    pkt.look = look;
+    send_packet(&pkt);
+
+    std::cout << "[STRIKE] 강타 전송 | pos=(" << position.x << ","
+        << position.y << "," << position.z << ")\n";
+}
+
+void send_taunt_packet(float range)
+{
+    cs_packet_taunt pkt{};
+    pkt.size = sizeof(pkt);
+    pkt.type = CS_P_TAUNT;
+    pkt.range = range;
+    send_packet(&pkt);
+
+    std::cout << "[TAUNT] 도발 전송 | range=" << range << "\n";
+}
+
+// 법사
+void send_skill_packet(SkillType skillType, const XMFLOAT3& position, const XMFLOAT3& look) //파이어 볼
+{
+    cs_packet_skill pkt{};
+    pkt.size = sizeof(pkt);
+    pkt.type = CS_P_SKILL;
+    pkt.skillType = skillType;
+    pkt.position = position;
+    pkt.look = look;
+    send_packet(&pkt);
+
+    std::cout << "[SKILL] cs_packet_skill 전송 | type=" << (int)pkt.type
+        << " size=" << (int)pkt.size << " skillType=" << (int)pkt.skillType << "\n";
+}
+
+void send_buff_atk_packet()
+{
+    cs_packet_buff_atk pkt{};
+    pkt.size = sizeof(pkt);
+    pkt.type = CS_P_BUFF_ATK;
+    send_packet(&pkt);
+
+    std::cout << "[BUFF_ATK] 공격력 버프 전송\n";
+}
+
+void send_buff_hp_packet()
+{
+    cs_packet_buff_hp pkt{};
+    pkt.size = sizeof(pkt);
+    pkt.type = CS_P_BUFF_HP;
+    send_packet(&pkt);
+
+    std::cout << "[BUFF_HP] 체력 버프 전송\n";
+}
+
+// 도적 
+void send_weapon_pos_packet(const XMFLOAT3& weaponPosition, const XMFLOAT3& weaponRotation)
+{
+    cs_packet_weapon_pos pkt{};
+    pkt.size = sizeof(pkt);
+    pkt.type = CS_P_WEAPON_POS;
+    pkt.weaponPosition = weaponPosition;
+    pkt.weaponRotation = weaponRotation;
+    send_packet(&pkt);
+
+    std::cout << "[WEAPON_POS] 도끼 위치 전송 | pos=(" << weaponPosition.x << ","
+        << weaponPosition.y << "," << weaponPosition.z << ")\n";
+}
 
 // =================================================================
 //                          아이템 관리
@@ -219,20 +305,6 @@ void send_packet(void* packet) {
         g_sendQueue.push(std::move(buf));
     }
     g_sendCV.notify_one();
-}
-
-void send_skill_packet(SkillType skillType, const XMFLOAT3& position, const XMFLOAT3& look)
-{
-    cs_packet_skill pkt{};
-    pkt.size = sizeof(pkt);
-    pkt.type = CS_P_SKILL;
-    pkt.skillType = skillType;
-    pkt.position = position;
-    pkt.look = look;
-    send_packet(&pkt);
-
-    std::cout << "[SKILL] cs_packet_skill 전송 | type=" << (int)pkt.type
-        << " size=" << (int)pkt.size << " skillType=" << (int)pkt.skillType << "\n";
 }
 
 void InitializeNetwork(char serverIP[]) {
@@ -401,6 +473,56 @@ void ProcessPacket(char* ptr)
 
         // 여기에 랜더링해야함. (스킬 동기화)
 
+        break;
+    }
+
+    case SC_P_SHIELD_BLOCK:
+    {
+        sc_packet_shield_block* packet = reinterpret_cast<sc_packet_shield_block*>(ptr);
+
+        cout << "[수신] SC_P_SHIELD_BLOCK | playerID=" << packet->playerID << " isBlocking=" << (int)packet->isBlocking << "\n";
+        break;
+    }
+
+    case SC_P_SKILL_STRIKE:
+    {
+        sc_packet_skill_strike* packet = reinterpret_cast<sc_packet_skill_strike*>(ptr);
+
+        cout << "[수신] SC_P_SKILL_STRIKE | playerID=" << packet->playerID
+            << " pos=(" << packet->position.x << "," << packet->position.y << ","   << packet->position.z << ")\n";
+        break;
+    }
+
+    case SC_P_TAUNT:
+    {
+        sc_packet_taunt* packet = reinterpret_cast<sc_packet_taunt*>(ptr);
+
+        cout << "[수신] SC_P_TAUNT | playerID=" << packet->playerID << "\n";
+        break;
+    }
+
+    case SC_P_BUFF_ATK:
+    {
+        sc_packet_buff_atk* packet = reinterpret_cast<sc_packet_buff_atk*>(ptr);
+
+        cout << "[수신] SC_P_BUFF_ATK | playerID=" << packet->playerID << " newDamage=" << packet->newDamage << "\n";
+        break;
+    }
+
+    case SC_P_BUFF_HP:
+    {
+        sc_packet_buff_hp* packet = reinterpret_cast<sc_packet_buff_hp*>(ptr);
+
+        cout << "[수신] SC_P_BUFF_HP | playerID=" << packet->playerID << " newHp=" << packet->newHp << "\n";
+        break;
+    }
+
+    case SC_P_WEAPON_POS:
+    {
+        sc_packet_weapon_pos* packet = reinterpret_cast<sc_packet_weapon_pos*>(ptr);
+
+        cout << "[수신] SC_P_WEAPON_POS | playerID=" << packet->playerID
+            << " pos=(" << packet->weaponPosition.x << "," << packet->weaponPosition.y << "," << packet->weaponPosition.z << ")\n";
         break;
     }
     
