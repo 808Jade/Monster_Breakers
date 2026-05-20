@@ -1155,7 +1155,7 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 				<< firePos.x << ", " << firePos.y << ", " << firePos.z
 				<< ") look=(" << fireLook.x << ", " << fireLook.y << ", " << fireLook.z << ")\n";
 
-			/*m_pFireballSystem->Emit(pHand->GetPosition(), pPlayer->GetLook(), 20.0f); */
+			//m_pFireballSystem->Emit(pHand->GetPosition(), p->GetLook(), 20.0f); 
 
 			// server!!
 			send_skill_packet(SkillType::SKILL_FIREBALL, firePos, fireLook);

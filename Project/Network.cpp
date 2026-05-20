@@ -398,9 +398,21 @@ void ProcessPacket(char* ptr)
             std::cout << "[SKILL] 내 패킷 루프백 → 무시\n";
             break;
         }
+        CScene* scene = gGameFramework.GetCurrentScene();
+        if (!scene) break;
 
-        // 여기에 랜더링해야함. (스킬 동기화)
+        switch (packet->skillType)
+        {
+        case SkillType::SKILL_FIREBALL:
+            scene->m_pFireballSystem->Emit(packet->position, packet->look);
+            cout << "[SKILL] 파이어볼 Emit: pos=("
+                << packet->position.x << ", "
+                << packet->position.y << ", "
+                << packet->position.z << ")\n";
+            break;
 
+            // 다른 스킬 타입도 여기에 추가
+        }
         break;
     }
     
