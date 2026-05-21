@@ -213,6 +213,36 @@ void CScene::BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 
 		m_UITextures.push_back(pTexture);
 	}
+
+	std::array<float, 3> cooldownSlotX{ 0.25f, 0.50f, 0.75f };
+
+	for (int i = 0; i < SKILL_COUNT; ++i)
+	{
+		// 최대 쿨타임 초기화 (레벨 반영)
+		m_fSkillMaxCooldown[i] = CalcMaxCooldown(i);
+		m_fSkillCooldown[i] = 0.0f;
+
+		/* 이건 회색 오버레이 방식일 때 추가할 것 지금은 일단 텍스트로만 구현
+		CCooldownOverlayShader* pOverlay = new CCooldownOverlayShader();
+		pOverlay->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+
+		CScreenRectMeshTextured* pOverlayMesh = new CScreenRectMeshTextured(
+			pd3dDevice, pd3dCommandList,
+			cooldownSlotX[i], 0.2f,   // 스킬 슬롯과 동일
+			-0.4f, 0.4f);
+		pOverlay->SetMesh(0, pOverlayMesh);
+		pOverlay->SetCooldownRatio(0.0f); // 초기엔 쿨타임 없음
+		pOverlay->SetVisible(false);
+
+		m_pCooldownOverlays[i] = pOverlay;
+		m_Shaders.push_back(pOverlay);
+		*/
+
+		CText* pText = new CText(pd3dDevice, pd3dCommandList,m_pd3dGraphicsRootSignature, L"", i * 0.25f, -0.5f);
+		pText->SetVisible(false);
+		m_pCooldownTexts[i] = pText;
+		m_GameObjects.push_back(pText);
+	}
 }
 
 void CScene::UpdateUI(ID3D12GraphicsCommandList* pd3dCommandList)
@@ -222,6 +252,25 @@ void CScene::UpdateUI(ID3D12GraphicsCommandList* pd3dCommandList)
 			textObj->UpdateText(std::to_wstring(m_pPlayer->level[0]), L"LV. ");
 			textObj->UpdateText(std::to_wstring(m_pPlayer->level[1]), L"LV. ");
 			textObj->UpdateText(std::to_wstring(m_pPlayer->level[2]), L"LV. ");
+		}
+	}
+
+	for (int i = 0; i < SKILL_COUNT; ++i)
+	{
+		float maxCD = m_fSkillMaxCooldown[i];
+		float remCD = m_fSkillCooldown[i];
+
+		bool onCooldown = (remCD > 0.0f);
+
+		// 텍스트: 남은 초(소수점 1자리)
+		if (m_pCooldownTexts[i])
+		{
+			m_pCooldownTexts[i]->SetVisible(onCooldown);
+			if (onCooldown)
+			{
+				std::wstring cdStr = std::to_wstring((int)std::ceilf(remCD));
+				m_pCooldownTexts[i]->UpdateText(cdStr, L"");
+			}
 		}
 	}
 }
@@ -1098,6 +1147,22 @@ void CScene::CreateShadowResources(ID3D12Device* pd3dDevice, ID3D12GraphicsComma
 	m_pSkinnedShadowShader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 }
 
+void CScene::TriggerSkillCooldown(int skillIndex)
+{
+	if (skillIndex < 0 || skillIndex >= SKILL_COUNT) return;
+	m_fSkillMaxCooldown[skillIndex] = CalcMaxCooldown(skillIndex);
+	m_fSkillCooldown[skillIndex] = m_fSkillMaxCooldown[skillIndex];
+}
+
+float CScene::CalcMaxCooldown(int skillIndex) const
+{
+	if (!m_pPlayer) return SKILL_BASE_CD[skillIndex];
+	int lv = m_pPlayer->level[skillIndex]; // 0-based
+	// 레벨당 5% 감소, 최대 70% 감소(lv 14)
+	float factor = 1.0f - std::min(lv * 0.05f, 0.70f);
+	return SKILL_BASE_CD[skillIndex] * factor;
+}
+
 void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
 	RECT rt[3] =
@@ -1137,56 +1202,58 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 	break;
 	case WM_RBUTTONDOWN:
 	{
-		p->m_currentAnim = AnimationState::SKILL1;
+		if (!IsSkillOnCooldown(0)) {
+			p->m_currentAnim = AnimationState::SKILL1;
+			if (m_pModel == m_pWizardModel)
+			{
 
-		if (m_pModel == m_pWizardModel)
-		{
+				CGameObject* pHand = p->FindFrame("RightHand");
 
-			CGameObject* pHand = p->FindFrame("RightHand");
+				if (!pHand) break;
 
-			if (!pHand) break;
+				// 위치/방향 변수로 먼저 받아두기
+				XMFLOAT3 firePos = pHand->GetPosition();
+				XMFLOAT3 fireLook = p->GetLook();
 
-			// 위치/방향 변수로 먼저 받아두기
-			XMFLOAT3 firePos = pHand->GetPosition();
-			XMFLOAT3 fireLook = p->GetLook();
+				// 로컬 이펙트 실행
+				m_pFireballSystem->Emit(firePos, fireLook, 20.0f);
 
-			// 로컬 이펙트 실행
-			m_pFireballSystem->Emit(firePos, fireLook, 20.0f);
+				std::cout << "[SKILL] 파이어볼 송신 | pos=("
+					<< firePos.x << ", " << firePos.y << ", " << firePos.z
+					<< ") look=(" << fireLook.x << ", " << fireLook.y << ", " << fireLook.z << ")\n";
 
-			std::cout << "[SKILL] 파이어볼 송신 | pos=("
-				<< firePos.x << ", " << firePos.y << ", " << firePos.z
-				<< ") look=(" << fireLook.x << ", " << fireLook.y << ", " << fireLook.z << ")\n";
+				//m_pFireballSystem->Emit(pHand->GetPosition(), p->GetLook(), 20.0f); 
 
-			//m_pFireballSystem->Emit(pHand->GetPosition(), p->GetLook(), 20.0f); 
+				// server!!
+				send_skill_packet(SkillType::SKILL_FIREBALL, firePos, fireLook);
+			}
+			else if (m_pModel == m_pThiefModel)
+			{
+				if (m_pWeaponThrowSystem->IsActive()) break;
 
-			// server!!
-			send_skill_packet(SkillType::SKILL_FIREBALL, firePos, fireLook);
-		}
-		else if (m_pModel == m_pThiefModel)
-		{
-			if (m_pWeaponThrowSystem->IsActive()) break;
+				CGameObject* pWeapon = p->FindFrame("SM_Weapon_01");
+				if (!pWeapon) break;
 
-			CGameObject* pWeapon = p->FindFrame("SM_Weapon_01");
-			if (!pWeapon) break;
+				XMFLOAT3 throwPos = pWeapon->GetPosition();
+				XMFLOAT3 throwDir = p->GetLook();
 
-			XMFLOAT3 throwPos = pWeapon->GetPosition();
-			XMFLOAT3 throwDir = p->GetLook();
+				m_pWeaponThrowSystem->Emit(throwPos, throwDir, 30.0f, pWeapon);
 
-			m_pWeaponThrowSystem->Emit(throwPos, throwDir, 30.0f, pWeapon);
+				std::cout << "[SKILL] 도적 무기 던지기 | pos=("
+					<< throwPos.x << ", " << throwPos.y << ", " << throwPos.z
+					<< ") dir=(" << throwDir.x << ", " << throwDir.y << ", " << throwDir.z << ")\n";
 
-			std::cout << "[SKILL] 도적 무기 던지기 | pos=("
-				<< throwPos.x << ", " << throwPos.y << ", " << throwPos.z
-				<< ") dir=(" << throwDir.x << ", " << throwDir.y << ", " << throwDir.z << ")\n";
-
-			send_weapon_pos_packet(throwPos, throwDir);
-		}
-		else if (m_pModel == m_pKnightModel)
-		{
-			std::cout << "[SKILL] 기사 방패막기 시작\n";
-			send_shield_block_packet(true);
-		}
-		else {
-			// 기사 방패막기이므로 몬스터 공격 X 처리
+				send_weapon_pos_packet(throwPos, throwDir);
+			}
+			else if (m_pModel == m_pKnightModel)
+			{
+				std::cout << "[SKILL] 기사 방패막기 시작\n";
+				send_shield_block_packet(true);
+			}
+			else {
+				// 기사 방패막기이므로 몬스터 공격 X 처리
+			}
+			TriggerSkillCooldown(0);
 		}
 	}
 	break;
@@ -1210,75 +1277,64 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 	case WM_KEYDOWN:
 		switch (wParam) {
 		case 'Q':
+			if (!IsSkillOnCooldown(1)) {
 			pPlayer->m_currentAnim = AnimationState::SKILL2;
-			
-			// 법사 otherplayer 공격력 늘리기
-			if (m_pModel == m_pWizardModel) {
+				// 법사 otherplayer 공격력 늘리기
+				if (m_pModel == m_pWizardModel) {
 
-				send_buff_atk_packet();
+					send_buff_atk_packet();
 
-				for (auto& kv : g_other_player_slots)
-				{
-					long long player_id = kv.first;
-					int slot = kv.second;
-					OtherPlayer* otherPlayer = m_ppOtherPlayers[slot];
-					if (!otherPlayer) continue;				
-					otherPlayer->damage += (pPlayer->level[2]); // 다른 플레이어 공격력 증가
-					m_pBeamSystem->Emit(otherPlayer->GetPosition(), pPlayer->GetPosition());
-				}
-			}
-			// 이부분 기사 q 스킬
-			else if (m_pModel == m_pKnightModel)
-			{
-				XMFLOAT3 pos = pPlayer->GetPosition();
-				XMFLOAT3 look = pPlayer->GetLook();
-
-				if (m_pGroundCrackEffect)
-					m_pGroundCrackEffect->Trigger(pos, look);
-
-				send_strike_packet(pos, look);
-			}
-			break;
-
-		case 'E':
-			pPlayer->m_currentAnim = AnimationState::SKILL3;
-			if (m_pModel == m_pWizardModel) {
-				if (m_pGreenSpiritSystem)
-				{
-					XMFLOAT3 footPos = pPlayer->GetPosition();
-					footPos.y -= 0.5f;
-					m_pGreenSpiritSystem->Emit(footPos);
-
-					//SERVER!!
-					send_buff_hp_packet();
-
-					/* 소라카 궁마냥
-					pPlayer->hp += (pPlayer->level[3] * 5);
-					for(auto* otherPlayer : m_vPlayers)
+					for (auto& kv : g_other_player_slots)
 					{
 						long long player_id = kv.first;
 						int slot = kv.second;
 						OtherPlayer* otherPlayer = m_ppOtherPlayers[slot];
 						if (!otherPlayer) continue;
+						otherPlayer->damage += (pPlayer->level[2]); // 다른 플레이어 공격력 증가
+						m_pBeamSystem->Emit(otherPlayer->GetPosition(), pPlayer->GetPosition());
+					}
+				}
+				// 이부분 기사 q 스킬
+				else if (m_pModel == m_pKnightModel)
+				{
+					XMFLOAT3 pos = pPlayer->GetPosition();
+					XMFLOAT3 look = pPlayer->GetLook();
 
-						otherPlayer->currentHP += (pPlayer->level[3] * 5); // 다른 플레이어 체력 회복
-						// 스킬 쓰면 다른 플레이어 발에서도 이펙트 보이게
-						XMFLOAT3 footPos = otherPlayer->GetPosition();
+					if (m_pGroundCrackEffect)
+						m_pGroundCrackEffect->Trigger(pos, look);
+
+					send_strike_packet(pos, look);
+				}
+				
+				TriggerSkillCooldown(1);
+			}
+			break;
+
+		case 'E':
+			if (!IsSkillOnCooldown(2)) {
+			pPlayer->m_currentAnim = AnimationState::SKILL3;
+				if (m_pModel == m_pWizardModel) {
+					if (m_pGreenSpiritSystem)
+					{
+						XMFLOAT3 footPos = pPlayer->GetPosition();
 						footPos.y -= 0.5f;
 						m_pGreenSpiritSystem->Emit(footPos);
-					}*/
-					
-				}
-			}
-			else if (m_pModel == m_pKnightModel) {
 
-				send_taunt_packet(8.0f); //도발범위 조정해보자...
-				// 기사 도발	
-				// 몬스터들 공격 멈추고 lookat = 기사 위치로
-				// m_pLevel[2]의 값에 따라 도발 지속시간 증가
-			}
-			else if(m_pModel == m_pThiefModel) {
-				// 도적 몬스터 뒤로 순보
+						//SERVER!!
+						send_buff_hp_packet();
+					}
+				}
+				else if (m_pModel == m_pKnightModel) {
+
+					send_taunt_packet(8.0f); //도발범위 조정해보자...
+					// 기사 도발	
+					// 몬스터들 공격 멈추고 lookat = 기사 위치로
+					// m_pLevel[2]의 값에 따라 도발 지속시간 증가
+				}
+				else if (m_pModel == m_pThiefModel) {
+					// 도적 몬스터 뒤로 순보
+				}
+				TriggerSkillCooldown(2);
 			}
 			break;	
 		}
@@ -1295,13 +1351,24 @@ void CScene::AnimateObjects(float fTimeElapsed)
 {
 	for (auto* obj : m_GameObjects) {
 		if (obj) obj->Animate(fTimeElapsed);
-		/*if (auto* textObj = dynamic_cast<CText*>(obj)) {
-			textObj->UpdateText(std::to_wstring(m_pPlayer->level[0]), L"LV. ");
-			textObj->UpdateText(std::to_wstring(m_pPlayer->level[1]), L"LV. ");
-			textObj->UpdateText(std::to_wstring(m_pPlayer->level[2]), L"LV. ");
-		}*/
 	}
 	
+	for (int i = 0; i < SKILL_COUNT; ++i)
+	{
+		// 레벨이 바뀌면 최대 쿨타임 재계산
+		float newMax = CalcMaxCooldown(i);
+		if (std::fabsf(newMax - m_fSkillMaxCooldown[i]) > 0.01f)
+			m_fSkillMaxCooldown[i] = newMax;
+
+		// 남은 쿨타임 차감
+		if (m_fSkillCooldown[i] > 0.0f)
+		{
+			m_fSkillCooldown[i] -= fTimeElapsed;
+			if (m_fSkillCooldown[i] < 0.0f)
+				m_fSkillCooldown[i] = 0.0f;
+		}
+	}
+
 	if (m_pFireballSystem) m_pFireballSystem->Animate(fTimeElapsed);
 	if (m_pGreenSpiritSystem) m_pGreenSpiritSystem->Animate(fTimeElapsed);
 	if (m_pWeaponThrowSystem) m_pWeaponThrowSystem->Animate(fTimeElapsed);
@@ -1358,8 +1425,6 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 	if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
 	if (m_pMap)     m_pMap->Render(pd3dCommandList, pCamera);
 
-	for (auto* obj : m_GameObjects)
-		if (obj && obj->GetVisible()) obj->Render(pd3dCommandList, pCamera);
 
 	for (auto* monster : m_Monsters)
 	{
@@ -1385,6 +1450,9 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 		auto* texShader = dynamic_cast<CTextureToScreenShader*>(shader);
 		if (texShader && texShader->visible) shader->Render(pd3dCommandList, pCamera);
 	}
+
+	for (auto* obj : m_GameObjects)
+		if (obj && obj->GetVisible()) obj->Render(pd3dCommandList, pCamera);
 
 	if (m_pFireballSystem) m_pFireballSystem->Render(pd3dCommandList, pCamera);
 	if (m_pGreenSpiritSystem) m_pGreenSpiritSystem->Render(pd3dCommandList, pCamera);

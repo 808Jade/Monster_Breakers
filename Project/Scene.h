@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <array>
 #include "Shader.h"
 #include "Player.h"
 #include "Object_Items.h"
@@ -228,6 +229,31 @@ public:
 	CWeaponThrowSystem* m_pWeaponThrowSystem = nullptr;
 	CBeamSystem* m_pBeamSystem = nullptr;
 	CGroundCrackEffect* m_pGroundCrackEffect = nullptr;
+
+	// skill cooltime
+	static constexpr int   SKILL_COUNT = 3;
+	static constexpr float SKILL_BASE_CD[3] = { 10.0f, 10.0f, 10.0f }; // 스킬별 기본 쿨타임(초)
+
+	float  m_fSkillCooldown[SKILL_COUNT] = {};   // 남은 쿨타임(초)
+	float  m_fSkillMaxCooldown[SKILL_COUNT] = {};   // 현재 레벨 기준 최대 쿨타임
+
+/*	// 쿨타임 오버레이 셰이더 (스킬 슬롯 위에 반투명 어두운 사각형)
+	std::array<CCooldownOverlayShader*, SKILL_COUNT> m_pCooldownOverlays = {};*/
+
+	// 쿨타임 텍스트 (남은 초 표시)
+	std::array<CText*, SKILL_COUNT> m_pCooldownTexts = {};
+
+	// 외부(플레이어 입력)에서 쿨타임 발동
+	void TriggerSkillCooldown(int skillIndex);
+
+	// 쿨타임 계산
+	float CalcMaxCooldown(int skillIndex) const;
+	// 쿨타임 중인지 확인
+	bool IsSkillOnCooldown(int skillIndex) const
+	{
+		if (skillIndex < 0 || skillIndex >= SKILL_COUNT) return false;
+		return m_fSkillCooldown[skillIndex] > 0.0f;
+	}
 
 	POINT m_ptPos;
 

@@ -53,8 +53,8 @@ void CText::UpdateText(const std::wstring& text, const std::wstring& fixtext)
     if (newText == m_text) return;
     m_text = newText;
 
-    if (!commandlist) return;
-    gGameFramework.WaitForGpuComplete();
+/*    if (!commandlist) return;
+    gGameFramework.WaitForGpuComplete();*/
 
     CFontMesh* pMesh = new CFontMesh(device, commandlist, m_text, m_fX, m_fY);
     SetMesh(pMesh);
