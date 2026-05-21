@@ -621,6 +621,8 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 
 				m_pSkinnedAnimationController->SetTrackWeight(m_animBlend.to, 1.0f);
 				m_pSkinnedAnimationController->SetTrackWeight(m_animBlend.from, 0.0f);
+
+				m_pSkinnedAnimationController->SetTrackPosition(m_animBlend.from, 0.0f);
 			}
 			else
 			{
@@ -634,28 +636,28 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 		case AnimationState::ATTACK:
 			PlayAnimationTrack(3, 1.0f);
 			if (IsAnimationFinished(3)) {
-				m_pSkinnedAnimationController->SetTrackPosition(3, 0.0f);
+				//m_pSkinnedAnimationController->SetTrackPosition(3, 0.0f);
 				m_currentAnim = AnimationState::IDLE;
 			}
 			break;
 		case AnimationState::SKILL1:
 			PlayAnimationTrack(4, 1.0f);
 			if (IsAnimationFinished(4)) {
-				m_pSkinnedAnimationController->SetTrackPosition(4, 0.0f);
+				//m_pSkinnedAnimationController->SetTrackPosition(4, 0.0f);
 				m_currentAnim = AnimationState::IDLE;
 			}
 			break;
 		case AnimationState::SKILL2:
 			PlayAnimationTrack(5, 1.0f);
 			if (IsAnimationFinished(5))	{
-				m_pSkinnedAnimationController->SetTrackPosition(5, 0.0f);
+				//m_pSkinnedAnimationController->SetTrackPosition(5, 0.0f);
 				m_currentAnim = AnimationState::IDLE;
 			}
 			break;
 		case AnimationState::SKILL3:
 			PlayAnimationTrack(6, 1.0f);
 			if (IsAnimationFinished(6)) {
-				m_pSkinnedAnimationController->SetTrackPosition(6, 0.0f);
+				//m_pSkinnedAnimationController->SetTrackPosition(6, 0.0f);
 				m_currentAnim = AnimationState::IDLE;
 			}
 			break;
