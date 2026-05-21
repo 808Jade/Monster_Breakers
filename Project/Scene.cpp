@@ -1176,10 +1176,24 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 				<< throwPos.x << ", " << throwPos.y << ", " << throwPos.z
 				<< ") dir=(" << throwDir.x << ", " << throwDir.y << ", " << throwDir.z << ")\n";
 
-			// send_skill_packet(SkillType::SKILL_WEAPON_THROW, throwPos, throwDir);
+			send_weapon_pos_packet(throwPos, throwDir);
+		}
+		else if (m_pModel == m_pKnightModel)
+		{
+			std::cout << "[SKILL] 기사 방패막기 시작\n";
+			send_shield_block_packet(true);
 		}
 		else {
 			// 기사 방패막기이므로 몬스터 공격 X 처리
+		}
+	}
+	break;
+	case WM_RBUTTONUP:
+	{
+		if (m_pModel == m_pKnightModel)
+		{
+			std::cout << "[SKILL] 기사 방패막기 종료\n";
+			send_shield_block_packet(false);
 		}
 	}
 	break;
@@ -1198,6 +1212,9 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 			
 			// 법사 otherplayer 공격력 늘리기
 			if (m_pModel == m_pWizardModel) {
+
+				send_buff_atk_packet();
+
 				for (auto& kv : g_other_player_slots)
 				{
 					long long player_id = kv.first;
@@ -1208,8 +1225,11 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 					m_pBeamSystem->Emit(otherPlayer->GetPosition(), pPlayer->GetPosition());
 				}
 			}
-			//SERVER!!
-
+			// 이부분 기사 q 스킬
+			/*else if (m_pModel == m_pKnightModel)
+			{
+				send_strike_packet(pPlayer->GetPosition(), pPlayer->GetLook());
+			}*/
 			break;
 
 		case 'E':
@@ -1222,9 +1242,11 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 					m_pGreenSpiritSystem->Emit(footPos);
 
 					//SERVER!!
-					pPlayer->currentHP += (pPlayer->level[3] * 5);
+					send_buff_hp_packet();
 
-					for (auto& kv : g_other_player_slots)
+					/* 소라카 궁마냥
+					pPlayer->hp += (pPlayer->level[3] * 5);
+					for(auto* otherPlayer : m_vPlayers)
 					{
 						long long player_id = kv.first;
 						int slot = kv.second;
@@ -1241,6 +1263,8 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 				}
 			}
 			else if (m_pModel == m_pKnightModel) {
+
+				send_taunt_packet(8.0f); //도발범위 조정해보자...
 				// 기사 도발	
 				// 몬스터들 공격 멈추고 lookat = 기사 위치로
 				// m_pLevel[2]의 값에 따라 도발 지속시간 증가
