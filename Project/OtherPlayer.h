@@ -13,6 +13,7 @@ public:
     
     float	currentHP = 100.f;
     int     level[3] = { 1,1,1 };
+	float damage = 1.f;
 
     int currentAnim = 0; // 현재 재생 애니메이션
     int targetAnim = 0; // 서버에서 받은 애니메이션

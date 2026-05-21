@@ -1195,20 +1195,21 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 		switch (wParam) {
 		case 'Q':
 			pPlayer->m_currentAnim = AnimationState::SKILL2;
-			//SERVER!!
+			
 			// 법사 otherplayer 공격력 늘리기
 			if (m_pModel == m_pWizardModel) {
-
-
 				for (auto& kv : g_other_player_slots)
 				{
 					long long player_id = kv.first;
 					int slot = kv.second;
 					OtherPlayer* otherPlayer = m_ppOtherPlayers[slot];
-					if (!otherPlayer) continue;
-					
+					if (!otherPlayer) continue;				
+					otherPlayer->damage += (pPlayer->level[2]); // 다른 플레이어 공격력 증가
+					m_pBeamSystem->Emit(otherPlayer->GetPosition(), pPlayer->GetPosition());
 				}
 			}
+			//SERVER!!
+
 			break;
 
 		case 'E':
@@ -1221,18 +1222,22 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 					m_pGreenSpiritSystem->Emit(footPos);
 
 					//SERVER!!
-					/* 소라카 궁마냥
-					pPlayer->hp += (pPlayer->level[3] * 5);
-					for(auto* otherPlayer : m_vPlayers)
+					pPlayer->currentHP += (pPlayer->level[3] * 5);
+
+					for (auto& kv : g_other_player_slots)
 					{
+						long long player_id = kv.first;
+						int slot = kv.second;
+						OtherPlayer* otherPlayer = m_ppOtherPlayers[slot];
 						if (!otherPlayer) continue;
-						otherPlayer->hp += (pPlayer->level[3] * 5); // 다른 플레이어 체력 회복
+
+						otherPlayer->currentHP += (pPlayer->level[3] * 5); // 다른 플레이어 체력 회복
 						// 스킬 쓰면 다른 플레이어 발에서도 이펙트 보이게
 						XMFLOAT3 footPos = otherPlayer->GetPosition();
 						footPos.y -= 0.5f;
 						m_pGreenSpiritSystem->Emit(footPos);
 					}
-					*/
+					
 				}
 			}
 			else if (m_pModel == m_pKnightModel) {
