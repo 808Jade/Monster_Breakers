@@ -58,6 +58,8 @@ void OtherPlayer::Animate(int animation, float fTimeElapsed)
 
 				m_pSkinnedAnimationController->SetTrackWeight(m_animBlend.to, 1.0f);
 				m_pSkinnedAnimationController->SetTrackWeight(m_animBlend.from, 0.0f);
+			
+				m_pSkinnedAnimationController->SetTrackPosition(m_animBlend.from, 0.0f);
 			}
 			else
 			{
@@ -70,28 +72,24 @@ void OtherPlayer::Animate(int animation, float fTimeElapsed)
 		case 3:
 			PlayAnimationTrack(3, 1.0f);
 			if (IsAnimationFinished(3)) {
-				m_pSkinnedAnimationController->SetTrackPosition(3, 0.0f);
 				animation = 0;
 			}
 			break;
 		case 4:
 			PlayAnimationTrack(4, 1.0f);
 			if (IsAnimationFinished(4)) {
-				m_pSkinnedAnimationController->SetTrackPosition(4, 0.0f);
 				animation = 0;
 			}
 			break;
 		case 5:
 			PlayAnimationTrack(5, 1.0f);
 			if (IsAnimationFinished(5)) {
-				m_pSkinnedAnimationController->SetTrackPosition(5, 0.0f);
 				animation = 0;
 			}			
 			break;
 		case 6:
 			PlayAnimationTrack(6, 1.0f);
 			if (IsAnimationFinished(6)) {
-				m_pSkinnedAnimationController->SetTrackPosition(6, 0.0f);
 				animation = 0;
 			}
 			break;
