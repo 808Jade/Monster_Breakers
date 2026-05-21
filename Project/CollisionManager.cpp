@@ -96,9 +96,8 @@ void CCollisionManager::HandleCollision(CPlayer* player, CGameObject* obj)
     if (isMonster && isAttacking && isSwordHit)
     {
 
-        std::cout << "Sword hit ! - " << ObjectFrameName << std::endl;
-		dynamic_cast<CMonster*>(obj)->TakeDamage(1.0f);
-        // 나중에 HP 깎는 로직도 여기서 넣으면 됨.
+        //std::cout << "Sword hit ! - " << ObjectFrameName << std::endl;
+		dynamic_cast<CMonster*>(obj)->TakeDamage(player->damage);
         return;
     }
 

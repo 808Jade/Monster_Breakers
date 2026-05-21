@@ -421,11 +421,6 @@ void ProcessPacket(char* ptr)
 
         if (other_id == g_myid) break;
 
-        cout << "[MOVE] other_id=" << other_id << " / currently registered ids: ";
-        for (auto& kv : g_other_player_slots)
-            cout << kv.first << " ";
-        cout << "\n";
-
         // OtherPlayer의 위치를 반영한다
         auto it = g_other_player_slots.find(other_id);
         if (it == g_other_player_slots.end()) break;
@@ -477,10 +472,10 @@ void ProcessPacket(char* ptr)
         {
         case SkillType::SKILL_FIREBALL:
             scene->m_pFireballSystem->Emit(packet->position, packet->look);
-            cout << "[SKILL] 파이어볼 Emit: pos=("
+/*            cout << "[SKILL] 파이어볼 Emit: pos=("
                 << packet->position.x << ", "
                 << packet->position.y << ", "
-                << packet->position.z << ")\n";
+                << packet->position.z << ")\n";*/
             break;
 
             // 다른 스킬 타입도 여기에 추가
@@ -488,7 +483,7 @@ void ProcessPacket(char* ptr)
         break;
     }
 
-    case SC_P_SHIELD_BLOCK:
+    case SC_P_SHIELD_BLOCK: // 방패막기
     {
         sc_packet_shield_block* packet = reinterpret_cast<sc_packet_shield_block*>(ptr);
 
@@ -496,16 +491,26 @@ void ProcessPacket(char* ptr)
         break;
     }
 
-    case SC_P_SKILL_STRIKE:
+    case SC_P_SKILL_STRIKE: // 강타
     {
         sc_packet_skill_strike* packet = reinterpret_cast<sc_packet_skill_strike*>(ptr);
+
+        if (packet->playerID == g_myid) break;
+
+        CScene* scene = gGameFramework.GetCurrentScene();
+        if (!scene) break;
+
+        if (scene->m_pGroundCrackEffect)
+        {
+            scene->m_pGroundCrackEffect->Trigger(packet->position, packet->look);
+        }
 
         cout << "[수신] SC_P_SKILL_STRIKE | playerID=" << packet->playerID
             << " pos=(" << packet->position.x << "," << packet->position.y << ","   << packet->position.z << ")\n";
         break;
     }
 
-    case SC_P_TAUNT:
+    case SC_P_TAUNT: // 도발
     {
         sc_packet_taunt* packet = reinterpret_cast<sc_packet_taunt*>(ptr);
 
@@ -513,25 +518,100 @@ void ProcessPacket(char* ptr)
         break;
     }
 
-    case SC_P_BUFF_ATK:
+    case SC_P_BUFF_ATK: // 공격력 빔
     {
         sc_packet_buff_atk* packet = reinterpret_cast<sc_packet_buff_atk*>(ptr);
+        if (packet->playerID == g_myid) break;
+
+        CScene* scene = gGameFramework.GetCurrentScene();
+        if (!scene) break;
+
+        XMFLOAT3 casterPos;
+        XMFLOAT3 targetPos;
+
+        // 시전자 위치
+        if (packet->playerID == g_myid)
+        {
+            casterPos = scene->m_pPlayer->GetPosition();
+        }
+        else
+        {
+            auto casterIt = g_other_player_slots.find(packet->playerID);
+            if (casterIt == g_other_player_slots.end()) break;
+
+            OtherPlayer* caster = scene->m_ppOtherPlayers[casterIt->second];
+            if (!caster) break;
+
+            casterPos = caster->GetPosition();
+        }
+
+        // 대상 위치
+        if (packet->targetID == g_myid)
+        {
+            targetPos = scene->m_pPlayer->GetPosition();
+        }
+        else
+        {
+            auto targetIt = g_other_player_slots.find(packet->targetID);
+            if (targetIt == g_other_player_slots.end()) break;
+
+            OtherPlayer* target = scene->m_ppOtherPlayers[targetIt->second];
+            if (!target) break;
+
+            targetPos = target->GetPosition();
+        }
+
+        scene->m_pBeamSystem->Emit(casterPos, targetPos);
 
         cout << "[수신] SC_P_BUFF_ATK | playerID=" << packet->playerID << " newDamage=" << packet->newDamage << "\n";
         break;
     }
 
-    case SC_P_BUFF_HP:
+    case SC_P_BUFF_HP: // 체력회복
     {
         sc_packet_buff_hp* packet = reinterpret_cast<sc_packet_buff_hp*>(ptr);
+
+        CScene* scene = gGameFramework.GetCurrentScene();
+        if (!scene) break;
+
+        if (scene->m_pPlayer)
+        {
+            scene->m_pGreenSpiritSystem->Emit(scene->m_pPlayer->GetPosition());
+        }
+
+        // 접속 중인 모든 OtherPlayer
+        for (auto& kv : g_other_player_slots)
+        {
+            int slot = kv.second;
+            OtherPlayer* otherPlayer = scene->m_ppOtherPlayers[slot];
+
+            if (!otherPlayer || !otherPlayer->isConnedted) continue;
+            scene->m_pGreenSpiritSystem->Emit(otherPlayer->GetPosition());
+			gGameFramework.UpdateOtherPlayerHP(slot, packet->newHp); // HP 갱신
+        }
+
+		// 내 hp 갱신 + other player hp 갱신 필요
+        if (packet->playerID == g_myid)
+        {
+            gGameFramework.UpdatePlayerHP(packet->newHp);
+        }
 
         cout << "[수신] SC_P_BUFF_HP | playerID=" << packet->playerID << " newHp=" << packet->newHp << "\n";
         break;
     }
 
-    case SC_P_WEAPON_POS:
+	case SC_P_WEAPON_POS: // 도끼 무기 위치 (도적)
     {
         sc_packet_weapon_pos* packet = reinterpret_cast<sc_packet_weapon_pos*>(ptr);
+
+        CScene* scene = gGameFramework.GetCurrentScene();
+        if (!scene || !scene->m_pWeaponThrowSystem) break;
+
+        /* CGameObject* pWeapon = packet->FindFrame("SM_Weapon_01");
+        if (!pWeapon) break;
+
+        scene->m_pWeaponThrowSystem->Emit(packet->weaponPosition, p->look, 30.0f, pWeapon);
+        );*/
 
         cout << "[수신] SC_P_WEAPON_POS | playerID=" << packet->playerID
             << " pos=(" << packet->weaponPosition.x << "," << packet->weaponPosition.y << "," << packet->weaponPosition.z << ")\n";

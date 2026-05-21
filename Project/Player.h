@@ -162,7 +162,6 @@ public:
 
 	CText* m_pText = nullptr;
 	CText* m_plevel[3] = { nullptr, nullptr, nullptr };
-	CGroundCrackEffect* m_pGroundCrackEffect = nullptr;
 	bool                m_bCrackTriggered = false;
 	PlayerClass          m_ePlayerClass = PlayerClass::UNKNOWN;
 	//server

@@ -238,6 +238,7 @@ struct sc_packet_buff_atk {
 	unsigned char   size;
 	char            type;
 	long long       playerID;
+	long long       targetID; 
 	int             newDamage;  // 변경된 공격력 값
 };
 

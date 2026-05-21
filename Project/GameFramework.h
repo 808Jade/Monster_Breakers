@@ -76,7 +76,6 @@ public:
 	void UpdatePlayerHP(float hp) {
 		m_pPlayer->currentHP = hp;
 	}
-
 	void UpdatePlayerGold(int gold) {
 		m_pPlayer->Pgold = gold;
 	}
@@ -113,6 +112,10 @@ public:
 	void UpdateOtherPlayerRotate(int clinetnum, XMFLOAT3 right, XMFLOAT3 look)
 	{
 		m_ppScenes[m_nCurrentScene]->UpdateOtherPlayerRotate(clinetnum, right, look);
+	}
+	void UpdateOtherPlayerHP(int clientnum, float hp) 
+	{
+		m_ppScenes[m_nCurrentScene]->UpdateOtherPlayerHP(clientnum, hp);
 	}
 
 

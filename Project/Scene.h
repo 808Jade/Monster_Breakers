@@ -18,6 +18,7 @@
 #include "CGreenSpiritSystem.h"
 #include "CWeaponThrowSystem.h"
 #include "CBeamSystem.h"
+#include "GroundCrackEffect.h"
 
 #define MAX_LIGHTS						16 
 
@@ -226,6 +227,7 @@ public:
 	CGreenSpiritSystem* m_pGreenSpiritSystem = nullptr;
 	CWeaponThrowSystem* m_pWeaponThrowSystem = nullptr;
 	CBeamSystem* m_pBeamSystem = nullptr;
+	CGroundCrackEffect* m_pGroundCrackEffect = nullptr;
 
 	POINT m_ptPos;
 
@@ -270,6 +272,13 @@ public:
 		if (!m_ppOtherPlayers[clientnum]) return; 
 		m_ppOtherPlayers[clientnum]->m_xmf3Look = look;
 		m_ppOtherPlayers[clientnum]->m_xmf3Right = right;
+	}
+	void UpdateOtherPlayerHP(int clientnum, float hp)
+	{
+		if (!m_ppOtherPlayers) return;
+		if (clientnum < 0 || clientnum >= m_nOtherPlayers) return;
+		if (!m_ppOtherPlayers[clientnum]) return; 
+		m_ppOtherPlayers[clientnum]->currentHP = hp;
 	}
 };
 

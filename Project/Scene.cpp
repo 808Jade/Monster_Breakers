@@ -251,6 +251,8 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 	m_pWeaponThrowSystem->Create(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 	m_pBeamSystem = new CBeamSystem();
 	m_pBeamSystem->Create(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	m_pGroundCrackEffect = new CGroundCrackEffect();
+	m_pGroundCrackEffect->Create(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 	
 	m_pKnightModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Knight.bin", NULL);
 	m_pWizardModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Wizard.bin", NULL);
@@ -1226,10 +1228,16 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 				}
 			}
 			// 이부분 기사 q 스킬
-			/*else if (m_pModel == m_pKnightModel)
+			else if (m_pModel == m_pKnightModel)
 			{
-				send_strike_packet(pPlayer->GetPosition(), pPlayer->GetLook());
-			}*/
+				XMFLOAT3 pos = pPlayer->GetPosition();
+				XMFLOAT3 look = pPlayer->GetLook();
+
+				if (m_pGroundCrackEffect)
+					m_pGroundCrackEffect->Trigger(pos, look);
+
+				send_strike_packet(pos, look);
+			}
 			break;
 
 		case 'E':
@@ -1258,7 +1266,7 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 						XMFLOAT3 footPos = otherPlayer->GetPosition();
 						footPos.y -= 0.5f;
 						m_pGreenSpiritSystem->Emit(footPos);
-					}
+					}*/
 					
 				}
 			}
@@ -1298,6 +1306,7 @@ void CScene::AnimateObjects(float fTimeElapsed)
 	if (m_pGreenSpiritSystem) m_pGreenSpiritSystem->Animate(fTimeElapsed);
 	if (m_pWeaponThrowSystem) m_pWeaponThrowSystem->Animate(fTimeElapsed);
 	if (m_pBeamSystem) m_pBeamSystem->Animate(fTimeElapsed);
+	if (m_pGroundCrackEffect) m_pGroundCrackEffect->Update(fTimeElapsed);
 
 	for(auto* shader : m_Shaders) if(shader) shader->AnimateObjects(fTimeElapsed);
 }
@@ -1381,6 +1390,7 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 	if (m_pGreenSpiritSystem) m_pGreenSpiritSystem->Render(pd3dCommandList, pCamera);
 	if (m_pWeaponThrowSystem) m_pWeaponThrowSystem->Render(pd3dCommandList, pCamera);
 	if (m_pBeamSystem) m_pBeamSystem->Render(pd3dCommandList, pCamera);
+	if (m_pGroundCrackEffect) m_pGroundCrackEffect->Render(pd3dCommandList, pCamera);
 }
 
 void CScene::RenderShadowPass(ID3D12GraphicsCommandList* pd3dCommandList)
