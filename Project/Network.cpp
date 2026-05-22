@@ -629,7 +629,7 @@ void ProcessPacket(char* ptr)
         }
 
 
-        //gGameFramework.OnMonsterSpawned(packet->monsterID, packet->position, packet->state);
+        gGameFramework.OnMonsterSpawned(packet->monsterID, packet->position, packet->state);
 
         break;
     }
@@ -638,8 +638,7 @@ void ProcessPacket(char* ptr)
     {
         sc_packet_monster_move* packet = reinterpret_cast<sc_packet_monster_move*>(ptr);
 
-        gGameFramework.OnMonsterSpawned(packet->monsterID, packet->position, packet->state);
-
+        gGameFramework.UpdateMonsterPosition((int)packet->monsterID, packet->position, packet->rotation, packet->state);
         break;
     }
 

@@ -784,10 +784,12 @@ void CGameFramework::OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int st
 	auto it = g_monsters.find(monsterID);
 	if (it != g_monsters.end())
 	{
+
 		// 기존 몬스터 위치/상태/HP 갱신
 		it->second->SetPosition(pos);
-
 		UpdateMonsterState(it->second, state);
+
+		cout << "[OnMonsterSpawned] ID=" << monsterID << " pos=(" << pos.x << "," << pos.y << "," << pos.z << ") 갱신\n";
 	}
 	else
 	{
@@ -800,6 +802,9 @@ void CGameFramework::OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int st
 		//g_monsters[monsterID] = pMonster;
 
 		//// 씬에서 관리하는 리스트나 배열에도 추가할 수 있음
+
+
+
 	}
 }
 
