@@ -72,7 +72,7 @@ void ProcessEnterPacket(long long player_id, uint8_t job)
     g_other_players[player_id] = target;
     g_other_player_slots[player_id] = slot;
 
-    cout << "[ENTER] success: id=" << player_id << " slot=" << slot << "\n";
+    std::cout << "[ENTER] success: id=" << player_id << " slot=" << slot << "\n";
 }
 // =================================================================
 //           몬스터 렌더링을 위한 몬스터 오브젝트 및 관리 
@@ -376,7 +376,7 @@ void ProcessPacket(char* ptr)
         gGameFramework.UpdatePlayerHP(packet->hp);
 
         //여기에 리스폰 관련해서 랜더링 해야할듯?? (이부분)
-        //gGameFramework.UpdateMyPlayerPosition(packet->position);
+        gGameFramework.UpdateMyPlayerPosition(packet->position);
 
         cout << "myid: " << packet->id << endl;
         
@@ -472,7 +472,7 @@ void ProcessPacket(char* ptr)
         {
         case SkillType::SKILL_FIREBALL:
             scene->m_pFireballSystem->Emit(packet->position, packet->look);
-/*            cout << "[SKILL] 파이어볼 Emit: pos=("
+/*            std::cout << "[SKILL] 파이어볼 Emit: pos=("
                 << packet->position.x << ", "
                 << packet->position.y << ", "
                 << packet->position.z << ")\n";*/
@@ -487,7 +487,7 @@ void ProcessPacket(char* ptr)
     {
         sc_packet_shield_block* packet = reinterpret_cast<sc_packet_shield_block*>(ptr);
 
-        cout << "[수신] SC_P_SHIELD_BLOCK | playerID=" << packet->playerID << " isBlocking=" << (int)packet->isBlocking << "\n";
+        std::cout << "[수신] SC_P_SHIELD_BLOCK | playerID=" << packet->playerID << " isBlocking=" << (int)packet->isBlocking << "\n";
         break;
     }
 
@@ -505,7 +505,7 @@ void ProcessPacket(char* ptr)
             scene->m_pGroundCrackEffect->Trigger(packet->position, packet->look);
         }
 
-        cout << "[수신] SC_P_SKILL_STRIKE | playerID=" << packet->playerID
+        std::cout << "[수신] SC_P_SKILL_STRIKE | playerID=" << packet->playerID
             << " pos=(" << packet->position.x << "," << packet->position.y << ","   << packet->position.z << ")\n";
         break;
     }
@@ -514,7 +514,7 @@ void ProcessPacket(char* ptr)
     {
         sc_packet_taunt* packet = reinterpret_cast<sc_packet_taunt*>(ptr);
 
-        cout << "[수신] SC_P_TAUNT | playerID=" << packet->playerID << "\n";
+        std::cout << "[수신] SC_P_TAUNT | playerID=" << packet->playerID << "\n";
         break;
     }
 
@@ -563,7 +563,7 @@ void ProcessPacket(char* ptr)
 
         scene->m_pBeamSystem->Emit(casterPos, targetPos);
 
-        cout << "[수신] SC_P_BUFF_ATK | playerID=" << packet->playerID << " newDamage=" << packet->newDamage << "\n";
+        std::cout << "[수신] SC_P_BUFF_ATK | playerID=" << packet->playerID << " newDamage=" << packet->newDamage << "\n";
         break;
     }
 
@@ -596,7 +596,7 @@ void ProcessPacket(char* ptr)
             gGameFramework.UpdatePlayerHP(packet->newHp);
         }
 
-        cout << "[수신] SC_P_BUFF_HP | playerID=" << packet->playerID << " newHp=" << packet->newHp << "\n";
+        std::cout << "[수신] SC_P_BUFF_HP | playerID=" << packet->playerID << " newHp=" << packet->newHp << "\n";
         break;
     }
 
@@ -613,7 +613,7 @@ void ProcessPacket(char* ptr)
         scene->m_pWeaponThrowSystem->Emit(packet->weaponPosition, p->look, 30.0f, pWeapon);
         );*/
 
-        cout << "[수신] SC_P_WEAPON_POS | playerID=" << packet->playerID
+        std::cout << "[수신] SC_P_WEAPON_POS | playerID=" << packet->playerID
             << " pos=(" << packet->weaponPosition.x << "," << packet->weaponPosition.y << "," << packet->weaponPosition.z << ")\n";
         break;
     }
@@ -624,7 +624,7 @@ void ProcessPacket(char* ptr)
         if (gGameFramework.isLoading || gGameFramework.isStartScene) {
             std::lock_guard<std::mutex> lock(g_pendingMonsterMutex);
             g_pendingMonsterSpawns.push_back({ (int)packet->monsterID,packet->position,    packet->state });
-            cout << "[몬스터] 로딩중 보관 ID=" << packet->monsterID << "\n";
+            std::cout << "[몬스터] 로딩중 보관 ID=" << packet->monsterID << "\n";
             break;
         }
 
@@ -637,8 +637,9 @@ void ProcessPacket(char* ptr)
     case SC_P_MONSTER_MOVE:
     {
         sc_packet_monster_move* packet = reinterpret_cast<sc_packet_monster_move*>(ptr);
+        
+        gGameFramework.UpdateMonsterPosition(packet->monsterID, packet->position, packet->rotation, packet->state);
 
-        gGameFramework.UpdateMonsterPosition((int)packet->monsterID, packet->position, packet->rotation, packet->state);
         break;
     }
 
@@ -646,7 +647,7 @@ void ProcessPacket(char* ptr)
     {
         sc_packet_update_monster_hp* packet = reinterpret_cast<sc_packet_update_monster_hp*>(ptr);
 
-        cout << "[몬스터] HP 갱신 수신 | ID=" << packet->monsterID << " HP=" << packet->hp << "\n";
+        std::cout << "[몬스터] HP 갱신 수신 | ID=" << packet->monsterID << " HP=" << packet->hp << "\n";
 
         break;
     }
@@ -667,7 +668,7 @@ void ProcessPacket(char* ptr)
 
         gGameFramework.UpdatePlayerGold(packet->totalGold);
 
-        cout << "[골드] SC_P_GOLD_REWARD 수신 | +" << packet->amount << "G (현재=" << packet->totalGold << "G)\n";
+        std::cout << "[골드] SC_P_GOLD_REWARD 수신 | +" << packet->amount << "G (현재=" << packet->totalGold << "G)\n";
 
         break;
 
@@ -733,12 +734,12 @@ void LoadingDoneToServer()
     pkt.size = sizeof(pkt);
     pkt.type = CS_P_LOADING_DONE;
     send_packet(&pkt);
-    cout << "[Client] LoadingDone send\n";
+    std::cout << "[Client] LoadingDone send\n";
     // 로딩 중에 못 처리한 ENTER 패킷 재처리
     {
     std::lock_guard<std::mutex> lock(g_pendingEnterMutex);
     for (auto& p : g_pendingEnters) {
-        cout << "[ENTER] Queue reprocessing: id=" << p.player_id << "\n";
+        std::cout << "[ENTER] Queue reprocessing: id=" << p.player_id << "\n";
         ProcessEnterPacket(p.player_id, p.job);
     }
     g_pendingEnters.clear();
@@ -746,7 +747,7 @@ void LoadingDoneToServer()
     {
         std::lock_guard<std::mutex> lock(g_pendingMonsterMutex);
         for (auto& m : g_pendingMonsterSpawns) {
-            cout << "[MONSTER] Queue reprocessing: id=" << m.monsterID << "\n";
+            std::cout << "[MONSTER] Queue reprocessing: id=" << m.monsterID << "\n";
             gGameFramework.OnMonsterSpawned(m.monsterID, m.position, m.state);
         }
         g_pendingMonsterSpawns.clear();

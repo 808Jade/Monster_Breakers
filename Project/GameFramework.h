@@ -79,6 +79,9 @@ public:
 	void UpdatePlayerGold(int gold) {
 		m_pPlayer->Pgold = gold;
 	}
+	void UpdateMyPlayerPosition(const XMFLOAT3& position) {
+		m_pPlayer->SetPosition(position);
+	}
 
 	void OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int state);
 	void UpdateMonsterState(CMonster* pMonster, int state);
