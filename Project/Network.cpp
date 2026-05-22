@@ -371,17 +371,12 @@ void ProcessPacket(char* ptr)
         sc_packet_user_info* packet = reinterpret_cast<sc_packet_user_info*>(ptr);
         g_myid = packet->id;
         gGameFramework.UpdatePlayerHP(packet->hp);
-        //g_pScene->m_pPlayer->currentHP = packet->hp;
+
+        //여기에 리스폰 관련해서 랜더링 해야할듯?? (이부분)
+        //gGameFramework.UpdateMyPlayerPosition(packet->position);
+
         cout << "myid: " << packet->id << endl;
         
-
-        //std::cout << "[Client] My Player : " << packet->id << std::endl;
-        //std::cout << "[Client] My Player Information ID:" << packet->id
-        //    << " Positino(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")"
-        //    << " Look(" << packet->look.x << "," << packet->look.y << "," << packet->look.z << ")"
-        //    << " Right(" << packet->right.x << "," << packet->right.y << "," << packet->right.z << ")"
-        //    << "Animation : " << static_cast<int>(packet->animState) << ", HP : " << packet->hp
-        //    << std::endl;
         break;
     }
     
@@ -401,16 +396,7 @@ void ProcessPacket(char* ptr)
         ProcessEnterPacket(player_id, packet->job);
 
         std::cout << "[Client] New Player " << player_id << "Connect " << "\n";
-        /*std::cout << "[Client] New Player Information Recv "
-            << " Position(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")"
-            << " Look(" << packet->look.x << "," << packet->look.y << "," << packet->look.z << ")"
-            << " Right(" << packet->right.x << "," << packet->right.y << "," << packet->right.z << ")"
-            << "Animation : " << static_cast<int>(packet->animState) << "HP : " << packet->hp
-            << std::endl;*/
 
-        // 씬에 OtherPlayer가 딱 나타난다
-        // 그리고 이제 if문 써서 직업에 따라 렌더링 다르게 하는걸로?
-        //gGameFramework.OnOtherClientConnected();
         break;
     }
 
@@ -453,16 +439,16 @@ void ProcessPacket(char* ptr)
         break;
     }
 
-    case SC_P_RESPAWN:
-    {
-        sc_packet_respawn* packet = reinterpret_cast<sc_packet_respawn*>(ptr);
+    //case SC_P_RESPAWN:
+    //{
+    //    sc_packet_respawn* packet = reinterpret_cast<sc_packet_respawn*>(ptr);
 
-        cout << "[수신] SC_P_RESPAWN | playerID=" << packet->playerID << " HP=" << packet->hp
-            << " pos=(" << packet->position.x << "," << packet->position.y << ","  << packet->position.z << ")\n";
+    //    cout << "[수신] SC_P_RESPAWN | playerID=" << packet->playerID << " HP=" << packet->hp
+    //        << " pos=(" << packet->position.x << "," << packet->position.y << ","  << packet->position.z << ")\n";
 
-        // 랜더링 만 하면 될듯
-        break;
-    }
+    //    // 랜더링 만 하면 될듯
+    //    break;
+    //}
 
     case SC_P_SKILL:
     {
