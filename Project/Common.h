@@ -57,6 +57,8 @@ constexpr char SC_P_BUFF_HP = 43;
 constexpr char CS_P_WEAPON_POS = 50;
 constexpr char SC_P_WEAPON_POS = 51;
 
+constexpr char SC_P_RESPAWN = 60;
+
 
 // =================== 주의!! ========================
 // 
@@ -166,6 +168,14 @@ struct cs_packet_move {
 	uint8_t				animState;
 };
 
+struct sc_packet_respawn {
+	unsigned char		size;
+	char				type;
+	long long			playerID;
+	XMFLOAT3			position;
+	short				hp;
+};
+
 
 // skill
 enum class SkillType : uint8_t {
@@ -190,83 +200,83 @@ struct sc_packet_skill {
 };
 
 struct cs_packet_shield_block {
-	unsigned char   size;
-	char            type;
-	bool            isBlocking;   // true=시작, false=종료
+	unsigned char		size;
+	char				type;
+	bool				isBlocking;   // true=시작, false=종료
 };
 
 struct sc_packet_shield_block {
-	unsigned char   size;
-	char            type;
-	long long       playerID;
-	bool            isBlocking;
+	unsigned char		size;
+	char				type;
+	long long			playerID;
+	bool				isBlocking;
 };
 
 struct cs_packet_skill_strike {
-	unsigned char   size;
-	char            type;
-	XMFLOAT3        position;
-	XMFLOAT3        look;
+	unsigned char		size;
+	char				type;
+	XMFLOAT3			position;
+	XMFLOAT3			look;
 };
 
 struct sc_packet_skill_strike {
-	unsigned char   size;
-	char            type;
-	long long       playerID;
-	XMFLOAT3        position;
-	XMFLOAT3        look;
+	unsigned char		size;
+	char				type;
+	long long			playerID;
+	XMFLOAT3			position;
+	XMFLOAT3			look;
 };
 
 struct cs_packet_taunt {
-	unsigned char   size;
-	char            type;
-	float           range;    // 도발 범위 (ex. 8.0f)
+	unsigned char		size;
+	char				type;
+	float				range;    // 도발 범위 (ex. 8.0f)
 };
 
 struct sc_packet_taunt {
-	unsigned char   size;
-	char            type;
-	long long       playerID;  // 도발한 플레이어
+	unsigned char		size;
+	char				type;
+	long long			playerID;  // 도발한 플레이어
 };
 
 struct cs_packet_buff_atk {
-	unsigned char   size;
-	char            type;
+	unsigned char		size;
+	char				type;
 };
 
 struct sc_packet_buff_atk {
-	unsigned char   size;
-	char            type;
-	long long       playerID;
-	long long       targetID; 
-	int             newDamage;  // 변경된 공격력 값
+	unsigned char		size;
+	char				type;
+	long long			playerID;
+	long long			targetID; 
+	int					newDamage;  // 변경된 공격력 값
 };
 
 struct cs_packet_buff_hp {
-	unsigned char   size;
-	char            type;
+	unsigned char		size;
+	char				type;
 };
 
 struct sc_packet_buff_hp {
-	unsigned char   size;
-	char            type;
-	long long       playerID;
-	short           newHp;   // 변경된 HP 값
+	unsigned char		size;
+	char				type;
+	long long			playerID;
+	short				newHp;   // 변경된 HP 값
 };
 
 struct cs_packet_weapon_pos {
-	unsigned char   size;
-	char            type;
-	XMFLOAT3        weaponPosition;
-	XMFLOAT3        weaponRotation;   // 도끼 회전값 (필요 시)
+	unsigned char		size;
+	char				type;
+	XMFLOAT3			weaponPosition;
+	XMFLOAT3			weaponRotation;   // 도끼 회전값 (필요 시)
 };
 
 struct sc_packet_weapon_pos {
-	unsigned char   size;
-	char            type;
-	long long       playerID;
-	XMFLOAT3        weaponPosition;
-	XMFLOAT3        weaponRotation;
+	unsigned char		size;
+	char				type;
+	long long			playerID;
+	XMFLOAT3			weaponPosition;
+	XMFLOAT3			weaponRotation;
 };
 
 
@@ -317,25 +327,25 @@ struct sc_packet_update_monster_hp
 };
 
 struct sc_packet_monster_die {
-	unsigned char size;
-	char          type;
-	long long     monsterID;
-	long long     killerID;   // 처치한 플레이어 ID (골드 지급용)
+	unsigned char		size;
+	char				type;
+	long long			monsterID;
+	long long			killerID;   // 처치한 플레이어 ID (골드 지급용)
 };
 
 struct sc_packet_gold_reward {
-	unsigned char size;
-	char          type;
-	long long     playerID;
-	int           amount;
-	int           totalGold;
+	unsigned char		size;
+	char				type;
+	long long			playerID;
+	int					amount;
+	int					totalGold;
 };
 
 struct cs_packet_hit_damage {
-	unsigned char size;
-	char          type;
-	long long     monsterID;
-	int           damage;
+	unsigned char		size;
+	char				type;
+	long long			monsterID;
+	int					damage;
 };
 
 

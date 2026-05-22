@@ -453,6 +453,17 @@ void ProcessPacket(char* ptr)
         break;
     }
 
+    case SC_P_RESPAWN:
+    {
+        sc_packet_respawn* packet = reinterpret_cast<sc_packet_respawn*>(ptr);
+
+        cout << "[수신] SC_P_RESPAWN | playerID=" << packet->playerID << " HP=" << packet->hp
+            << " pos=(" << packet->position.x << "," << packet->position.y << ","  << packet->position.z << ")\n";
+
+        // 랜더링 만 하면 될듯
+        break;
+    }
+
     case SC_P_SKILL:
     {
         sc_packet_skill* packet = reinterpret_cast<sc_packet_skill*>(ptr);
@@ -663,8 +674,7 @@ void ProcessPacket(char* ptr)
 
         gGameFramework.UpdatePlayerGold(packet->totalGold);
 
-        std::cout << "[골드] SC_P_GOLD_REWARD 수신 | +" << packet->amount
-            << "G (현재=" << packet->totalGold << "G)\n";
+        cout << "[골드] SC_P_GOLD_REWARD 수신 | +" << packet->amount << "G (현재=" << packet->totalGold << "G)\n";
 
         break;
 
