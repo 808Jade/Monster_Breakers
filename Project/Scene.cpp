@@ -25,14 +25,14 @@ struct MonsterDesc {
 };
 
 static const MonsterDesc MONSTER_DESCS[] = {
-	{ "Model/Monster/BattleBeePA.bin",      10001, 100.0f, 2.0f },
+	{ "Model/Monster/SalamanderPA.bin",      10001, 100.0f, 2.0f },
 	{ "Model/Monster/BishopKnightPA.bin",   10004, 150.0f, 2.0f },
 	{ "Model/Monster/CactusPA.bin",         10007, 100.0f, 2.0f },
 	{ "Model/Monster/CyclopsPA.bin",        10010, 200.0f, 2.0f },
 	{ "Model/Monster/FishmanPA.bin",        10013, 100.0f, 2.0f },
 	{ "Model/Monster/MushroomAngryPA.bin",  10016, 100.0f, 2.0f },
 	{ "Model/Monster/NagaWizardPA.bin",     10019, 120.0f, 2.0f },
-	{ "Model/Monster/SalamanderPA.bin",     10022, 100.0f, 2.0f },
+	{ "Model/Monster/BattleBeePA.bin",     10022, 100.0f, 2.0f },
 	{ "Model/Monster/StingRayPA.bin",       10025, 100.0f, 2.0f },
 };
 
@@ -261,18 +261,10 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 	m_Monsters.clear();
 	for (const auto& desc : MONSTER_DESCS)
 	{
-		auto group = CMonster::SpawnGroup(
-			pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, desc.modelPath,
-			3,              // 종류마다 3마리
-			desc.startID, desc.hp, desc.scale);
-
-		// server!! 위치 받아야함
-		for (CMonster* pMonster : group)
+		for (int i = 0; i < 3; ++i)
 		{
-			pMonster->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
-			pMonster->Rotate(0, rand() % 360, 0);
-
-			m_Monsters.push_back(pMonster);
+			CMonster* monster = new CMonster(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, desc.modelPath, 5, nullptr, desc.hp, desc.startID + i);
+			m_Monsters.push_back(monster);
 		}
 	}
 
@@ -353,7 +345,7 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 //	m_GameObjects[1]->SetPosition(positions[1]);
 //
 //	static_cast<Item*>(m_GameObjects[1])->SetUniqueID(itemIDs[1]);
-//	static_cast<Item*>(m_GameObjects[1])->SetPrice(itemPrices[1]);
+//	static_cast<Item*>(m_GameObjects[1)->SetPrice(itemPrices[1]);
 //	g_items[itemIDs[1]] = static_cast<Item*>(m_GameObjects[1]);
 //
 //	if (pShovelModel) delete pShovelModel;
@@ -1369,15 +1361,15 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 	for (auto* obj : m_GameObjects)
 		if (obj && obj->GetVisible()) obj->Render(pd3dCommandList, pCamera);
 
-	for (auto* monster : m_Monsters)
-	{
-		if (!monster) continue;
-		monster->Animate(m_fElapsedTime);
-		monster->Render(pd3dCommandList, pCamera);
-	}
-
 	m_CollisionManager.Update(m_pPlayer);
 
+	for (auto* monster : m_Monsters)
+	{
+		if (monster) {
+			//monster->Animate(m_fElapsedTime);
+			monster->Render(pd3dCommandList, pCamera);
+		}
+	}
 /*	for (int i = 0; i < m_nOtherPlayers; ++i)
 		if (m_ppOtherPlayers[i] && m_ppOtherPlayers[i]->visible) m_ppOtherPlayers[i]->Render(pd3dCommandList, pCamera);*/
 	for (auto* otherPlayer : m_vPlayers)

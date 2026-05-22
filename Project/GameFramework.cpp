@@ -606,9 +606,13 @@ void CGameFramework::AnimateObjects()
 					<< otherPlayer->m_xmf3Position.z << ")\n";*/
 				m_pScene->m_ppOtherPlayers[slot]->Animate(otherPlayer->targetAnim, fTimeElapsed);
 			}
-		if (m_pScene->m_Monsters.size() > 0)
-			for (auto* monster : m_pScene->m_Monsters)
-				monster->Animate(fTimeElapsed);
+		if (!isLoading && !isStartScene) {
+			for (auto& [id, pMonster] : g_monsters) {
+				if (pMonster) { 
+					pMonster->Animate(fTimeElapsed); 
+				}
+			}
+		}
 	}
 
 	m_pPlayer->Animate(fTimeElapsed);
@@ -828,7 +832,8 @@ void CGameFramework::UpdateMonsterPosition(int monsterID, const XMFLOAT3& pos, c
 		std::cout << "[Error] Monster ID not found: " << monsterID << std::endl;
 		return;
 	}
-
+	printf("[Net] Monster %d → pos=(%.1f, %.1f, %.1f) state=%d\n",
+		monsterID, pos.x, pos.y, pos.z, state);
 	CMonster* pMonster = it->second;
 	pMonster->SetPosition(pos);
 	pMonster->Rotate(rot);

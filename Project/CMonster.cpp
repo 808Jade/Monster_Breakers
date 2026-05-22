@@ -4,7 +4,7 @@
 #include "Network.h"   // g_monsters
 
 CMonster::CMonster(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature,
-    const char* pstrModelPath, int nAnimationTracks, CLoadedModelInfo* pModel, float fMaxHP)
+    const char* pstrModelPath, int nAnimationTracks, CLoadedModelInfo* pModel, float fMaxHP, int id)
     : CGameObject(1), m_fMaxHP(fMaxHP), m_fMonsterHP(fMaxHP)
 {
     CLoadedModelInfo* pMonsterModel = pModel;
@@ -25,44 +25,19 @@ CMonster::CMonster(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dComm
     for (int i = 1; i < nAnimationTracks; ++i)
         m_pSkinnedAnimationController->SetTrackEnable(i, false);
 
+    SetScale(2.0f, 2.0f, 2.0f);
+
+    m_pHpbar = new Hpbar(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
+
+    SetMonsterID(id);
+    g_monsters[id] = this;
+
     CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }
 
 CMonster::~CMonster()
 {
     if (m_pHpbar) delete m_pHpbar;
-}
-
-std::vector<CMonster*> CMonster::SpawnGroup(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList,
-    ID3D12RootSignature* pd3dGraphicsRootSignature, const char* pstrModelPath,
-    int                        count,
-    int                        startID,
-    float                      fMaxHP,
-    float                      fScale)
-{
-    // 모델은 한 번만 로드, 모든 인스턴스가 공유
-    CLoadedModelInfo* pSharedModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, pstrModelPath, NULL);
-
-    std::vector<CMonster*> group;
-    group.reserve(count);
-
-    for (int i = 0; i < count; ++i)
-    {
-        CMonster* pMonster = new CMonster(
-            pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, pstrModelPath, 5, pSharedModel, fMaxHP);
-        pMonster->m_pHpbar = new Hpbar(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
-        const int id = startID + i;
-        pMonster->SetMonsterID(id);
-        pMonster->SetScale(fScale, fScale, fScale);
-
-        g_monsters[id] = pMonster;   // 서버 ID 등록
-        group.push_back(pMonster);
-    }
-
-    // 공유 모델 정보 객체 해제 (각 인스턴스는 내부적으로 필요한 데이터를 이미 복사)
-    delete pSharedModel;
-
-    return group;
 }
 
 // -----------------------------------------------------------------------
@@ -108,13 +83,24 @@ void CMonster::Animate(float fTimeElapsed)
 
 void CMonster::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
 {
+    static int s_count = 0;
+    if (s_count++ < 30) {
+        XMFLOAT3 pos = GetPosition();
+        printf("[Monster %d] pos=(%.1f, %.1f, %.1f) | m_pChild=%p | childVisible=%d | animCtrl=%p\n",
+            m_nMonsterID,
+            pos.x, pos.y, pos.z,
+            (void*)m_pChild,
+            m_pChild ? (int)m_pChild->GetVisible() : -1,
+            (void*)m_pSkinnedAnimationController);
+    }
     CGameObject::Render(pd3dCommandList, pCamera);
     if (m_pHpbar && !IsDead())
     {
         XMFLOAT3 pos = GetPosition();
 
         m_pHpbar->SetPosition(pos.x, pos.y + 2.5f, pos.z);
-        m_pHpbar->LookAt(m_pPlayer->GetPosition(), XMFLOAT3(0.0f, 1.0f, 0.0f));
+        if(m_pPlayer)
+            m_pHpbar->LookAt(m_pPlayer->GetPosition(), XMFLOAT3(0.0f, 1.0f, 0.0f));
         m_pHpbar->SetHpRatio(m_fHpRatio);
 
         m_pHpbar->Render(pd3dCommandList, pCamera);
