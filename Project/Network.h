@@ -34,6 +34,15 @@ class Item;
 //    IO_OPERATION operation;
 //};
 
+struct PendingMonsterSpawn {
+    int      monsterID;
+    XMFLOAT3 position;
+    int      state;
+};
+
+extern std::mutex                        g_pendingMonsterMutex;
+extern std::vector<PendingMonsterSpawn>  g_pendingMonsterSpawns;
+
 // otherplayer
 extern std::unordered_map<long long, OtherPlayer*> g_other_players;
 extern std::unordered_map<long long, int> g_other_player_slots;

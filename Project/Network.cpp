@@ -34,6 +34,9 @@ std::unordered_map<long long, Item*> g_items;
 std::mutex g_item_mutex;
 
 
+std::mutex                        g_pendingMonsterMutex;
+std::vector<PendingMonsterSpawn>  g_pendingMonsterSpawns;
+
 // =================================================================
 //           otherplayer player 렌더링을 위한 other player 오브젝트 및 관리
 // =================================================================
@@ -618,12 +621,15 @@ void ProcessPacket(char* ptr)
     case SC_P_MONSTER_SPAWN:
     {
         sc_packet_monster_spawn* packet = reinterpret_cast<sc_packet_monster_spawn*>(ptr);
+        if (gGameFramework.isLoading || gGameFramework.isStartScene) {
+            std::lock_guard<std::mutex> lock(g_pendingMonsterMutex);
+            g_pendingMonsterSpawns.push_back({ (int)packet->monsterID,packet->position,    packet->state });
+            cout << "[몬스터] 로딩중 보관 ID=" << packet->monsterID << "\n";
+            break;
+        }
 
-        std::cout << "[몬스터] SC_P_MONSTER_SPAWN 수신 | ID=" << packet->monsterID
-            << " pos=(" << packet->position.x << ", "
-            << packet->position.y << ", "
-            << packet->position.z << ")\n";
 
+        //gGameFramework.OnMonsterSpawned(packet->monsterID, packet->position, packet->state);
 
         break;
     }
@@ -631,6 +637,8 @@ void ProcessPacket(char* ptr)
     case SC_P_MONSTER_MOVE:
     {
         sc_packet_monster_move* packet = reinterpret_cast<sc_packet_monster_move*>(ptr);
+
+        gGameFramework.OnMonsterSpawned(packet->monsterID, packet->position, packet->state);
 
         break;
     }
@@ -728,11 +736,21 @@ void LoadingDoneToServer()
     send_packet(&pkt);
     cout << "[Client] LoadingDone send\n";
     // 로딩 중에 못 처리한 ENTER 패킷 재처리
+    {
     std::lock_guard<std::mutex> lock(g_pendingEnterMutex);
     for (auto& p : g_pendingEnters) {
         cout << "[ENTER] Queue reprocessing: id=" << p.player_id << "\n";
         ProcessEnterPacket(p.player_id, p.job);
     }
     g_pendingEnters.clear();
+    }
+    {
+        std::lock_guard<std::mutex> lock(g_pendingMonsterMutex);
+        for (auto& m : g_pendingMonsterSpawns) {
+            cout << "[MONSTER] Queue reprocessing: id=" << m.monsterID << "\n";
+            gGameFramework.OnMonsterSpawned(m.monsterID, m.position, m.state);
+        }
+        g_pendingMonsterSpawns.clear();
+    }
     std::cout << "[Client] LodingDone ! " << std::endl;
 }
