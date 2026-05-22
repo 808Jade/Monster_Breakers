@@ -1132,6 +1132,14 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 		if (m_pPlayer->Pgold >= cost) {
 			m_pPlayer->Pgold -= cost;
 			if (Chance(prob)) p->level[idx]++;
+
+			cs_packet_use_gold pkt{};
+			pkt.size = sizeof(pkt);
+			pkt.type = CS_P_USE_GOLD;
+			pkt.amount = cost;
+			send_packet(&pkt);
+			cout << "[GOLD] 골드 사용 전송 | -" << cost << "G\n";
+
 		}
 	}
 	break;
