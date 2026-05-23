@@ -508,7 +508,7 @@ CCamera *CTerrainPlayer::ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed)
 
 void CTerrainPlayer::OnPlayerUpdateCallback(float fTimeElapsed)
 {
-/*	CHeightMapTerrain *pTerrain = (CHeightMapTerrain *)m_pPlayerUpdatedContext;
+	CHeightMapTerrain *pTerrain = (CHeightMapTerrain *)m_pPlayerUpdatedContext;
 	XMFLOAT3 xmf3Scale = pTerrain->GetScale();
 	XMFLOAT3 xmf3PlayerPosition = GetPosition();
 	int z = (int)(xmf3PlayerPosition.z / xmf3Scale.z);
@@ -521,26 +521,26 @@ void CTerrainPlayer::OnPlayerUpdateCallback(float fTimeElapsed)
 		SetVelocity(xmf3PlayerVelocity);
 		xmf3PlayerPosition.y = fHeight;
 		SetPosition(xmf3PlayerPosition);
-	}*/
-	Map* pMap = (Map*)m_pPlayerUpdatedContext; // ← CHeightMapTerrain 대신
-
-	XMFLOAT3 pos = GetPosition();
-	float fHeight = pMap->GetHeight(pos.x, pos.z);
-
-	if (pos.y <= fHeight)
-	{
-		XMFLOAT3 vel = GetVelocity();
-		if (vel.y < 0.0f) vel.y = 0.0f; // 아래로 향하는 속도만 리셋
-		vel.y = 0.0f;
-		SetVelocity(vel);
-		pos.y = fHeight;
-		SetPosition(pos);
 	}
+	//Map* pMap = (Map*)m_pPlayerUpdatedContext; // ← CHeightMapTerrain 대신
+//
+//	XMFLOAT3 pos = GetPosition();
+//	float fHeight = pTerrain->GetHeight(xmf3PlayerPosition.x, xmf3PlayerPosition.z, bReverseQuad) + 0.0f;
+//
+//	if (pos.y <= fHeight)
+//	{
+//		XMFLOAT3 vel = GetVelocity();
+//		if (vel.y < 0.0f) vel.y = 0.0f; // 아래로 향하는 속도만 리셋
+//		vel.y = 0.0f;
+//		SetVelocity(vel);
+//		pos.y = fHeight;
+//		SetPosition(pos);
+//	}
 }
 
 void CTerrainPlayer::OnCameraUpdateCallback(float fTimeElapsed)
 {
-/*	CHeightMapTerrain *pTerrain = (CHeightMapTerrain *)m_pCameraUpdatedContext;
+	CHeightMapTerrain *pTerrain = (CHeightMapTerrain *)m_pCameraUpdatedContext;
 	XMFLOAT3 xmf3Scale = pTerrain->GetScale();
 	XMFLOAT3 xmf3CameraPosition = m_pCamera->GetPosition();
 	int z = (int)(xmf3CameraPosition.z / xmf3Scale.z);
@@ -556,23 +556,23 @@ void CTerrainPlayer::OnCameraUpdateCallback(float fTimeElapsed)
 			p3rdPersonCamera->SetLookAt(GetPosition());
 			p3rdPersonCamera->Rotate(-90.0f, 0 , 0);
 		}
-	}*/
-	Map* pMap = (Map*)m_pCameraUpdatedContext; // ← CHeightMapTerrain 대신
+	}
+	//Map* pMap = (Map*)m_pCameraUpdatedContext; // ← CHeightMapTerrain 대신
 
-    XMFLOAT3 camPos = m_pCamera->GetPosition();
-    float fHeight = pMap->GetHeight(camPos.x, camPos.z);
+ //   XMFLOAT3 camPos = m_pCamera->GetPosition();
+ //   float fHeight = pMap->GetHeight(camPos.x, camPos.z);
 
-    if (camPos.y <= fHeight)
-    {
-        camPos.y = fHeight;
-        m_pCamera->SetPosition(camPos);
-        if (m_pCamera->GetMode() == THIRD_PERSON_CAMERA)
-        {
-            CThirdPersonCamera* p3rd = (CThirdPersonCamera*)m_pCamera;
-            p3rd->SetLookAt(GetPosition());
-            p3rd->Rotate(-90.0f, 0, 0);
-        }
-    }
+ //   if (camPos.y <= fHeight)
+ //   {
+ //       camPos.y = fHeight;
+ //       m_pCamera->SetPosition(camPos);
+ //       if (m_pCamera->GetMode() == THIRD_PERSON_CAMERA)
+ //       {
+ //           CThirdPersonCamera* p3rd = (CThirdPersonCamera*)m_pCamera;
+ //           p3rd->SetLookAt(GetPosition());
+ //           p3rd->Rotate(-90.0f, 0, 0);
+ //       }
+ //   }
 }
 
 void CTerrainPlayer::Move(DWORD dwDirection, float fDistance, bool bUpdateVelocity)

@@ -442,7 +442,7 @@ void CGameFramework::BuildObjects()
 			m_ppScenes[2]->m_pModel = m_ppScenes[2]->m_pThiefModel;
 		m_ppScenes[2]->BuildSimpleUI(m_pd3dDevice, m_pd3dCommandList);
 
-		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[2]->GetGraphicsRootSignature(), m_ppScenes[2]->m_pMap, m_ppScenes[2]->m_pModel);
+		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[2]->GetGraphicsRootSignature(), m_ppScenes[2]->m_pTerrain, m_ppScenes[2]->m_pModel);
 
 		m_ppScenes[2]->SetPlayer(pPlayer);
 		for (auto* monster : m_ppScenes[2]->m_Monsters) {
@@ -738,7 +738,10 @@ void CGameFramework::FrameAdvance()
 	m_GameTimer.GetFrameRate(m_pszFrameRate + 18, 37);
 	size_t nLength = _tcslen(m_pszFrameRate);
 	std::wstring w_user_name(user_name.begin(), user_name.end());
-	_stprintf_s(m_pszFrameRate + nLength, 70 - nLength, _T(" - ID : %s"), w_user_name.c_str());
+	XMFLOAT3 vPos = m_pPlayer->GetPosition();
+	_stprintf_s(m_pszFrameRate + nLength, 100 - nLength,
+		_T(" - ID : %s | Pos: X:%.1f, Y:%.1f, Z:%.1f"),
+		w_user_name.c_str(), vPos.x, vPos.y, vPos.z);
 	::SetWindowText(m_hWnd, m_pszFrameRate);
 }
 

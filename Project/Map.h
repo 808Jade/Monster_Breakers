@@ -61,7 +61,7 @@ public:
     //virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = NULL, UINT n);
 
 	void BuildWorldBoundingBoxes();
-	float GetHeight(float x, float z) const;
+	//float GetHeight(float x, float z) const;
 
 public:
     CInstancedStandardShader* m_pInstancedShader = NULL;
