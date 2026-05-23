@@ -246,14 +246,14 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 	m_pMap = new Map(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 
 	m_pTerrain = new CHeightMapTerrain(
-		pd3dDevice,                  // 1. 디바이스 (있는 거 그대로 전달, 메쉬 코드를 지웠다면 nullptr도 가능)
-		pd3dCommandList,             // 2. 커맨드 리스트 (그대로 전달)
-		m_pd3dGraphicsRootSignature, // 3. 루트 시그니처 (그대로 전달)
-		L"Terrain/YourHeightMap.raw",// 4. 하이트맵 파일 경로
-		257,                         // 5. nWidth: 텍스처 가로 픽셀 수 (예: 256, 512, 1024...)
-		257,                         // 6. nLength: 텍스처 세로 픽셀 수
-		XMFLOAT3(8.0f, 2.0f, 8.0f), // 7. xmf3Scale: 핵심! (아래 설명 참조)
-		XMFLOAT4(0.0f, 0.3f, 0.0f, 0.0f) // 8. xmf4Color: 렌더링 안 하니 아무 색이나 (흰색)
+		pd3dDevice,                  
+		pd3dCommandList,            
+		m_pd3dGraphicsRootSignature, 
+		L"Terrain/HeightMap.raw",
+		257,                        
+		257,                         
+		XMFLOAT3(8.0f, 2.0f, 8.0f),
+		XMFLOAT4(0.0f, 0.3f, 0.0f, 0.0f) 
 	);
 	m_pFireballSystem = new CFireballSystem(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 	m_pGreenSpiritSystem = new CGreenSpiritSystem(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
