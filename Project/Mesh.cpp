@@ -165,7 +165,7 @@ float CHeightMapImage::GetHeight(float fx, float fz, bool bReverseQuad)
 {
 	fx = (fx / m_xmf3Scale.x) + ((m_nWidth - 1) * 0.5f);
 	fz = (fz / m_xmf3Scale.z) + ((m_nLength - 1) * 0.5f);
-	if ((fx < 0.0f) || (fz < 0.0f) || (fx >= m_nWidth - 1) || (fz >= m_nLength - 1)) return(0.0f);
+	if ((fx < 0.0f) || (fz < 0.0f) || (fx >= m_nWidth - 1) || (fz >= m_nLength - 1)) return(-4.0f);
 
 	int x = (int)fx;
 	int z = (int)fz;
@@ -196,7 +196,7 @@ float CHeightMapImage::GetHeight(float fx, float fz, bool bReverseQuad)
 	float fBottomHeight = fBottomLeft * (1 - fxPercent) + fBottomRight * fxPercent;
 	float fHeight = fBottomHeight * (1 - fzPercent) + fTopHeight * fzPercent;
 
-	return(fHeight);
+	return ((fHeight / 65535.0f) * m_xmf3Scale.y);
 }
 
 CHeightMapGridMesh::CHeightMapGridMesh(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, int xStart, int zStart, int nWidth, int nLength, XMFLOAT3 xmf3Scale, XMFLOAT4 xmf4Color, void *pContext) : CMesh(pd3dDevice, pd3dCommandList)
