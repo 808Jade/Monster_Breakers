@@ -163,9 +163,9 @@ XMFLOAT3 CHeightMapImage::GetHeightMapNormal(int x, int z)
 
 float CHeightMapImage::GetHeight(float fx, float fz, bool bReverseQuad)
 {
-	fx = fx / m_xmf3Scale.x;
-	fz = fz / m_xmf3Scale.z;
-	if ((fx < 0.0f) || (fz < 0.0f) || (fx >= m_nWidth) || (fz >= m_nLength)) return(0.0f);
+	fx = (fx / m_xmf3Scale.x) + ((m_nWidth - 1) * 0.5f);
+	fz = (fz / m_xmf3Scale.z) + ((m_nLength - 1) * 0.5f);
+	if ((fx < 0.0f) || (fz < 0.0f) || (fx >= m_nWidth - 1) || (fz >= m_nLength - 1)) return(0.0f);
 
 	int x = (int)fx;
 	int z = (int)fz;
