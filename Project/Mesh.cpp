@@ -117,14 +117,14 @@ CHeightMapImage::CHeightMapImage(LPCTSTR pFileName, int nWidth, int nLength, XMF
 	m_nLength = nLength;
 	m_xmf3Scale = xmf3Scale;
 
-	BYTE *pHeightMapPixels = new BYTE[m_nWidth * m_nLength];
+	unsigned short *pHeightMapPixels = new unsigned short[m_nWidth * m_nLength];
 
 	HANDLE hFile = ::CreateFile(pFileName, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_ATTRIBUTE_READONLY, NULL);
 	DWORD dwBytesRead;
-	::ReadFile(hFile, pHeightMapPixels, (m_nWidth * m_nLength), &dwBytesRead, NULL);
+	::ReadFile(hFile, pHeightMapPixels, (m_nWidth * m_nLength * sizeof(unsigned short)), &dwBytesRead, NULL);
 	::CloseHandle(hFile);
 
-	m_pHeightMapPixels = new BYTE[m_nWidth * m_nLength];
+	m_pHeightMapPixels = new unsigned short[m_nWidth * m_nLength];
 	for (int y = 0; y < m_nLength; y++)
 	{
 		for (int x = 0; x < m_nWidth; x++)
@@ -325,7 +325,7 @@ void CHeightMapGridMesh::ReleaseUploadBuffers()
 float CHeightMapGridMesh::OnGetHeight(int x, int z, void *pContext)
 {
 	CHeightMapImage *pHeightMapImage = (CHeightMapImage *)pContext;
-	BYTE *pHeightMapPixels = pHeightMapImage->GetHeightMapPixels();
+	unsigned short *pHeightMapPixels = pHeightMapImage->GetHeightMapPixels();
 	XMFLOAT3 xmf3Scale = pHeightMapImage->GetScale();
 	int nWidth = pHeightMapImage->GetHeightMapWidth();
 	float fHeight = pHeightMapPixels[x + (z*nWidth)] * xmf3Scale.y;
