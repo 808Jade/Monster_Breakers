@@ -238,7 +238,7 @@ void CScene::BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 		m_Shaders.push_back(pOverlay);
 		*/
 
-		CText* pText = new CText(pd3dDevice, pd3dCommandList,m_pd3dGraphicsRootSignature, L"", i * 0.25f, -0.5f);
+		CText* pText = new CText(pd3dDevice, pd3dCommandList,m_pd3dGraphicsRootSignature, L"", 0.3f + i * 0.25f, -0.6f);
 		pText->SetVisible(false);
 		m_pCooldownTexts[i] = pText;
 		m_GameObjects.push_back(pText);
