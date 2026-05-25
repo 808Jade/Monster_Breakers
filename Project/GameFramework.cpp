@@ -841,6 +841,36 @@ void CGameFramework::UpdateMonsterPosition(int monsterID, const XMFLOAT3& pos, c
 		monsterID, pos.x, pos.y, pos.z, state);
 	CMonster* pMonster = it->second;
 	pMonster->SetPosition(pos);
-	pMonster->Rotate(rot);
+
+	//pMonster->Rotate(rot);
+	float len = sqrtf(rot.x * rot.x + rot.z * rot.z);
+	if (len > 0.001f)
+	{
+		XMFLOAT3 look = { rot.x / len, 0.0f, rot.z / len };  // XZ 정규화
+		XMFLOAT3 up = { 0.0f, 1.0f, 0.0f };
+
+		// right = up × look
+		XMFLOAT3 right = {
+			 up.y * look.z - up.z * look.y,
+			 up.z * look.x - up.x * look.z,
+			 up.x * look.y - up.y * look.x
+		};
+
+		// right 정규화
+		float rlen = sqrtf(right.x * right.x + right.y * right.y + right.z * right.z);
+		if (rlen > 0.001f) { right.x /= rlen; right.y /= rlen; right.z /= rlen; }
+
+		pMonster->m_xmf4x4ToParent._11 = right.x;
+		pMonster->m_xmf4x4ToParent._12 = right.y;
+		pMonster->m_xmf4x4ToParent._13 = right.z;
+
+		pMonster->m_xmf4x4ToParent._21 = up.x;
+		pMonster->m_xmf4x4ToParent._22 = up.y;
+		pMonster->m_xmf4x4ToParent._23 = up.z;
+
+		pMonster->m_xmf4x4ToParent._31 = look.x;
+		pMonster->m_xmf4x4ToParent._32 = look.y;
+		pMonster->m_xmf4x4ToParent._33 = look.z;
+	}
 	UpdateMonsterState(pMonster, state);
 }
