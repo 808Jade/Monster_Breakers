@@ -521,7 +521,7 @@ void ProcessPacket(char* ptr)
     case SC_P_BUFF_ATK: // 공격력 빔
     {
         sc_packet_buff_atk* packet = reinterpret_cast<sc_packet_buff_atk*>(ptr);
-        if (packet->playerID == g_myid) break;
+        //if (packet->playerID == g_myid) break;
 
         CScene* scene = gGameFramework.GetCurrentScene();
         if (!scene) break;
@@ -562,8 +562,9 @@ void ProcessPacket(char* ptr)
         }
 
         scene->m_pBeamSystem->Emit(casterPos, targetPos);
-
-        std::cout << "[수신] SC_P_BUFF_ATK | playerID=" << packet->playerID << " newDamage=" << packet->newDamage << "\n";
+        std::cout << "[SC_P_BUFF_ATK 버프] Emit: casterPos=(" << casterPos.x << "," << casterPos.y << "," << casterPos.z
+			<< ") targetPos=(" << targetPos.x << "," << targetPos.y << "," << targetPos.z << ")\n";
+        std::cout << "[SC_P_BUFF_ATK 버프] | playerID=" << packet->playerID << " newDamage=" << packet->newDamage << "\n";
         break;
     }
 

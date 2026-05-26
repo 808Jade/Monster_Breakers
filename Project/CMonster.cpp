@@ -83,7 +83,7 @@ void CMonster::Animate(float fTimeElapsed)
 
 void CMonster::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
 {
-    static int s_count = 0;
+/*    static int s_count = 0;
     if (s_count++ < 30) {
         XMFLOAT3 pos = GetPosition();
         printf("[Monster %d] pos=(%.1f, %.1f, %.1f) | m_pChild=%p | childVisible=%d | animCtrl=%p\n",
@@ -92,7 +92,7 @@ void CMonster::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCame
             (void*)m_pChild,
             m_pChild ? (int)m_pChild->GetVisible() : -1,
             (void*)m_pSkinnedAnimationController);
-    }
+    }*/
     CGameObject::Render(pd3dCommandList, pCamera);
     if (m_pHpbar && !IsDead())
     {
