@@ -863,6 +863,23 @@ void CGameFramework::UpdateMonsterPosition(int monsterID, const XMFLOAT3& pos, c
 		float rlen = sqrtf(right.x * right.x + right.y * right.y + right.z * right.z);
 		if (rlen > 0.001f) { right.x /= rlen; right.y /= rlen; right.z /= rlen; }
 
+		float sx = sqrtf(
+			pMonster->m_xmf4x4ToParent._11 * pMonster->m_xmf4x4ToParent._11 +
+			pMonster->m_xmf4x4ToParent._12 * pMonster->m_xmf4x4ToParent._12 +
+			pMonster->m_xmf4x4ToParent._13 * pMonster->m_xmf4x4ToParent._13);
+		float sy = sqrtf(
+			pMonster->m_xmf4x4ToParent._21 * pMonster->m_xmf4x4ToParent._21 +
+			pMonster->m_xmf4x4ToParent._22 * pMonster->m_xmf4x4ToParent._22 +
+			pMonster->m_xmf4x4ToParent._23 * pMonster->m_xmf4x4ToParent._23);
+		float sz = sqrtf(
+			pMonster->m_xmf4x4ToParent._31 * pMonster->m_xmf4x4ToParent._31 +
+			pMonster->m_xmf4x4ToParent._32 * pMonster->m_xmf4x4ToParent._32 +
+			pMonster->m_xmf4x4ToParent._33 * pMonster->m_xmf4x4ToParent._33);
+
+		if (sx < 0.001f) sx = 1.0f;
+		if (sy < 0.001f) sy = 1.0f;
+		if (sz < 0.001f) sz = 1.0f;
+
 		pMonster->m_xmf4x4ToParent._11 = right.x;
 		pMonster->m_xmf4x4ToParent._12 = right.y;
 		pMonster->m_xmf4x4ToParent._13 = right.z;
