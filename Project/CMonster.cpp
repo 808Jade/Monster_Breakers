@@ -25,7 +25,7 @@ CMonster::CMonster(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dComm
     for (int i = 1; i < nAnimationTracks; ++i)
         m_pSkinnedAnimationController->SetTrackEnable(i, false);
 
-    SetScale(2.0f, 2.0f, 2.0f);
+    SetScale(1.0f, 1.0f, 1.0f);
 
     m_pHpbar = new Hpbar(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
 
