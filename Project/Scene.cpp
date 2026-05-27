@@ -245,16 +245,17 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 
 	m_pMap = new Map(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 
-	float fScaleXZ = 240.0f / 1024.0f;
-	float fScaleY = 8.0f;
+	float fScaleX = 292.5964f / 2048.0f;
+	float fScaleZ = 294.5966f / 2048.0f;
+	float fScaleY = 16.7097f;
 	m_pTerrain = new CHeightMapTerrain(
 		pd3dDevice,                  
 		pd3dCommandList,            
 		m_pd3dGraphicsRootSignature, 
 		L"Terrain/HeightMap.raw",
-		1024,                        
-		1024,                         
-		XMFLOAT3(fScaleXZ, fScaleY, fScaleXZ),
+		2049,                        
+		2049,                         
+		XMFLOAT3(fScaleX, fScaleY, fScaleZ),
 		XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f) 
 	);
 	m_pFireballSystem = new CFireballSystem(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
@@ -1355,6 +1356,7 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 	if (m_pSkyBox)  m_pSkyBox->Render(pd3dCommandList, pCamera);
 	if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
 	if (m_pMap)     m_pMap->Render(pd3dCommandList, pCamera);
+	//if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
 
 	for (auto* obj : m_GameObjects)
 		if (obj && obj->GetVisible()) obj->Render(pd3dCommandList, pCamera);

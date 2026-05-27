@@ -508,71 +508,69 @@ CCamera *CTerrainPlayer::ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed)
 
 void CTerrainPlayer::OnPlayerUpdateCallback(float fTimeElapsed)
 {
-	CHeightMapTerrain *pTerrain = (CHeightMapTerrain *)m_pPlayerUpdatedContext;
+	CHeightMapTerrain* pTerrain = (CHeightMapTerrain*)m_pPlayerUpdatedContext;
 	XMFLOAT3 xmf3Scale = pTerrain->GetScale();
 	XMFLOAT3 xmf3PlayerPosition = GetPosition();
-	int z = (int)(xmf3PlayerPosition.z / xmf3Scale.z);
+
+	// 유니티 터레인의 실제 월드 위치 보정
+	float terrainX = -140.7f;
+	float terrainY = -8.9f;
+	float terrainZ = -112.9f;
+
+	float localX = xmf3PlayerPosition.x - terrainX;
+	float localZ = xmf3PlayerPosition.z - terrainZ;
+
+	int z = (int)(localZ / xmf3Scale.z);
 	bool bReverseQuad = ((z % 2) != 0);
-	float fHeight = pTerrain->GetHeight(xmf3PlayerPosition.x, xmf3PlayerPosition.z, bReverseQuad) + 0.0f;
-	if (xmf3PlayerPosition.y < fHeight)
+
+	float localHeight = pTerrain->GetHeight(localX, localZ, bReverseQuad);
+
+	float finalWorldHeight = localHeight + terrainY;
+
+	if (xmf3PlayerPosition.y < finalWorldHeight)
 	{
 		XMFLOAT3 xmf3PlayerVelocity = GetVelocity();
 		xmf3PlayerVelocity.y = 0.0f;
 		SetVelocity(xmf3PlayerVelocity);
-		xmf3PlayerPosition.y = fHeight;
+
+		xmf3PlayerPosition.y = finalWorldHeight;
 		SetPosition(xmf3PlayerPosition);
 	}
-	//Map* pMap = (Map*)m_pPlayerUpdatedContext; // ← CHeightMapTerrain 대신
-//
-//	XMFLOAT3 pos = GetPosition();
-//	float fHeight = pTerrain->GetHeight(xmf3PlayerPosition.x, xmf3PlayerPosition.z, bReverseQuad) + 0.0f;
-//
-//	if (pos.y <= fHeight)
-//	{
-//		XMFLOAT3 vel = GetVelocity();
-//		if (vel.y < 0.0f) vel.y = 0.0f; // 아래로 향하는 속도만 리셋
-//		vel.y = 0.0f;
-//		SetVelocity(vel);
-//		pos.y = fHeight;
-//		SetPosition(pos);
-//	}
 }
 
 void CTerrainPlayer::OnCameraUpdateCallback(float fTimeElapsed)
 {
-	CHeightMapTerrain *pTerrain = (CHeightMapTerrain *)m_pCameraUpdatedContext;
+	CHeightMapTerrain* pTerrain = (CHeightMapTerrain*)m_pCameraUpdatedContext;
 	XMFLOAT3 xmf3Scale = pTerrain->GetScale();
 	XMFLOAT3 xmf3CameraPosition = m_pCamera->GetPosition();
-	int z = (int)(xmf3CameraPosition.z / xmf3Scale.z);
+
+	// 유니티 터레인의 실제 월드 위치 보정
+	float terrainX = -140.7f;
+	float terrainY = -8.9f;
+	float terrainZ = -112.9f;
+
+	float localX = xmf3CameraPosition.x - terrainX;
+	float localZ = xmf3CameraPosition.z - terrainZ;
+
+	int z = (int)(localZ / xmf3Scale.z);
 	bool bReverseQuad = ((z % 2) != 0);
-	float fHeight = pTerrain->GetHeight(xmf3CameraPosition.x, xmf3CameraPosition.z, bReverseQuad);
-	if (xmf3CameraPosition.y <= fHeight)
+
+	float localHeight = pTerrain->GetHeight(localX, localZ, bReverseQuad);
+
+	float finalWorldHeight = localHeight + terrainY;
+
+	if (xmf3CameraPosition.y <= finalWorldHeight)
 	{
-		xmf3CameraPosition.y = fHeight;
+		xmf3CameraPosition.y = finalWorldHeight;
 		m_pCamera->SetPosition(xmf3CameraPosition);
+
 		if (m_pCamera->GetMode() == THIRD_PERSON_CAMERA)
 		{
-			CThirdPersonCamera *p3rdPersonCamera = (CThirdPersonCamera *)m_pCamera;
+			CThirdPersonCamera* p3rdPersonCamera = (CThirdPersonCamera*)m_pCamera;
 			p3rdPersonCamera->SetLookAt(GetPosition());
-			p3rdPersonCamera->Rotate(-90.0f, 0 , 0);
+			p3rdPersonCamera->Rotate(-90.0f, 0, 0);
 		}
 	}
-	//Map* pMap = (Map*)m_pCameraUpdatedContext; // ← CHeightMapTerrain 대신
-
- //   XMFLOAT3 camPos = m_pCamera->GetPosition();
- //   float fHeight = pMap->GetHeight(camPos.x, camPos.z);
-
- //   if (camPos.y <= fHeight)
- //   {
- //       camPos.y = fHeight;
- //       m_pCamera->SetPosition(camPos);
- //       if (m_pCamera->GetMode() == THIRD_PERSON_CAMERA)
- //       {
- //           CThirdPersonCamera* p3rd = (CThirdPersonCamera*)m_pCamera;
- //           p3rd->SetLookAt(GetPosition());
- //           p3rd->Rotate(-90.0f, 0, 0);
- //       }
- //   }
 }
 
 void CTerrainPlayer::Move(DWORD dwDirection, float fDistance, bool bUpdateVelocity)

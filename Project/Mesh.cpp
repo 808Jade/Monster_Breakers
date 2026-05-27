@@ -133,21 +133,6 @@ CHeightMapImage::CHeightMapImage(LPCTSTR pFileName, int nWidth, int nLength, XMF
 		}
 	}
 
-	// =============================================================
-	// [팩트 체크] 파일 전체를 뒤져서 가장 밝은(높은) 픽셀 값을 찾습니다.
-	int maxPixelValue = 0;
-	for (int i = 0; i < (m_nWidth * m_nLength); i++)
-	{
-		if (pHeightMapPixels[i] > maxPixelValue)
-		{
-			maxPixelValue = pHeightMapPixels[i];
-		}
-	}
-
-	// ★ 이 줄에 브레이크포인트를 걸고 maxPixelValue 값을 확인해 보세요!
-	int debug_stop = 0;
-	// =============================================================
-
 	if (pHeightMapPixels) delete[] pHeightMapPixels;
 }
 
@@ -178,8 +163,10 @@ XMFLOAT3 CHeightMapImage::GetHeightMapNormal(int x, int z)
 
 float CHeightMapImage::GetHeight(float fx, float fz, bool bReverseQuad)
 {
-	fx = (fx / m_xmf3Scale.x) + ((m_nWidth - 1) * 0.5f);
-	fz = (fz / m_xmf3Scale.z) + ((m_nLength - 1) * 0.5f);
+	//fx = (fx / m_xmf3Scale.x) + ((m_nWidth - 1) * 0.5f);
+	//fz = (fz / m_xmf3Scale.z) + ((m_nLength - 1) * 0.5f);
+	fx = (fx / m_xmf3Scale.x);
+	fz = (fz / m_xmf3Scale.z);
 	if ((fx < 0.0f) || (fz < 0.0f) || (fx >= m_nWidth - 1) || (fz >= m_nLength - 1)) return(-4.0f);
 
 	int x = (int)fx;
@@ -210,12 +197,8 @@ float CHeightMapImage::GetHeight(float fx, float fz, bool bReverseQuad)
 	float fTopHeight = fTopLeft * (1 - fxPercent) + fTopRight * fxPercent;
 	float fBottomHeight = fBottomLeft * (1 - fxPercent) + fBottomRight * fxPercent;
 	float fHeight = fBottomHeight * (1 - fzPercent) + fTopHeight * fzPercent;
-	if (fHeight == 0.0f)
-	{
-		// ★ 만약 브레이크포인트가 여기에 걸린다면: 파일 로드 실패 or 블렌더에서 검은색으로만 저장됨!
-		int debug_stop = 0;
-	}
-	return ((fHeight / 65535.0f) * m_xmf3Scale.y) -4.0f;
+
+	return ((fHeight / 65535.0f) * m_xmf3Scale.y);
 }
 
 CHeightMapGridMesh::CHeightMapGridMesh(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, int xStart, int zStart, int nWidth, int nLength, XMFLOAT3 xmf3Scale, XMFLOAT4 xmf4Color, void *pContext) : CMesh(pd3dDevice, pd3dCommandList)
@@ -347,7 +330,7 @@ float CHeightMapGridMesh::OnGetHeight(int x, int z, void *pContext)
 	unsigned short *pHeightMapPixels = pHeightMapImage->GetHeightMapPixels();
 	XMFLOAT3 xmf3Scale = pHeightMapImage->GetScale();
 	int nWidth = pHeightMapImage->GetHeightMapWidth();
-	float fHeight = pHeightMapPixels[x + (z*nWidth)] * xmf3Scale.y;
+	float fHeight = (pHeightMapPixels[x + (z * nWidth)] / 65535.0f) * xmf3Scale.y;
 	return(fHeight);
 }
 
