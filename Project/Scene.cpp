@@ -310,7 +310,7 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 	m_Monsters.clear();
 	for (const auto& desc : MONSTER_DESCS)
 	{
-		for (int i = 0; i < 3; ++i)
+		for (int i = 0; i < TOTAL_MONSTER_COUNT; ++i)
 		{
 			CMonster* monster = new CMonster(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, desc.modelPath, 5, nullptr, desc.hp, desc.startID + i);
 			m_Monsters.push_back(monster);
