@@ -1494,34 +1494,35 @@ CHeightMapTerrain::CHeightMapTerrain(ID3D12Device *pd3dDevice, ID3D12GraphicsCom
 
 	m_pHeightMapImage = new CHeightMapImage(pFileName, nWidth, nLength, xmf3Scale);
 
-	CHeightMapGridMesh *pMesh = new CHeightMapGridMesh(pd3dDevice, pd3dCommandList, 0, 0, nWidth, nLength, xmf3Scale, xmf4Color, m_pHeightMapImage);
-	SetMesh(pMesh);
+	//CHeightMapGridMesh *pMesh = new CHeightMapGridMesh(pd3dDevice, pd3dCommandList, 0, 0, nWidth, nLength, xmf3Scale, xmf4Color, m_pHeightMapImage);
+	//SetMesh(pMesh);
 
-	CreateShaderVariables(pd3dDevice, pd3dCommandList);
+	//CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
-	CTexture* pTerrainBaseTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
-	pTerrainBaseTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Terrain/Base_Texture.dds", RESOURCE_TEXTURE2D, 0);
+	//CTexture* pTerrainBaseTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+	//pTerrainBaseTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Terrain/Base_Texture.dds", RESOURCE_TEXTURE2D, 0);
 
-	CTexture* pTerrainDetailTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
-	pTerrainDetailTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Terrain/Detail_Texture_7.dds", RESOURCE_TEXTURE2D, 0);
+	//CTexture* pTerrainDetailTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+	//pTerrainDetailTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Terrain/Detail_Texture_7.dds", RESOURCE_TEXTURE2D, 0);
 
-	CTerrainShader *pTerrainShader = new CTerrainShader();
-	pTerrainShader->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
-	pTerrainShader->CreateShaderVariables(pd3dDevice, pd3dCommandList);
+	//CTerrainShader *pTerrainShader = new CTerrainShader();
+	//pTerrainShader->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
+	//pTerrainShader->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
-	CScene::CreateShaderResourceViews(pd3dDevice, pTerrainBaseTexture, 0, 13);
-	CScene::CreateShaderResourceViews(pd3dDevice, pTerrainDetailTexture, 0, 14);
+	//CScene::CreateShaderResourceViews(pd3dDevice, pTerrainBaseTexture, 0, 13);
+	//CScene::CreateShaderResourceViews(pd3dDevice, pTerrainDetailTexture, 0, 14);
 
-	CMaterial *pTerrainMaterial = new CMaterial(2);
-	pTerrainMaterial->SetTexture(pTerrainBaseTexture, 0);
-	pTerrainMaterial->SetTexture(pTerrainDetailTexture, 1);
-	pTerrainMaterial->SetShader(pTerrainShader);
+	//CMaterial *pTerrainMaterial = new CMaterial(2);
+	//pTerrainMaterial->SetTexture(pTerrainBaseTexture, 0);
+	//pTerrainMaterial->SetTexture(pTerrainDetailTexture, 1);
+	//pTerrainMaterial->SetShader(pTerrainShader);
 
-	SetMaterial(0, pTerrainMaterial);
+	//SetMaterial(0, pTerrainMaterial);
 
-	float worldPosX = -140.3f;
-	float worldPosY = -9.3f;
-	float worldPosZ = -112.9f;
+	// 터레인 보정 (2/4)
+	float worldPosX = -152.8f;
+	float worldPosY = -9.0f;
+	float worldPosZ = -115.8f;
 
 	SetPosition(worldPosX, worldPosY, worldPosZ);
 	UpdateTransform(NULL);

@@ -571,12 +571,12 @@ void CGameFramework::ProcessInput()
 			if (isRunning && isMoving)
 			{
 				terrainPlayer->m_currentAnim = AnimationState::RUN;
-				terrainPlayer->Move(dwDirection, 11.5f, true);
+				terrainPlayer->Move(dwDirection, 3.5f, true);
 			}
 			else if (isMoving)
 			{
 				terrainPlayer->m_currentAnim = AnimationState::WALK;
-				terrainPlayer->Move(dwDirection, 11.5f, true);
+				terrainPlayer->Move(dwDirection, 3.5f, true);
 			}
 			else
 			{

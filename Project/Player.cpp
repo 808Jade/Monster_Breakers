@@ -512,10 +512,10 @@ void CTerrainPlayer::OnPlayerUpdateCallback(float fTimeElapsed)
 	XMFLOAT3 xmf3Scale = pTerrain->GetScale();
 	XMFLOAT3 xmf3PlayerPosition = GetPosition();
 
-	// 유니티 터레인의 실제 월드 위치 보정
-	float terrainX = -140.7f;
-	float terrainY = -8.9f;
-	float terrainZ = -112.9f;
+	// 터레인 보정 (3/4)
+	float terrainX = -152.8f;
+	float terrainY = -9.0f;
+	float terrainZ = -115.8f;
 
 	float localX = xmf3PlayerPosition.x - terrainX;
 	float localZ = xmf3PlayerPosition.z - terrainZ;
@@ -544,10 +544,10 @@ void CTerrainPlayer::OnCameraUpdateCallback(float fTimeElapsed)
 	XMFLOAT3 xmf3Scale = pTerrain->GetScale();
 	XMFLOAT3 xmf3CameraPosition = m_pCamera->GetPosition();
 
-	// 유니티 터레인의 실제 월드 위치 보정
-	float terrainX = -140.7f;
-	float terrainY = -8.9f;
-	float terrainZ = -112.9f;
+	// 터레인 보정 (4/4)
+	float terrainX = -152.8f;
+	float terrainY = -9.0f;
+	float terrainZ = -115.8f;
 
 	float localX = xmf3CameraPosition.x - terrainX;
 	float localZ = xmf3CameraPosition.z - terrainZ;
