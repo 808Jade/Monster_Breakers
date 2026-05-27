@@ -13,6 +13,8 @@
 #define BUF_SIZE 1024
 #define MAX_BUFFER 8192
 
+static const int TOTAL_MONSTER_COUNT = 20;
+
 constexpr char SC_P_USER_INFO = 1;
 constexpr char SC_P_MOVE = 2;
 constexpr char SC_P_ENTER = 3;
