@@ -49,6 +49,8 @@ void CMonster::TakeDamage(float damage)
     m_fMonsterHP = max(0.0f, m_fMonsterHP - damage);
     m_fHpRatio = m_fMonsterHP / m_fMaxHP;
 
+	send_hit_damage(m_nMonsterID, (int)damage);
+    
     TransitionTo(m_fMonsterHP <= 0.0f ? MonsterState::Death : MonsterState::GetHit);
 }
 

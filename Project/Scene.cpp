@@ -26,14 +26,14 @@ struct MonsterDesc {
 
 static const MonsterDesc MONSTER_DESCS[] = {
 	{ "Model/Monster/SalamanderPA.bin",      10001, 100.0f, 2.0f },
-/*	{ "Model/Monster/BishopKnightPA.bin",   10004, 150.0f, 2.0f },
-	{ "Model/Monster/CactusPA.bin",         10007, 100.0f, 2.0f },
-	{ "Model/Monster/CyclopsPA.bin",        10010, 200.0f, 2.0f },
-	{ "Model/Monster/FishmanPA.bin",        10013, 100.0f, 2.0f },
-	{ "Model/Monster/MushroomAngryPA.bin",  10016, 100.0f, 2.0f },
-	{ "Model/Monster/NagaWizardPA.bin",     10019, 120.0f, 2.0f },
-	{ "Model/Monster/BattleBeePA.bin",     10022, 100.0f, 2.0f },
-	{ "Model/Monster/StingRayPA.bin",       10025, 100.0f, 2.0f },*/ // 몬스터 수 서버에서 늘리면 주석 풀기
+	{ "Model/Monster/MushroomAngryPA.bin",   10004, 150.0f, 2.0f },
+	{ "Model/Monster/BattleBeePA.bin",         10007, 100.0f, 2.0f },
+	{ "Model/Monster/StingRayPA.bin",        10010, 200.0f, 2.0f },
+	{ "Model/Monster/BishopKnightPA.bin",        10013, 100.0f, 2.0f },
+	{ "Model/Monster/NagaWizardPA.bin",  10016, 100.0f, 2.0f },
+/*	{ "Model/Monster/FishmanPA.bin",     10019, 120.0f, 2.0f },
+	{ "Model/Monster/CactusPA.bin",     10022, 100.0f, 2.0f },
+	{ "Model/Monster/CyclopsPA.bin",       10025, 100.0f, 2.0f },*/ // 몬스터 수 서버에서 늘리면 주석 풀기
 };
 
 extern CGameFramework gGameFramework;
@@ -310,7 +310,7 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 	m_Monsters.clear();
 	for (const auto& desc : MONSTER_DESCS)
 	{
-		for (int i = 0; i < TOTAL_MONSTER_COUNT; ++i)
+		for (int i = 0; i < 3; ++i)
 		{
 			CMonster* monster = new CMonster(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, desc.modelPath, 5, nullptr, desc.hp, desc.startID + i);
 			m_Monsters.push_back(monster);
