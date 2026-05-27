@@ -294,6 +294,21 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 
 	m_pMap = new Map(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 
+	// 터레인 보정 (1/4)
+	float fScaleX = 321.8676f / 2048.0f;
+	float fScaleZ = 311.1753f / 2048.0f;
+	float fScaleY = 16.70971f;
+	m_pTerrain = new CHeightMapTerrain(
+		pd3dDevice,                  
+		pd3dCommandList,            
+		m_pd3dGraphicsRootSignature, 
+		L"Terrain/HeightMap.raw",
+		2049,                        
+		2049,                         
+		XMFLOAT3(fScaleX, fScaleY, fScaleZ),
+		XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f) 
+	);
+
 	m_pFireballSystem = new CFireballSystem(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 	m_pGreenSpiritSystem = new CGreenSpiritSystem(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 	m_pWeaponThrowSystem = new CWeaponThrowSystem();
@@ -1424,6 +1439,7 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 	if (m_pSkyBox)  m_pSkyBox->Render(pd3dCommandList, pCamera);
 	if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
 	if (m_pMap)     m_pMap->Render(pd3dCommandList, pCamera);
+	//if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
 
 
 	m_CollisionManager.Update(m_pPlayer);

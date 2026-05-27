@@ -336,27 +336,27 @@ void Map::BuildWorldBoundingBoxes()
 	}
 }
 
-// 플레이어 XZ 위치에서 가장 높은 오브젝트 상단 Y를 반환
-float Map::GetHeight(float x, float z) const
-{
-	float maxHeight = 0.0f;
-	bool  found = false;
-
-	for (const auto& [idx, group] : m_mInstanceGroups)
-	{
-		for (const BoundingBox& wb : group.vWorldBoundingBoxes)
-		{
-			float minX = wb.Center.x - wb.Extents.x;
-			float maxX = wb.Center.x + wb.Extents.x;
-			float minZ = wb.Center.z - wb.Extents.z;
-			float maxZ = wb.Center.z + wb.Extents.z;
-
-			if (x >= minX && x <= maxX && z >= minZ && z <= maxZ)
-			{
-				float topY = wb.Center.y + wb.Extents.y;
-				if (!found || topY > maxHeight) { maxHeight = topY; found = true; }
-			}
-		}
-	}
-	return maxHeight;
-}
+//// 플레이어 XZ 위치에서 가장 높은 오브젝트 상단 Y를 반환
+//float Map::GetHeight(float x, float z) const
+//{
+//	float maxHeight = 0.0f;
+//	bool  found = false;
+//
+//	for (const auto& [idx, group] : m_mInstanceGroups)
+//	{
+//		for (const BoundingBox& wb : group.vWorldBoundingBoxes)
+//		{
+//			float minX = wb.Center.x - wb.Extents.x;
+//			float maxX = wb.Center.x + wb.Extents.x;
+//			float minZ = wb.Center.z - wb.Extents.z;
+//			float maxZ = wb.Center.z + wb.Extents.z;
+//
+//			if (x >= minX && x <= maxX && z >= minZ && z <= maxZ)
+//			{
+//				float topY = wb.Center.y + wb.Extents.y;
+//				if (!found || topY > maxHeight) { maxHeight = topY; found = true; }
+//			}
+//		}
+//	}
+//	return maxHeight;
+//}

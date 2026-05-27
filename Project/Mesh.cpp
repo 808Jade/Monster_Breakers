@@ -117,14 +117,14 @@ CHeightMapImage::CHeightMapImage(LPCTSTR pFileName, int nWidth, int nLength, XMF
 	m_nLength = nLength;
 	m_xmf3Scale = xmf3Scale;
 
-	BYTE *pHeightMapPixels = new BYTE[m_nWidth * m_nLength];
+	unsigned short *pHeightMapPixels = new unsigned short[m_nWidth * m_nLength];
 
 	HANDLE hFile = ::CreateFile(pFileName, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_ATTRIBUTE_READONLY, NULL);
 	DWORD dwBytesRead;
-	::ReadFile(hFile, pHeightMapPixels, (m_nWidth * m_nLength), &dwBytesRead, NULL);
+	::ReadFile(hFile, pHeightMapPixels, (m_nWidth * m_nLength * sizeof(unsigned short)), &dwBytesRead, NULL);
 	::CloseHandle(hFile);
 
-	m_pHeightMapPixels = new BYTE[m_nWidth * m_nLength];
+	m_pHeightMapPixels = new unsigned short[m_nWidth * m_nLength];
 	for (int y = 0; y < m_nLength; y++)
 	{
 		for (int x = 0; x < m_nWidth; x++)
@@ -163,9 +163,11 @@ XMFLOAT3 CHeightMapImage::GetHeightMapNormal(int x, int z)
 
 float CHeightMapImage::GetHeight(float fx, float fz, bool bReverseQuad)
 {
-	fx = fx / m_xmf3Scale.x;
-	fz = fz / m_xmf3Scale.z;
-	if ((fx < 0.0f) || (fz < 0.0f) || (fx >= m_nWidth) || (fz >= m_nLength)) return(0.0f);
+	//fx = (fx / m_xmf3Scale.x) + ((m_nWidth - 1) * 0.5f);
+	//fz = (fz / m_xmf3Scale.z) + ((m_nLength - 1) * 0.5f);
+	fx = (fx / m_xmf3Scale.x);
+	fz = (fz / m_xmf3Scale.z);
+	if ((fx < 0.0f) || (fz < 0.0f) || (fx >= m_nWidth - 1) || (fz >= m_nLength - 1)) return(-4.0f);
 
 	int x = (int)fx;
 	int z = (int)fz;
@@ -196,7 +198,7 @@ float CHeightMapImage::GetHeight(float fx, float fz, bool bReverseQuad)
 	float fBottomHeight = fBottomLeft * (1 - fxPercent) + fBottomRight * fxPercent;
 	float fHeight = fBottomHeight * (1 - fzPercent) + fTopHeight * fzPercent;
 
-	return(fHeight);
+	return ((fHeight / 65535.0f) * m_xmf3Scale.y);
 }
 
 CHeightMapGridMesh::CHeightMapGridMesh(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, int xStart, int zStart, int nWidth, int nLength, XMFLOAT3 xmf3Scale, XMFLOAT4 xmf4Color, void *pContext) : CMesh(pd3dDevice, pd3dCommandList)
@@ -325,10 +327,10 @@ void CHeightMapGridMesh::ReleaseUploadBuffers()
 float CHeightMapGridMesh::OnGetHeight(int x, int z, void *pContext)
 {
 	CHeightMapImage *pHeightMapImage = (CHeightMapImage *)pContext;
-	BYTE *pHeightMapPixels = pHeightMapImage->GetHeightMapPixels();
+	unsigned short *pHeightMapPixels = pHeightMapImage->GetHeightMapPixels();
 	XMFLOAT3 xmf3Scale = pHeightMapImage->GetScale();
 	int nWidth = pHeightMapImage->GetHeightMapWidth();
-	float fHeight = pHeightMapPixels[x + (z*nWidth)] * xmf3Scale.y;
+	float fHeight = (pHeightMapPixels[x + (z * nWidth)] / 65535.0f) * xmf3Scale.y;
 	return(fHeight);
 }
 
