@@ -41,6 +41,9 @@ constexpr char CS_P_HIT_DAMAGE = 30;
 
 constexpr char CS_P_LOADING_DONE = 25;
 
+constexpr char CS_P_SKILL_UPGRADE = 62;
+constexpr char SC_P_SKILL_UPGRADE = 63;
+
 // 기사
 constexpr char CS_P_SHIELD_BLOCK = 31;
 constexpr char SC_P_SHIELD_BLOCK = 32;
@@ -185,8 +188,29 @@ struct cs_packet_use_gold {
 };
 
 // skill
+
+enum class SkillSlot : uint8_t {
+	SKILL_Q = 0,
+	SKILL_E = 1,
+	SKILL_R = 2,   // 우클릭
+};
+
 enum class SkillType : uint8_t {
 	SKILL_FIREBALL = 0
+};
+
+struct cs_packet_skill_upgrade {
+	unsigned char size;
+	char          type;
+	SkillSlot     slot;   // Q=0, E=1, R=2
+};
+
+struct sc_packet_skill_upgrade {
+	unsigned char size;
+	char          type;
+	long long     playerID;
+	SkillSlot     slot;
+	int           newValue;
 };
 
 struct cs_packet_skill {

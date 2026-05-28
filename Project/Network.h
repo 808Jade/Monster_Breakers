@@ -93,5 +93,5 @@ void send_buff_atk_packet();
 void send_buff_hp_packet();
 void send_weapon_pos_packet(const XMFLOAT3& weaponPosition, const XMFLOAT3& weaponRotation);
 void send_skill_packet(SkillType skillType, const XMFLOAT3& position, const XMFLOAT3& look);
-
+void send_skill_upgrade(SkillSlot slot);
 
