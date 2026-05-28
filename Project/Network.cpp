@@ -100,7 +100,14 @@ void send_hit_damage(long long monsterID, int damage) // 이 함수를 플레이
 //                           스킬 관리
 // =================================================================
 
-
+void send_skill_upgrade(SkillSlot slot)
+{
+    cs_packet_skill_upgrade pkt{};
+    pkt.size = sizeof(pkt);
+    pkt.type = CS_P_SKILL_UPGRADE;
+    pkt.slot = slot;
+    send_packet(&pkt);
+}
 
 // 기사
 void send_shield_block_packet(bool isBlocking)
@@ -453,6 +460,16 @@ void ProcessPacket(char* ptr)
     //    break;
     //}
 
+    case SC_P_SKILL_UPGRADE:
+    {
+        sc_packet_skill_upgrade* packet = reinterpret_cast<sc_packet_skill_upgrade*>(ptr);
+
+        // 쿨타임 감소는 클라 스킬 쿨타임 변수에 직접 적용
+        cout << "[강화완료] slot=" << (int)packet->slot   << " newValue=" << packet->newValue << "\n";
+
+        break;
+    }
+
     case SC_P_SKILL:
     {
         sc_packet_skill* packet = reinterpret_cast<sc_packet_skill*>(ptr);
@@ -656,8 +673,17 @@ void ProcessPacket(char* ptr)
     {
         sc_packet_monster_die* packet = reinterpret_cast<sc_packet_monster_die*>(ptr);
 
-        std::cout << "[몬스터] SC_P_MONSTER_DIE 수신 | ID=" << packet->monsterID
-            << " 처치자=" << packet->killerID << "\n";
+        std::cout << "[몬스터] SC_P_MONSTER_DIE 수신 | ID=" << packet->monsterID << " 처치자=" << packet->killerID << "\n";
+
+        auto it = g_monsters.find(packet->monsterID);
+        if (it != g_monsters.end())
+        {
+            CMonster* pMonster = it->second;
+            for (int i = 0; i < 5; ++i)
+                pMonster->m_pSkinnedAnimationController->SetTrackEnable(i, false);
+            pMonster->m_pSkinnedAnimationController->SetTrackPosition(4, 0.0f);
+            pMonster->m_pSkinnedAnimationController->SetTrackEnable(4, true);
+        }
 
         break;
     }
