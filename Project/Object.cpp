@@ -868,7 +868,16 @@ void CGameObject::RenderShadow(ID3D12GraphicsCommandList* pd3dCommandList)
 	{
 		UpdateShaderVariable(pd3dCommandList, &m_xmf4x4World);
 
-		m_pMesh->Render(pd3dCommandList, 0);
+		int nSubMeshes = m_pMesh->GetSubMeshCount();
+		if (nSubMeshes > 0)
+		{
+			for (int i = 0; i < nSubMeshes; i++)
+				m_pMesh->Render(pd3dCommandList, i);
+		}
+		else
+		{
+			m_pMesh->Render(pd3dCommandList, 0);
+		}
 	}
 
 	if (m_pSibling && m_pSibling->GetVisible()) m_pSibling->RenderShadow(pd3dCommandList);

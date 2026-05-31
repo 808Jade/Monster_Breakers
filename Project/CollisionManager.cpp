@@ -50,7 +50,7 @@ void CCollisionManager::Update(CPlayer* player)
         {
             HandleCollision(player, obj);
         }
-        if (std::string::npos != ObjectFrameName.find("SalamanderPA") && obj != player && player->GetSwordAttackBoundingBox().Intersects(obj->GetBoundingBox()))
+        if (std::string::npos != ObjectFrameName.find("SalamanderPA") && obj != player && player->GetWeaponAttackBoundingBox().Intersects(obj->GetBoundingBox()))
         {
             HandleCollision(player, obj);
         }
@@ -91,13 +91,13 @@ void CCollisionManager::HandleCollision(CPlayer* player, CGameObject* obj)
 
     bool isMonster = (dynamic_cast<CMonster*>(obj) != nullptr);
     bool isAttacking = (dynamic_cast<CTerrainPlayer*>(player)->m_currentAnim == AnimationState::ATTACK);
-    bool isSwordHit = player->GetSwordAttackBoundingBox().Intersects(obj->GetBoundingBox());
+    bool isWeaponHit = player->GetWeaponAttackBoundingBox().Intersects(obj->GetBoundingBox());
 
-    if (isMonster && isAttacking && isSwordHit)
+    if (isMonster && isAttacking && isWeaponHit)
     {
 
-        //std::cout << "Sword hit ! - " << ObjectFrameName << std::endl;
 		dynamic_cast<CMonster*>(obj)->TakeDamage(player->damage);
+        std::cout << "hit ! - " << ObjectFrameName <<" damage=" << player->damage << std::endl;
         return;
     }
 

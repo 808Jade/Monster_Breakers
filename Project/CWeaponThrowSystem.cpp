@@ -44,6 +44,11 @@ void CWeaponThrowSystem::Emit(const XMFLOAT3& pos, const XMFLOAT3& dir, float sp
         m_pWeaponFrame->SetVisible(false);
 }
 
+void CWeaponThrowSystem::Emit(const XMFLOAT3& pos, const XMFLOAT3& dir, float speed)
+{
+    Emit(pos, dir, speed, nullptr);
+}
+
 void CWeaponThrowSystem::Animate(float fTimeElapsed)
 {
     if (!m_bActive) return;

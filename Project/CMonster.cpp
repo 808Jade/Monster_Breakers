@@ -101,10 +101,8 @@ void CMonster::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCame
         XMFLOAT3 pos = GetPosition();
 
         m_pHpbar->SetPosition(pos.x, pos.y + 2.5f, pos.z);
-        if(m_pPlayer)
-            m_pHpbar->LookAt(m_pPlayer->GetPosition(), XMFLOAT3(0.0f, 1.0f, 0.0f));
+        m_pHpbar->LookAt(pCamera->GetPosition(), XMFLOAT3(0.0f, 1.0f, 0.0f));
         m_pHpbar->SetHpRatio(m_fHpRatio);
-
         m_pHpbar->Render(pd3dCommandList, pCamera);
     }
 }

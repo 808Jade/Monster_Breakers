@@ -840,8 +840,8 @@ void CGameFramework::UpdateMonsterPosition(int monsterID, const XMFLOAT3& pos, c
 		std::cout << "[Error] Monster ID not found: " << monsterID << std::endl;
 		return;
 	}
-	printf("[Net] Monster %d → pos=(%.1f, %.1f, %.1f) state=%d\n",
-		monsterID, pos.x, pos.y, pos.z, state);
+/*	printf("[Net] Monster %d → pos=(%.1f, %.1f, %.1f) state=%d\n",
+		monsterID, pos.x, pos.y, pos.z, state);*/
 	CMonster* pMonster = it->second;
 	pMonster->SetPosition(pos);
 

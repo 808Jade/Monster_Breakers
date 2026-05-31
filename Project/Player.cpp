@@ -210,21 +210,23 @@ void CPlayer::GenerateSwordAttackBoundingBox()
 	m_swordAttackBoundingBox.Extents = XMFLOAT3(0.5f, 0.5f, 1.0f);
 }
 
-BoundingBox CPlayer::GetSwordAttackBoundingBox()
+BoundingBox CPlayer::GetWeaponAttackBoundingBox()
 {
 	BoundingBox emptyBox{};
 	emptyBox.Center = XMFLOAT3(0, 0, 0);
 	emptyBox.Extents = XMFLOAT3(0, 0, 0);   // 널 박스
 
-	CGameObject* pWeapon = FindFrame("SM_Weapon_04");
-	if (!pWeapon)
-	{
-		// 디버깅용 로그 플레이어마다 다르게 해야함
-		// 법사 - 화염구, 도적 - SM_Weapon_01
-		// std::cout << "Weapon frame SM_Weapon_04 not found!\n";
+	CGameObject* pWeapon = nullptr;
+
+	if (m_ePlayerClass == PlayerClass::KNIGHT)
+		pWeapon = FindFrame("SM_Weapon_04");
+	else if (m_ePlayerClass == PlayerClass::ROGUE)
+		pWeapon = FindFrame("SM_Weapon_01");
+
+	if (!pWeapon) {
+		cout << "Weapon not found for player class: " << static_cast<int>(m_ePlayerClass) << endl;
 		return emptyBox;
 	}
-
 	pWeapon->CalculateBoundingBox();
 	return pWeapon->GetBoundingBox();
 }
@@ -774,9 +776,8 @@ bool CTerrainPlayer::IsAnimationFinished(int trackIndex)
 
 void CTerrainPlayer::StartAnimationBlend(int fromTrack, int toTrack, float blendTime)
 {
-	/* 이건 애니메이션 도중 다른 애니메이션으로 전환할 때 자연스럽게 이어지도록 하기 위한 코드인데, 지금은 단순히 0에서 시작하도록 했음
 	// 진행 중인 블렌드가 있으면 현재 weight를 from의 시작값으로 사용
-    */float startWeight = 1.0f;
+    float startWeight = 1.0f;
     if (m_animBlend.active && m_animBlend.to == fromTrack) {
         float t = m_animBlend.elapsed / m_animBlend.duration;
         startWeight = t; // 현재까지 올라온 weight에서 시작
@@ -791,10 +792,6 @@ void CTerrainPlayer::StartAnimationBlend(int fromTrack, int toTrack, float blend
 	for (int i = 0; i < 7; ++i)
 		m_pSkinnedAnimationController->SetTrackEnable(i, i == fromTrack || i == toTrack);
 
-	// 이것도 위에서 주석한 부분과 마찬가지
 	m_pSkinnedAnimationController->SetTrackWeight(fromTrack, startWeight);
     m_pSkinnedAnimationController->SetTrackWeight(toTrack, 1.0f - startWeight);
-	
-/*	m_pSkinnedAnimationController->SetTrackWeight(fromTrack, 1.0f);
-	m_pSkinnedAnimationController->SetTrackWeight(toTrack, 0.0f);*/
 }

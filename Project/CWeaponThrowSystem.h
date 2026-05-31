@@ -14,8 +14,8 @@ public:
         ID3D12RootSignature* pd3dRootSignature);
 
     // pWeaponFrame : 플레이어의 SM_Weapon_01 프레임 (숨기기/복원용)
-    void Emit(const XMFLOAT3& pos, const XMFLOAT3& dir, float speed,
-        CGameObject* pWeaponFrame);
+    void Emit(const XMFLOAT3& pos, const XMFLOAT3& dir, float speed, CGameObject* pWeaponFrame);
+    void Emit(const XMFLOAT3& pos, const XMFLOAT3& dir, float speed);
 
     bool IsActive() const { return m_bActive; }
 
