@@ -142,7 +142,7 @@ void CScene::InitializeCollisionSystem()
 	}
 
 	for (auto* obj : m_Monsters) {
-		m_CollisionManager.InsertObject(obj);
+		m_CollisionManager.SetMonsters(&m_Monsters);
 	}
 
 	for (auto obj : m_pMap->m_vMapObjects) {
@@ -328,6 +328,12 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 		for (int i = 0; i < 3; ++i)
 		{
 			CMonster* monster = new CMonster(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, desc.modelPath, 5, nullptr, desc.hp, desc.startID + i);
+			std::string path = desc.modelPath;
+			size_t slash = path.rfind('/');
+			size_t dot = path.rfind('.');
+			std::string monsterName = path.substr(slash + 1, dot - slash - 1);
+			monster->SetFrameName(monsterName.c_str());
+			monster->SetPosition(XMFLOAT3(-99,-99,-99));
 			m_Monsters.push_back(monster);
 		}
 	}

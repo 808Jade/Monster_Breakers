@@ -789,8 +789,9 @@ D3D12_DEPTH_STENCIL_DESC CHpbarShader::CreateDepthStencilState()
 	// 캐릭터에 가려져도 항상 보이게 깊이 테스트 끔. 가려지게 하고 싶으면 LESS로 두면 됨.
 	D3D12_DEPTH_STENCIL_DESC d;
 	::ZeroMemory(&d, sizeof(d));
-	d.DepthEnable = FALSE;
-	d.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+	d.DepthEnable = TRUE;
+	d.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+	d.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 	d.StencilEnable = FALSE;
 	return d;
 }

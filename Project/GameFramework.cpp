@@ -844,6 +844,7 @@ void CGameFramework::UpdateMonsterPosition(int monsterID, const XMFLOAT3& pos, c
 		monsterID, pos.x, pos.y, pos.z, state);*/
 	CMonster* pMonster = it->second;
 	pMonster->SetPosition(pos);
+	//pMonster->CalculateBoundingBox();
 
 	//pMonster->Rotate(rot);
 	float len = sqrtf(rot.x * rot.x + rot.z * rot.z);

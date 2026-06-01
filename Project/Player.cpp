@@ -222,7 +222,8 @@ BoundingBox CPlayer::GetWeaponAttackBoundingBox()
 		pWeapon = FindFrame("SM_Weapon_04");
 	else if (m_ePlayerClass == PlayerClass::ROGUE)
 		pWeapon = FindFrame("SM_Weapon_01");
-
+	else if (m_ePlayerClass == PlayerClass::MAGE)
+		pWeapon = FindFrame("RightHand");
 	if (!pWeapon) {
 		cout << "Weapon not found for player class: " << static_cast<int>(m_ePlayerClass) << endl;
 		return emptyBox;
@@ -373,12 +374,6 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 			m_ePlayerClass = PlayerClass::MAGE;
 	}
 
-	// 기사일 때만 이펙트 객체 생성 (메모리 절약)
-/*	if (m_ePlayerClass == PlayerClass::KNIGHT)
-	{
-		m_pGroundCrackEffect = new CGroundCrackEffect();
-		m_pGroundCrackEffect->Create(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
-	}*/
 	m_pSkinnedAnimationController = new CAnimationController(pd3dDevice, pd3dCommandList, 7, pPlayerModel);
 	m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); // 기본
 	m_pSkinnedAnimationController->SetTrackAnimationSet(1, 1); // 걷기
@@ -397,6 +392,7 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 	m_pSkinnedAnimationController->SetTrackType(4, ANIMATION_TYPE_ONCE);
 	m_pSkinnedAnimationController->SetTrackType(5, ANIMATION_TYPE_ONCE);
 	m_pSkinnedAnimationController->SetTrackType(6, ANIMATION_TYPE_ONCE);
+	m_pSkinnedAnimationController->SetTrackSpeed(3, 1.5);
 	m_pSkinnedAnimationController->SetTrackSpeed(4, 1.5);
 	m_pSkinnedAnimationController->SetTrackSpeed(5, 1.5);
 	m_pSkinnedAnimationController->SetTrackSpeed(6, 1.5);

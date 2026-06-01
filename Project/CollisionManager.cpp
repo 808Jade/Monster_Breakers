@@ -30,30 +30,38 @@ void CCollisionManager::PrintTree()
 
 void CCollisionManager::Update(CPlayer* player)
 {
-    // 플레이어가 속한 노드 탐색
-    QuadTreeNode* playerNode = m_pQuadTree->FindNode(m_pQuadTree->root, player->GetBoundingBox());
-    if (!playerNode) return;
+    player->CalculateBoundingBox();
+    bool isAttacking = (dynamic_cast<CTerrainPlayer*>(player)->m_currentAnim == AnimationState::ATTACK);
+    if (!isAttacking)
+    {
+        m_bHitProcessed = false;
+        return;
+    }
+    if (m_bHitProcessed) return;
 
-    //if (frameCounter % 60 == 0) // 60 프레임마다 출력
-    //    cout << playerNode->bounds.Center.x << ", " << playerNode->bounds.Center.z << endl;
+    // 몬스터: 트리 무시하고 직접 순회
+    if (m_pMonsters && isAttacking)
+    {
+        for (CMonster* monster : *m_pMonsters)
+        {
+            if (!monster || monster->IsDead()) continue;
+            monster->CalculateBoundingBox();
+            if (player->GetWeaponAttackBoundingBox().Intersects(monster->GetBoundingBox()))
+            {
+                monster->TakeDamage(player->damage);
+                m_bHitProcessed = true;
+            }
+        }
+    }
 
-    // 근처 오브젝트 수집
+    // 환경 오브젝트: 기존 쿼드트리 그대로 사용
     m_collisions.clear();
-    CollectNearbyObjects(playerNode, player->GetBoundingBox(), m_collisions);
-
-    // 충돌 검사 및 처리
+    CollectNearbyObjects(m_pQuadTree->root, player->GetBoundingBox(), m_collisions);
     for (CGameObject* obj : m_collisions)
     {
-        std::string ObjectFrameName = obj->GetFrameName();
-
-        if (obj != player && player->GetBoundingBox().Intersects(obj->GetBoundingBox()))
-        {
+        if (dynamic_cast<CMonster*>(obj)) continue;
+        if (player->GetBoundingBox().Intersects(obj->GetBoundingBox()))
             HandleCollision(player, obj);
-        }
-        if (std::string::npos != ObjectFrameName.find("SalamanderPA") && obj != player && player->GetWeaponAttackBoundingBox().Intersects(obj->GetBoundingBox()))
-        {
-            HandleCollision(player, obj);
-        }
     }
 }
 
@@ -72,34 +80,34 @@ bool CCollisionManager::IsColliding(const BoundingBox& box1, const BoundingBox& 
 
 void CCollisionManager::CollectNearbyObjects(QuadTreeNode* node, const BoundingBox& aabb, std::vector<CGameObject*>& collisions)
 {
-    if (!node) return;
-    for (CGameObject* obj : node->objects)
+    if (!node || !node->bounds.Intersects(aabb)) return;
+
+    // 리프 노드면 오브젝트 수집
+    if (node->isLeaf)
     {
-        if (obj)
+        for (CGameObject* obj : node->objects)
         {
-            collisions.push_back(obj);
+            if (obj) collisions.push_back(obj);
         }
+        return;
+    }
+
+    // 내부 노드면 자식 재귀 탐색
+    for (int i = 0; i < 4; i++)
+    {
+        if (node->children[i])
+            CollectNearbyObjects(node->children[i], aabb, collisions);
     }
 }
 
 void CCollisionManager::HandleCollision(CPlayer* player, CGameObject* obj)
 {
+    // 몬스터는 여기 들어오지 않지만 방어적으로 차단
+    if (dynamic_cast<CMonster*>(obj) != nullptr) return;
     std::string ObjectFrameName = obj->GetFrameName();
 
     //if (frameCounter % 60 == 0)
     //    cout << "ObjectFrameName: " << ObjectFrameName << endl;
-
-    bool isMonster = (dynamic_cast<CMonster*>(obj) != nullptr);
-    bool isAttacking = (dynamic_cast<CTerrainPlayer*>(player)->m_currentAnim == AnimationState::ATTACK);
-    bool isWeaponHit = player->GetWeaponAttackBoundingBox().Intersects(obj->GetBoundingBox());
-
-    if (isMonster && isAttacking && isWeaponHit)
-    {
-
-		dynamic_cast<CMonster*>(obj)->TakeDamage(player->damage);
-        std::cout << "hit ! - " << ObjectFrameName <<" damage=" << player->damage << std::endl;
-        return;
-    }
 
     if (std::string::npos != ObjectFrameName.find("Map_wall_window")
         || std::string::npos != ObjectFrameName.find("Map_wall_plain")
