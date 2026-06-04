@@ -48,6 +48,10 @@ public:
         float                      fScale = 1.0f);*/
 
     Hpbar* m_pHpbar = nullptr;
+
+
+    void ResetHP() { m_fMonsterHP = m_fMaxHP; m_fHpRatio = 1.0f; }
+
 private:
     CPlayer* m_pPlayer = nullptr;
     int          m_nMonsterID = -1;
