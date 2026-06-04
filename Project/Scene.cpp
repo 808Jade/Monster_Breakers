@@ -17,24 +17,24 @@ static bool Chance(int percent) { // 0~100
 }
 
 // 몬스터 종류별 정보: { 모델 파일명, 서버 시작ID, HP, 스케일 }
-struct MonsterDesc {
-	const char* modelPath;
-	int         startID;
-	float       hp;
-	float       scale;
-};
-
-static const MonsterDesc MONSTER_DESCS[] = {
-	{ "Model/Monster/FishmanPA.bin",      10001, 100.0f, 1.0f },
-	{ "Model/Monster/CactusPA.bin",   10004, 150.0f, 1.0f },
-	{ "Model/Monster/BattleBeePA.bin",         10007, 100.0f, 1.0f },
-	{ "Model/Monster/CyclopsPA.bin",        10010, 200.0f, 1.0f },
-	{ "Model/Monster/BishopKnightPA.bin",        10013, 100.0f, 1.0f },
-	{ "Model/Monster/NagaWizardPA.bin",  10016, 100.0f, 1.0f },
-	{ "Model/Monster/SalamanderPA.bin",     10019, 120.0f, 1.0f },
-	{ "Model/Monster/MushroomAngryPA.bin",     10022, 100.0f, 1.0f },
-	{ "Model/Monster/StingRayPA.bin",       10025, 100.0f, 1.0f },
-};
+//struct MonsterDesc {
+//	const char* modelPath;
+//	int         startID;
+//	float       hp;
+//	float       scale;
+//};
+//
+//static const MonsterDesc MONSTER_DESCS[] = {
+//	{ "Model/Monster/FishmanPA.bin",      10001, 100.0f, 1.0f },
+//	{ "Model/Monster/CactusPA.bin",   10004, 150.0f, 1.0f },
+//	{ "Model/Monster/BattleBeePA.bin",         10007, 100.0f, 1.0f },
+//	{ "Model/Monster/CyclopsPA.bin",        10010, 200.0f, 1.0f },
+//	{ "Model/Monster/BishopKnightPA.bin",        10013, 100.0f, 1.0f },
+//	{ "Model/Monster/NagaWizardPA.bin",  10016, 100.0f, 1.0f },
+//	{ "Model/Monster/SalamanderPA.bin",     10019, 120.0f, 1.0f },
+//	{ "Model/Monster/MushroomAngryPA.bin",     10022, 100.0f, 1.0f },
+//	{ "Model/Monster/StingRayPA.bin",       10025, 100.0f, 1.0f },
+//};
 
 extern CGameFramework gGameFramework;
 

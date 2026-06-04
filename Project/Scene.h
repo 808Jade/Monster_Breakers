@@ -76,6 +76,25 @@ struct CB_SHADOW_INFO
 //D3D12_VIEWPORT m_ShadowViewport = {};
 //D3D12_RECT     m_ShadowScissor = {};
 
+struct MonsterDesc {
+	const char* modelPath;
+	int         startID;
+	float       hp;
+	float       scale;
+};
+
+static const MonsterDesc MONSTER_DESCS[] = {
+	{ "Model/Monster/FishmanPA.bin",      10001, 100.0f, 1.0f },
+	{ "Model/Monster/CactusPA.bin",       10004, 150.0f, 1.0f },
+	{ "Model/Monster/BattleBeePA.bin",    10007, 100.0f, 1.0f },
+	{ "Model/Monster/CyclopsPA.bin",      10010, 200.0f, 1.0f },
+	{ "Model/Monster/BishopKnightPA.bin", 10013, 100.0f, 1.0f },
+	{ "Model/Monster/NagaWizardPA.bin",   10016, 100.0f, 1.0f },
+	{ "Model/Monster/SalamanderPA.bin",   10019, 120.0f, 1.0f },
+	{ "Model/Monster/MushroomAngryPA.bin",10022, 100.0f, 1.0f },
+	{ "Model/Monster/StingRayPA.bin",     10025, 100.0f, 1.0f },
+};
+
 class CScene
 {
 public:

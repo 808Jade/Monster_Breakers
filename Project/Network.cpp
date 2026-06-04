@@ -446,6 +446,28 @@ void ProcessPacket(char* ptr)
 
         std::cout << "[Client] Player Remove: ID=" << other_id << std::endl;
 
+        auto slotIt = g_other_player_slots.find(other_id);
+        if (slotIt != g_other_player_slots.end())
+        {
+            int slot = slotIt->second;
+
+            CScene* scene = gGameFramework.GetCurrentScene();
+            if (scene && scene->m_ppOtherPlayers)
+            {
+                OtherPlayer* target = scene->m_ppOtherPlayers[slot];
+                if (target)
+                    target->isConnedted = false;
+            }
+
+            // 슬롯 인덱스 반환 (job 별로 slot 범위를 역추산)
+            if (slot < 2) { g_knightIndex = min(g_knightIndex, slot); }
+            else if (slot < 4) { g_wizardIndex = min(g_wizardIndex, slot); }
+            else { g_thiefIndex = min(g_thiefIndex, slot); }
+
+            g_other_player_slots.erase(slotIt);
+            g_other_players.erase(other_id);
+        }
+
         break;
     }
 
