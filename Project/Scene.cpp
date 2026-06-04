@@ -1212,6 +1212,10 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 			send_packet(&pkt);
 			cout << "[GOLD] 골드 사용 전송 | -" << cost << "G\n";
 
+			SkillSlot slot = static_cast<SkillSlot>(idx); // 0=Q, 1=E, 2=R
+			send_skill_upgrade(slot);
+			cout << "[스킬강화] slot=" << idx << " 전송\n";
+
 		}
 	}
 	break;
