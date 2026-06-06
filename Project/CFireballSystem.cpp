@@ -240,3 +240,12 @@ void CFireballSystem::ReleaseUploadBuffers()
     // 업로드 힙은 매 프레임 사용하므로 해제하지 않음
     // (쿼드 VB는 업로드 힙이지만 변하지 않으므로 그대로 유지)
 }
+
+std::vector<std::pair<int, XMFLOAT3>> CFireballSystem::GetActiveParticles() const
+{
+    std::vector<std::pair<int, XMFLOAT3>> result;
+    for (int i = 0; i < MAX_PARTICLES; ++i)
+        if (m_Particles[i].active)
+            result.push_back({ i, m_Particles[i].position });
+    return result;
+}

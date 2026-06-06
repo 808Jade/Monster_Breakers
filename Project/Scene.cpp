@@ -141,8 +141,11 @@ void CScene::InitializeCollisionSystem()
 		m_CollisionManager.InsertObject(obj);
 	}
 
+	m_CollisionManager.SetFireballSystem(m_pFireballSystem);
+	m_CollisionManager.SetWeaponThrowSystem(m_pWeaponThrowSystem);
+
 	for (auto* obj : m_Monsters) {
-		m_CollisionManager.InsertObject(obj);
+		m_CollisionManager.SetMonsters(&m_Monsters);
 	}
 
 	for (auto obj : m_pMap->m_vMapObjects) {
@@ -328,6 +331,12 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 		for (int i = 0; i < 3; ++i)
 		{
 			CMonster* monster = new CMonster(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, desc.modelPath, 5, nullptr, desc.hp, desc.startID + i);
+			std::string path = desc.modelPath;
+			size_t slash = path.rfind('/');
+			size_t dot = path.rfind('.');
+			std::string monsterName = path.substr(slash + 1, dot - slash - 1);
+			monster->SetFrameName(monsterName.c_str());
+			monster->SetPosition(XMFLOAT3(-99,-99,-99));
 			m_Monsters.push_back(monster);
 		}
 	}
@@ -1301,6 +1310,9 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 	{
 	case WM_KEYDOWN:
 		switch (wParam) {
+		case VK_TAB:
+			m_bEnableShadow = !m_bEnableShadow;
+				break;
 		case 'Q':
 			if (!IsSkillOnCooldown(1)) {
 			pPlayer->m_currentAnim = AnimationState::SKILL2;
@@ -1351,13 +1363,63 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 				}
 				else if (m_pModel == m_pKnightModel) {
 
-					send_taunt_packet(8.0f); //도발범위 조정해보자...
+					send_taunt_packet(pPlayer->level[2] * 5); //도발범위는 플레이어 레벨에 따라 증가
 					// 기사 도발	
 					// 몬스터들 공격 멈추고 lookat = 기사 위치로
 					// m_pLevel[2]의 값에 따라 도발 지속시간 증가
 				}
 				else if (m_pModel == m_pThiefModel) {
-					// 도적 몬스터 뒤로 순보
+					const float SEARCH_RANGE = pPlayer->level[2] * 5;  // 탐색 범위
+					const float BEHIND_OFFSET = 2.0f;  // 몬스터 뒤 얼마나 멀리
+
+					XMFLOAT3 playerPos = pPlayer->GetPosition();
+					XMVECTOR vPlayer = XMLoadFloat3(&playerPos);
+
+					CMonster* pNearest = nullptr;
+					float fMinDist = SEARCH_RANGE;
+
+					for (auto* monster : m_Monsters) {
+						if (!monster || monster->IsDead()) continue;
+
+						XMFLOAT3 monPos = monster->GetPosition();
+						XMVECTOR vMon = XMLoadFloat3(&monPos);
+						float dist = XMVectorGetX(XMVector3Length(XMVectorSubtract(vMon, vPlayer)));
+
+						if (dist < fMinDist) {
+							fMinDist = dist;
+							pNearest = monster;
+						}
+					}
+
+					if (pNearest) {
+						XMFLOAT3 monPos = pNearest->GetPosition();
+						XMFLOAT3 monLook = pNearest->GetLook();  // 몬스터가 바라보는 방향
+
+						// 몬스터 뒤쪽 = 몬스터 위치 - (몬스터 look * offset)
+						XMVECTOR vMonPos = XMLoadFloat3(&monPos);
+						XMVECTOR vMonLook = XMLoadFloat3(&monLook);
+						vMonLook = XMVector3Normalize(vMonLook);
+
+						XMVECTOR vBehind = XMVectorSubtract(vMonPos, XMVectorScale(vMonLook, BEHIND_OFFSET));
+
+						XMFLOAT3 teleportPos;
+						XMStoreFloat3(&teleportPos, vBehind);
+						teleportPos.y = playerPos.y;  // y축은 플레이어 그대로 유지
+
+						// 2) 플레이어 위치 이동
+						pPlayer->SetPosition(teleportPos);
+
+						// 3) 플레이어가 몬스터를 바라보도록 회전
+						//    방향: teleportPos -> monPos
+						XMVECTOR vDir = XMVectorSubtract(XMLoadFloat3(&monPos), vBehind);
+						vDir = XMVector3Normalize(vDir);
+						XMFLOAT3 faceDir;
+						XMStoreFloat3(&faceDir, vDir);
+
+						// y축 회전각 계산 후 플레이어 방향 설정
+						float yaw = atan2f(faceDir.x, faceDir.z);  // XZ 평면 각도
+						pPlayer->Rotate(0.0f, XMConvertToDegrees(yaw), 0.0f);
+					}
 				}
 				TriggerSkillCooldown(2);
 			}
@@ -1509,7 +1571,7 @@ void CScene::RenderShadowPass(ID3D12GraphicsCommandList* pd3dCommandList)
 		XMVECTOR vEye = vFocus - vDir * dist;
 
 		XMMATRIX mLightView = XMMatrixLookAtLH(vEye, vFocus, XMVectorSet(0, 1, 0, 0));
-		XMMATRIX mLightProj = XMMatrixOrthographicLH(800.0f, 800.0f, 1.0f, 1000.0f);
+		XMMATRIX mLightProj = XMMatrixOrthographicLH(60.0f, 60.0f, 1.0f, 300.0f);
 
 		XMFLOAT4X4 lv, lp;
 		XMStoreFloat4x4(&lv, XMMatrixTranspose(mLightView));
@@ -1541,12 +1603,12 @@ void CScene::RenderShadowPass(ID3D12GraphicsCommandList* pd3dCommandList)
 	pd3dCommandList->SetGraphicsRootConstantBufferView(18, va);
 
 	// Monsters (스키닝이라고 가정)
-/*	for (auto* monster : m_Monsters)
+	for (auto* monster : m_Monsters)
 	{
 		if (!monster) continue;
 		m_pSkinnedShadowShader->OnPrepareRender(pd3dCommandList);
 		monster->RenderShadow(pd3dCommandList);
-	}*/
+	}
 
 	// Player (스키닝이라고 가정)
 	if (m_pPlayer)
@@ -1573,14 +1635,14 @@ void CScene::RenderShadowPass(ID3D12GraphicsCommandList* pd3dCommandList)
 		}
 	}
 
-/*	for (int i = 0; i < m_nOtherPlayers; ++i)
+	for (auto* otherPlayer : m_vPlayers)
 	{
-		if (m_ppOtherPlayers[i] && m_ppOtherPlayers[i]->visible)
+		if (otherPlayer && otherPlayer->GetVisible())
 		{
 			m_pSkinnedShadowShader->OnPrepareRender(pd3dCommandList);
-			m_ppOtherPlayers[i]->RenderShadow(pd3dCommandList);
+			otherPlayer->RenderShadow(pd3dCommandList);
 		}
-	}*/
+	}
 
 	{
 		D3D12_RESOURCE_BARRIER barrier = {};

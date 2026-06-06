@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Network.h"
 #include "CMonster.h"
 #include "GameFramework.h"
@@ -92,7 +92,7 @@ void send_hit_damage(long long monsterID, int damage) // 이 함수를 플레이
     pkt.damage = damage;
     send_packet(&pkt);
 
-    std::cout << "[HIT] 몬스터 ID=" << monsterID << " 데미지=" << damage << " 전송\n";
+    std::cout << "[HIT] monster ID=" << monsterID << " damage=" << damage << " sent\n";
 }
 
 
@@ -646,11 +646,7 @@ void ProcessPacket(char* ptr)
         CScene* scene = gGameFramework.GetCurrentScene();
         if (!scene || !scene->m_pWeaponThrowSystem) break;
 
-        /* CGameObject* pWeapon = packet->FindFrame("SM_Weapon_01");
-        if (!pWeapon) break;
-
-        scene->m_pWeaponThrowSystem->Emit(packet->weaponPosition, p->look, 30.0f, pWeapon);
-        );*/
+       // scene->m_pWeaponThrowSystem->Emit(packet->weaponPosition, packet->look, 30.0f);
 
         std::cout << "[수신] SC_P_WEAPON_POS | playerID=" << packet->playerID
             << " pos=(" << packet->weaponPosition.x << "," << packet->weaponPosition.y << "," << packet->weaponPosition.z << ")\n";
