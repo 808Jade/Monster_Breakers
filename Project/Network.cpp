@@ -146,18 +146,16 @@ void send_taunt_packet(float range)
 }
 
 // 법사
-void send_skill_packet(SkillType skillType, const XMFLOAT3& position, const XMFLOAT3& look) //파이어 볼
+void send_skill_packet(const XMFLOAT3& position, const XMFLOAT3& look)
 {
     cs_packet_skill pkt{};
     pkt.size = sizeof(pkt);
     pkt.type = CS_P_SKILL;
-    pkt.skillType = skillType;
     pkt.position = position;
     pkt.look = look;
     send_packet(&pkt);
 
-    std::cout << "[SKILL] cs_packet_skill 전송 | type=" << (int)pkt.type
-        << " size=" << (int)pkt.size << " skillType=" << (int)pkt.skillType << "\n";
+    std::cout << "[FIREBALL] cs_packet_skill 전송 | size=" << (int)pkt.size << "\n";
 }
 
 void send_buff_atk_packet()
@@ -496,30 +494,19 @@ void ProcessPacket(char* ptr)
     {
         sc_packet_skill* packet = reinterpret_cast<sc_packet_skill*>(ptr);
 
-        std::cout << "[SKILL] SC_P_SKILL 수신 | playerID=" << packet->playerID
-            << " skillType=" << (int)packet->skillType
-            << " pos=(" << packet->position.x << ", " << packet->position.y << ", " << packet->position.z << ")\n";
+        std::cout << "[SKILL] SC_P_SKILL 수신 | playerID=" << packet->playerID << " pos=(" << packet->position.x << ", " << packet->position.y << ", " << packet->position.z << ")\n";
+
 
         if (packet->playerID == g_myid) {
             std::cout << "[SKILL] 내 패킷 루프백 → 무시\n";
             break;
         }
+
         CScene* scene = gGameFramework.GetCurrentScene();
         if (!scene) break;
+        scene->m_pFireballSystem->Emit(packet->position, packet->look);
 
-        switch (packet->skillType)
-        {
-        case SkillType::SKILL_FIREBALL:
-            scene->m_pFireballSystem->Emit(packet->position, packet->look);
-/*            std::cout << "[SKILL] 파이어볼 Emit: pos=("
-                << packet->position.x << ", "
-                << packet->position.y << ", "
-                << packet->position.z << ")\n";*/
-            break;
-
-            // 다른 스킬 타입도 여기에 추가
-        }
-        break;
+ 
     }
 
     case SC_P_SHIELD_BLOCK: // 방패막기

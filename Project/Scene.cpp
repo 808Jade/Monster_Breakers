@@ -1210,11 +1210,17 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 			pkt.type = CS_P_USE_GOLD;
 			pkt.amount = cost;
 			send_packet(&pkt);
-			cout << "[GOLD] 골드 사용 전송 | -" << cost << "G\n";
 
-			SkillSlot slot = static_cast<SkillSlot>(idx); // 0=Q, 1=E, 2=R
-			send_skill_upgrade(slot);
-			cout << "[스킬강화] slot=" << idx << " 전송\n";
+			if (Chance(prob)) {
+				p->level[idx]++;
+
+				SkillSlot slot = static_cast<SkillSlot>(idx);
+				send_skill_upgrade(slot);
+				cout << "[스킬강화 성공] slot=" << idx << " 새레벨=" << p->level[idx] << "\n";
+			}
+			else {
+				cout << "[스킬강화 실패] slot=" << idx << "\n";
+			}
 
 		}
 	}
@@ -1244,7 +1250,7 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 				//m_pFireballSystem->Emit(pHand->GetPosition(), p->GetLook(), 20.0f); 
 
 				// server!!
-				send_skill_packet(SkillType::SKILL_FIREBALL, firePos, fireLook);
+				send_skill_packet(firePos, fireLook);
 			}
 			else if (m_pModel == m_pThiefModel)
 			{
