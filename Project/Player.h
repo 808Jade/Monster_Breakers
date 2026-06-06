@@ -73,7 +73,9 @@ public:
 	bool	alreadyHeld = false;
 	float	currentHP = 100.f;
 	int		Pgold = 1000;
-	float damage = 1.f;
+	float	damage = 10.f;
+	bool	 m_bIsAtkBuffed = false;
+
 	int level[3] = { 1,1,1 };
 
 	// 아이템

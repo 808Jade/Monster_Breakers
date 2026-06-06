@@ -474,10 +474,10 @@ void ProcessPacket(char* ptr)
     //case SC_P_RESPAWN:
     //{
     //    sc_packet_respawn* packet = reinterpret_cast<sc_packet_respawn*>(ptr);
-
+    //
     //    cout << "[수신] SC_P_RESPAWN | playerID=" << packet->playerID << " HP=" << packet->hp
     //        << " pos=(" << packet->position.x << "," << packet->position.y << ","  << packet->position.z << ")\n";
-
+    //
     //    // 랜더링 만 하면 될듯
     //    break;
     //}
@@ -603,6 +603,18 @@ void ProcessPacket(char* ptr)
         scene->m_pBeamSystem->Emit(casterPos, targetPos);
         std::cout << "[SC_P_BUFF_ATK 버프] Emit: casterPos=(" << casterPos.x << "," << casterPos.y << "," << casterPos.z
 			<< ") targetPos=(" << targetPos.x << "," << targetPos.y << "," << targetPos.z << ")\n";
+
+
+        if (scene && scene->m_pPlayer)
+        {
+            if (packet->targetID == g_myid)
+            {
+                scene->m_pPlayer->damage = packet->newDamage;
+                scene->m_pPlayer->m_bIsAtkBuffed = (packet->newDamage > 10);
+                cout << "[BUFF_ATK] 내 공격력 갱신: " << packet->newDamage << "\n";
+            }
+        }
+
         std::cout << "[SC_P_BUFF_ATK 버프] | playerID=" << packet->playerID << " newDamage=" << packet->newDamage << "\n";
         break;
     }

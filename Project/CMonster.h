@@ -57,7 +57,7 @@ private:
     int          m_nMonsterID = -1;
 
     float        m_fMonsterHP = 100.0f;
-    float        m_fMaxHP = 100.0f;
+    float        m_fMaxHP = 1000.0f;
     float        m_fHpRatio = 1.0f;
 
     MonsterState m_eState = MonsterState::Idle;
