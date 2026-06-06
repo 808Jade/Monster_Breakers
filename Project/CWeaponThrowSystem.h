@@ -22,6 +22,14 @@ public:
     void Animate(float fTimeElapsed);
     void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
 
+    XMFLOAT3 GetPosition() const { return m_Position; }
+    float GetHitRadius()   const { return 0.8f; }
+    void Deactivate()
+    {
+        m_bActive = false;
+        if (m_pWeaponFrame) { m_pWeaponFrame->SetVisible(true); m_pWeaponFrame = nullptr; }
+    }
+
 private:
     static constexpr float MAX_LIFETIME = 3.0f;
     static constexpr float ROTATION_SPEED = 360.0f;

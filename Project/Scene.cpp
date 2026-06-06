@@ -141,6 +141,9 @@ void CScene::InitializeCollisionSystem()
 		m_CollisionManager.InsertObject(obj);
 	}
 
+	m_CollisionManager.SetFireballSystem(m_pFireballSystem);
+	m_CollisionManager.SetWeaponThrowSystem(m_pWeaponThrowSystem);
+
 	for (auto* obj : m_Monsters) {
 		m_CollisionManager.SetMonsters(&m_Monsters);
 	}
