@@ -91,15 +91,27 @@ void CCollisionManager::HandleCollision(CPlayer* player, CGameObject* obj)
 
     bool isMonster = (dynamic_cast<CMonster*>(obj) != nullptr);
     bool isAttacking = (dynamic_cast<CTerrainPlayer*>(player)->m_currentAnim == AnimationState::ATTACK);
-    bool isSwordHit = player->GetSwordAttackBoundingBox().Intersects(obj->GetBoundingBox());
+
+  //  bool isSwordHit = player->GetSwordAttackBoundingBox().Intersects(obj->GetBoundingBox());
+//
+  //  if (isMonster && isAttacking && isSwordHit)
+  //  {
+//
+  //      //std::cout << "Sword hit ! - " << ObjectFrameName << std::endl;
+		//dynamic_cast<CMonster*>(obj)->TakeDamage(player->damage);
+  //      return;
+  //  }
+
+    BoundingBox swordBox = player->GetSwordAttackBoundingBox();
+    bool isValidBox = (swordBox.Extents.x > 0.0f || swordBox.Extents.y > 0.0f || swordBox.Extents.z > 0.0f);
+    bool isSwordHit = isValidBox && swordBox.Intersects(obj->GetBoundingBox());
 
     if (isMonster && isAttacking && isSwordHit)
     {
-
-        //std::cout << "Sword hit ! - " << ObjectFrameName << std::endl;
-		dynamic_cast<CMonster*>(obj)->TakeDamage(player->damage);
+        dynamic_cast<CMonster*>(obj)->TakeDamage(player->damage);
         return;
     }
+
 
     if (std::string::npos != ObjectFrameName.find("Map_wall_window")
         || std::string::npos != ObjectFrameName.find("Map_wall_plain")
