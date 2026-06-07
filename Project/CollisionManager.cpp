@@ -199,7 +199,7 @@ void CCollisionManager::HandleCollision(CPlayer* player, CGameObject* obj)
   //      return;
   //  }
 
-    BoundingBox swordBox = player->GetSwordAttackBoundingBox();
+    BoundingBox swordBox = player->GetWeaponAttackBoundingBox();
     bool isValidBox = (swordBox.Extents.x > 0.0f || swordBox.Extents.y > 0.0f || swordBox.Extents.z > 0.0f);
     bool isSwordHit = isValidBox && swordBox.Intersects(obj->GetBoundingBox());
 
