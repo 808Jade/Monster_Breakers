@@ -230,5 +230,55 @@ void CCollisionManager::HandleCollision(CPlayer* player, CGameObject* obj)
 
 void CCollisionManager::HandleCollision(CPlayer* player, const ColliderInfo& colinfo)
 {
-       
+    // 현재 맵 인스턴스들은 모두 AABB로 처리되고 있으므로, AABB일 때만 밀어내기 적용
+    // 앞에서 걸러놓고, 여기로 들어오는 애들에 대해서는 그냥 다 AABB 처리를 해버리기
+    // string::find() 를 하지 않는다..? 결국 앞에서 하면 똑같은게 아닌가 싶긴 하지만..
+    if (colinfo.type != ColliderType::AABB) return;
+
+    DirectX::XMFLOAT3 playerPos = player->GetPosition();
+    BoundingBox playerBox = player->GetBoundingBox();
+    BoundingBox objBox = colinfo.aabb;
+
+    // Min, Max 계산
+    DirectX::XMFLOAT3 playerMin, playerMax, objMin, objMax;
+
+    playerMin.x = playerBox.Center.x - playerBox.Extents.x;
+    playerMin.y = playerBox.Center.y - playerBox.Extents.y;
+    playerMin.z = playerBox.Center.z - playerBox.Extents.z;
+    playerMax.x = playerBox.Center.x + playerBox.Extents.x;
+    playerMax.y = playerBox.Center.y + playerBox.Extents.y;
+    playerMax.z = playerBox.Center.z + playerBox.Extents.z;
+
+    objMin.x = objBox.Center.x - objBox.Extents.x;
+    objMin.y = objBox.Center.y - objBox.Extents.y;
+    objMin.z = objBox.Center.z - objBox.Extents.z;
+    objMax.x = objBox.Center.x + objBox.Extents.x;
+    objMax.y = objBox.Center.y + objBox.Extents.y;
+    objMax.z = objBox.Center.z + objBox.Extents.z;
+
+    // 겹침 크기 계산 (x, z축)
+    DirectX::XMFLOAT3 overlap;
+    overlap.x = std::min(playerMax.x, objMax.x) - std::max(playerMin.x, objMin.x);
+    overlap.z = std::min(playerMax.z, objMax.z) - std::max(playerMin.z, objMin.z);
+
+    // 겹침이 작은 축(더 얕게 파고든 축)을 기준으로 플레이어 위치 조정 (AABB Response)
+    if (overlap.x < overlap.z)
+    {
+        if (playerPos.x < objBox.Center.x)
+            playerPos.x = objMin.x - playerBox.Extents.x; // 왼쪽으로 밀어냄
+        else
+            playerPos.x = objMax.x + playerBox.Extents.x; // 오른쪽으로 밀어냄
+    }
+    else
+    {
+        if (playerPos.z < objBox.Center.z)
+            playerPos.z = objMin.z - playerBox.Extents.z; // 아래로 밀어냄
+        else
+            playerPos.z = objMax.z + playerBox.Extents.z; // 위로 밀어냄
+    }
+
+    // 플레이어 위치 갱신 및 상태 초기화
+    player->SetPosition(playerPos);
+    player->SetVelocity({ 0.0f, 0.0f, 0.0f }); // 필요에 따라 x, z 속도만 0으로 만들 수도 있음
+    player->CalculateBoundingBox();            // 밀려난 위치 기준으로 바운딩 박스 재계산
 }

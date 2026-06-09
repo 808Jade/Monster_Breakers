@@ -156,9 +156,23 @@ void CScene::InitializeCollisionSystem()
 		// 그룹의 원본 베이스 모델 이름 확인
 		std::string strFrameName = group.pModel->GetFrameName();
 
-		// [그룹 필터링] 바닥이나 천장이라면 이 그룹의 수천 개 인스턴스를 통째로 스킵!
-		if (std::string::npos != strFrameName.find("floor") ||
-			std::string::npos != strFrameName.find("ceiling"))
+		if (std::string::npos != strFrameName.find("hill") ||
+			std::string::npos != strFrameName.find("grass") ||
+			std::string::npos != strFrameName.find("sand") ||
+			std::string::npos != strFrameName.find("trail") ||
+			std::string::npos != strFrameName.find("bush") ||
+			std::string::npos != strFrameName.find("plank") ||
+			std::string::npos != strFrameName.find("banana") ||
+			std::string::npos != strFrameName.find("coin") ||
+			std::string::npos != strFrameName.find("apple") ||
+			std::string::npos != strFrameName.find("melon") ||
+			std::string::npos != strFrameName.find("carrot") ||
+			std::string::npos != strFrameName.find("onion") ||
+			std::string::npos != strFrameName.find("potato") ||
+			std::string::npos != strFrameName.find("plane") ||
+			std::string::npos != strFrameName.find("bridge") ||
+			std::string::npos != strFrameName.find("tree")
+			)
 		{
 			continue;
 		}
