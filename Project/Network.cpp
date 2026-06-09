@@ -688,6 +688,12 @@ void ProcessPacket(char* ptr)
 
         std::cout << "[몬스터] HP 갱신 수신 | ID=" << packet->monsterID << " HP=" << packet->hp << "\n";
 
+        auto it = g_monsters.find(packet->monsterID);
+        if (it != g_monsters.end())
+        {
+            it->second->SetHP((float)packet->hp);
+        }
+
         break;
     }
 

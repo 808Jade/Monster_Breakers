@@ -52,6 +52,11 @@ public:
 
     void ResetHP() { m_fMonsterHP = m_fMaxHP; m_fHpRatio = 1.0f; }
 
+    void SetHP(float hp) {
+        m_fMonsterHP = hp;
+        m_fHpRatio = m_fMonsterHP / m_fMaxHP;
+    }
+
 private:
     CPlayer* m_pPlayer = nullptr;
     int          m_nMonsterID = -1;
