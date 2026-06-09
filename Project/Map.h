@@ -68,7 +68,7 @@ public:
 
 	std::vector<MapObjectInstance> m_vObjectInstances;
 	std::vector<CGameObject*> m_vLoadedModelInfo;
-    std::vector<CGameObject*> m_vMapObjects; // 이제 필요 없
+    //std::vector<CGameObject*> m_vMapObjects; // 이제 필요 없
     std::map<int, InstanceGroup> m_mInstanceGroups;
     std::vector<ID3D12Resource*> m_vUploadBuffers; // 임시 보관소
 };

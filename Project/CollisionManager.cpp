@@ -23,9 +23,34 @@ void CCollisionManager::InsertObject(CGameObject* object)
     m_pQuadTree->Insert(object);
 }
 
+void CCollisionManager::InsertCollider(const ColliderInfo& collider)
+{
+    m_pQuadTree->Insert(collider);
+}
+
 void CCollisionManager::PrintTree()
 {
     m_pQuadTree->PrintTree();
+}
+
+bool CCollisionManager::CheckIntersection(const BoundingBox& bounds, const ColliderInfo& col)
+{
+    switch (col.type)
+    {
+    case ColliderType::AABB:    return bounds.Intersects(col.aabb);
+    case ColliderType::OBB:     return bounds.Intersects(col.obb);
+    case ColliderType::Sphere:  return bounds.Intersects(col.sphere);
+    case ColliderType::Segment:
+    {
+        XMVECTOR start = XMLoadFloat3(&col.segment.start);
+        XMVECTOR end = XMLoadFloat3(&col.segment.end);
+        XMVECTOR dir = XMVector3Normalize(end - start);
+        float len = XMVectorGetX(XMVector3Length(end - start));
+        float dist = 0.0f;
+        return bounds.Intersects(start, dir, dist) && (dist <= len);
+    }
+    }
+    return false;
 }
 
 void CCollisionManager::Update(CPlayer* player)
@@ -34,15 +59,17 @@ void CCollisionManager::Update(CPlayer* player)
     QuadTreeNode* playerNode = m_pQuadTree->FindNode(m_pQuadTree->root, player->GetBoundingBox());
     if (!playerNode) return;
 
-    //if (frameCounter % 60 == 0) // 60 프레임마다 출력
+    //if (m_frameCounter++ % 60 == 0) // 60 프레임마다 출력
     //    cout << playerNode->bounds.Center.x << ", " << playerNode->bounds.Center.z << endl;
 
     // 근처 오브젝트 수집
-    m_collisions.clear();
-    CollectNearbyObjects(playerNode, player->GetBoundingBox(), m_collisions);
+    m_objects.clear();
+    m_colliderinfos.clear();
+    CollectNearbyObjects(playerNode, player->GetBoundingBox(), m_objects, m_colliderinfos);
+    cout << m_colliderinfos.size() << endl;
 
-    // 충돌 검사 및 처리
-    for (CGameObject* obj : m_collisions)
+    // object 대상 충돌 검사 및 처리
+    for (CGameObject* obj : m_objects)
     {
         std::string ObjectFrameName = obj->GetFrameName();
 
@@ -50,9 +77,19 @@ void CCollisionManager::Update(CPlayer* player)
         {
             HandleCollision(player, obj);
         }
+        // for 검 공격 충돌?
         if (std::string::npos != ObjectFrameName.find("SalamanderPA") && obj != player && player->GetSwordAttackBoundingBox().Intersects(obj->GetBoundingBox()))
         {
             HandleCollision(player, obj);
+        }
+    }
+
+    // ColliderInfo 대상 충돌 검사 및 처리
+    for (const ColliderInfo& col : m_colliderinfos) 
+    {
+        if (CheckIntersection(player->GetBoundingBox(), col))
+        {
+            HandleCollision(player, col);
         }
     }
 }
@@ -70,14 +107,26 @@ bool CCollisionManager::IsColliding(const BoundingBox& box1, const BoundingBox& 
     return true;
 }
 
-void CCollisionManager::CollectNearbyObjects(QuadTreeNode* node, const BoundingBox& aabb, std::vector<CGameObject*>& collisions)
+void CCollisionManager::CollectNearbyObjects(QuadTreeNode* node, const BoundingBox& aabb, std::vector<CGameObject*>& outDynamics, std::vector<ColliderInfo>& outStatics) 
 {
     if (!node) return;
+    if (!node->bounds.Intersects(aabb)) return;
+
     for (CGameObject* obj : node->objects)
     {
-        if (obj)
+        if (obj) outDynamics.push_back(obj);
+    }
+
+    for (const ColliderInfo& col : node->colliders)
+    {
+        outStatics.push_back(col);
+    }
+
+    if (!node->isLeaf)
+    {
+        for (int i = 0; i < 4; i++)
         {
-            collisions.push_back(obj);
+            CollectNearbyObjects(node->children[i], aabb, outDynamics, outStatics);
         }
     }
 }
@@ -86,7 +135,7 @@ void CCollisionManager::HandleCollision(CPlayer* player, CGameObject* obj)
 {
     std::string ObjectFrameName = obj->GetFrameName();
 
-    //if (frameCounter % 60 == 0)
+    //if (m_frameCounter++ % 60 == 0)
     //    cout << "ObjectFrameName: " << ObjectFrameName << endl;
 
     bool isMonster = (dynamic_cast<CMonster*>(obj) != nullptr);
@@ -95,91 +144,9 @@ void CCollisionManager::HandleCollision(CPlayer* player, CGameObject* obj)
 
     if (isMonster && isAttacking && isSwordHit)
     {
-
         //std::cout << "Sword hit ! - " << ObjectFrameName << std::endl;
 		dynamic_cast<CMonster*>(obj)->TakeDamage(player->damage);
         return;
-    }
-
-    if (std::string::npos != ObjectFrameName.find("Map_wall_window")
-        || std::string::npos != ObjectFrameName.find("Map_wall_plain")
-        || std::string::npos != ObjectFrameName.find("Map_wall_baydoor")
-        )
-    {
-        // 플레이어와 벽의 경계 상자 가져오기
-        BoundingBox playerBox = player->GetBoundingBox();
-        BoundingBox wallBox = obj->GetBoundingBox();
-
-        // 플레이어와 벽의 중심 간 차이
-        XMFLOAT3 playerCenter = playerBox.Center;
-        XMFLOAT3 wallCenter = wallBox.Center;
-        XMFLOAT3 diff(playerCenter.x - wallCenter.x, playerCenter.y - wallCenter.y, playerCenter.z - wallCenter.z);
-
-        //// 플레이어 BoundingBox의 4개 꼭짓점 계산
-        XMFLOAT3 playerExtents = playerBox.Extents;
-        XMFLOAT3 playerVertices[4] = {
-            XMFLOAT3(playerCenter.x - playerExtents.x, playerCenter.y, playerCenter.z - playerExtents.z), // 우상단
-            XMFLOAT3(playerCenter.x + playerExtents.x, playerCenter.y, playerCenter.z - playerExtents.z), // 좌상단
-            XMFLOAT3(playerCenter.x + playerExtents.x, playerCenter.y, playerCenter.z + playerExtents.z), // 좌하단
-            XMFLOAT3(playerCenter.x - playerExtents.x, playerCenter.y, playerCenter.z + playerExtents.z), // 우하단
-        };
-
-        // 벽 BoundingBox의 4개 꼭짓점 계산
-        XMFLOAT3 wallExtents = wallBox.Extents;
-        XMFLOAT3 wallVertices[4] = {
-            XMFLOAT3(wallCenter.x - wallExtents.x, playerCenter.y, wallCenter.z - wallExtents.z), // 우상단
-            XMFLOAT3(wallCenter.x + wallExtents.x, playerCenter.y, wallCenter.z - wallExtents.z), // 좌상단
-            XMFLOAT3(wallCenter.x + wallExtents.x, playerCenter.y, wallCenter.z + wallExtents.z), // 좌하단
-            XMFLOAT3(wallCenter.x - wallExtents.x, playerCenter.y, wallCenter.z + wallExtents.z), // 우하단
-        };
-
-        // 벽이 밀어낼 방향 과 거리 찾기
-        XMFLOAT3 pushDirection(0, 0, 0);
-        float pushDistance{ 0.0f };
-        float pushMargin{ 0.0f };
-        float maxExtent = std::max(wallExtents.x, wallExtents.z);
-        if (maxExtent == wallExtents.x)
-        {
-            if (diff.z < 0)
-            {
-                // 위로 밀어야 함
-                pushDirection = XMFLOAT3(0, 0, -1);
-                pushDistance = playerVertices[2].z - wallVertices[1].z + pushMargin;
-            }
-            else
-            {
-                // 아래로 밀어야 함
-                pushDirection = XMFLOAT3(0, 0, 1);
-                pushDistance = wallVertices[2].z - playerVertices[1].z + pushMargin;
-            }
-        }
-        else
-        {
-            if (diff.x < 0)
-            {
-                // 오른쪽으로 밀어야 함
-                pushDirection = XMFLOAT3(-1, 0, 0);
-                pushDistance = playerVertices[1].x - wallVertices[0].x + pushMargin;
-            }
-            else
-            {
-                // 왼쪽으로 밀어야 함
-                pushDirection = XMFLOAT3(1, 0, 0);
-                pushDistance = wallVertices[1].x - playerVertices[0].x + pushMargin;
-            }
-        }
-
-        XMFLOAT3 pushVector(
-            pushDirection.x * pushDistance,
-            0,
-            pushDirection.z * pushDistance
-        );
-
-        XMFLOAT3 shift = pushVector;
-        player->SetVelocity(XMFLOAT3(0, 0, 0));
-        player->Move(shift, false);
-        player->CalculateBoundingBox();
-        playerBox = player->GetBoundingBox();
     }
 
     if (std::string::npos != ObjectFrameName.find("Map_barrel")
@@ -259,4 +226,9 @@ void CCollisionManager::HandleCollision(CPlayer* player, CGameObject* obj)
         player->CalculateBoundingBox();
         playerBox = player->GetBoundingBox();
     }
+}
+
+void CCollisionManager::HandleCollision(CPlayer* player, const ColliderInfo& colinfo)
+{
+       
 }
