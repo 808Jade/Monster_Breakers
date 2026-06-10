@@ -145,6 +145,7 @@
     <ClCompile Include="CBeamSystem.cpp" />
     <ClCompile Include="CCubeMesh.cpp" />
     <ClCompile Include="CCubeShader.cpp" />
+    <ClCompile Include="CDebugShader.cpp" />
     <ClCompile Include="CFireballShader.cpp" />
     <ClCompile Include="CFireballSystem.cpp" />
     <ClCompile Include="CFontMesh.cpp" />
@@ -180,6 +181,7 @@
     <ClInclude Include="CBeamSystem.h" />
     <ClInclude Include="CCubeMesh.h" />
     <ClInclude Include="CCubeShader.h" />
+    <ClInclude Include="CDebugShader.h" />
     <ClInclude Include="CFireballShader.h" />
     <ClInclude Include="CFireballSystem.h" />
     <ClInclude Include="CFontMesh.h" />

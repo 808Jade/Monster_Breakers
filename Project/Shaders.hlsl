@@ -740,3 +740,37 @@ float4 PSBeam(VS_BEAM_OUTPUT input) : SV_TARGET
 
     return float4(color * glow * 2.5f, glow);
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+cbuffer cbDebugObject : register(b2)
+{
+    matrix gmtxDebugWorld : packoffset(c0);
+    float4 gvDebugColor : packoffset(c4); // RGBA, Alpha로 투명도 조절
+};
+
+struct VS_PRIMITIVE_INPUT
+{
+    float3 position : POSITION;
+};
+
+struct VS_PRIMITIVE_OUTPUT
+{
+    float4 position : SV_POSITION;
+};
+
+VS_PRIMITIVE_OUTPUT VSPrimitive(VS_PRIMITIVE_INPUT input)
+{
+    VS_PRIMITIVE_OUTPUT output;
+
+    float4 posW = mul(float4(input.position, 1.0f), gmtxDebugWorld);
+    float4 posV = mul(posW, gmtxView); // 카메라 cbuffer
+    float4 posH = mul(posV, gmtxProjection); // 카메라 cbuffer
+
+    output.position = posH;
+    return output;
+}
+
+float4 PSPrimitive(VS_PRIMITIVE_OUTPUT input) : SV_TARGET
+{
+    return gvDebugColor; // cbuffer에서 받은 색상 그대로 반환
+}

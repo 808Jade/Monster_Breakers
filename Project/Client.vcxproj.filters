@@ -148,6 +148,9 @@
     <ClCompile Include="CBeamSystem.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="CDebugShader.cpp">
+      <Filter>소스 파일\Shader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h">
@@ -254,6 +257,9 @@
     </ClInclude>
     <ClInclude Include="CBeamSystem.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="CDebugShader.h">
+      <Filter>소스 파일\Shader</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
