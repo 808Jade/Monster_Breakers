@@ -297,6 +297,7 @@ void Map::BuildWorldBoundingBoxes()
 		group.vWorldBoundingBoxes.reserve(group.nInstances);
 
 		// 모델 계층 전체를 순회해 로컬 공간 AABB를 머지
+		// 처리할 객체의 bounding타입에 따라 다르게 측정
 		BoundingBox localBox{};
 		bool hasBox = false;
 
@@ -323,6 +324,12 @@ void Map::BuildWorldBoundingBoxes()
 		}
 
 		if (!hasBox) continue;
+
+		// [임시]
+		float scaleFactor = 0.4f; // 1.0f = 100%, 0.8f = 80% 크기
+		localBox.Extents.x *= scaleFactor;
+		localBox.Extents.y *= scaleFactor;
+		localBox.Extents.z *= scaleFactor;
 
 		// 각 인스턴스의 월드 행렬로 변환 후 캐시에 저장
 		for (const auto& inst : group.vInstanceData)
