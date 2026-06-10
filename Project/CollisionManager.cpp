@@ -179,10 +179,10 @@ void CCollisionManager::Update(CPlayer* player)
             HandleCollision(player, obj);
         }
         // for 검 공격 충돌?
-        if (std::string::npos != ObjectFrameName.find("SalamanderPA") && obj != player && player->GetSwordAttackBoundingBox().Intersects(obj->GetBoundingBox()))
-        {
-            HandleCollision(player, obj);
-        }
+        //if (std::string::npos != ObjectFrameName.find("SalamanderPA") && obj != player && player->GetSwordAttackBoundingBox().Intersects(obj->GetBoundingBox()))
+        //{
+        //    HandleCollision(player, obj);
+        //}
     }
 
     // ColliderInfo 대상 충돌 검사 및 처리
