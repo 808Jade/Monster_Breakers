@@ -66,7 +66,6 @@ void CCollisionManager::Update(CPlayer* player)
     m_objects.clear();
     m_colliderinfos.clear();
     CollectNearbyObjects(playerNode, player->GetBoundingBox(), m_objects, m_colliderinfos);
-    cout << m_colliderinfos.size() << endl;
 
     // object 대상 충돌 검사 및 처리
     for (CGameObject* obj : m_objects)
@@ -107,10 +106,10 @@ bool CCollisionManager::IsColliding(const BoundingBox& box1, const BoundingBox& 
     return true;
 }
 
-void CCollisionManager::CollectNearbyObjects(QuadTreeNode* node, const BoundingBox& aabb, std::vector<CGameObject*>& outDynamics, std::vector<ColliderInfo>& outStatics) 
+void CCollisionManager::CollectNearbyObjects(QuadTreeNode* node, const BoundingBox& playerbb, std::vector<CGameObject*>& outDynamics, std::vector<ColliderInfo>& outStatics) 
 {
     if (!node) return;
-    if (!node->bounds.Intersects(aabb)) return;
+    if (!node->bounds.Intersects(playerbb)) return;
 
     for (CGameObject* obj : node->objects)
     {
@@ -126,7 +125,7 @@ void CCollisionManager::CollectNearbyObjects(QuadTreeNode* node, const BoundingB
     {
         for (int i = 0; i < 4; i++)
         {
-            CollectNearbyObjects(node->children[i], aabb, outDynamics, outStatics);
+            CollectNearbyObjects(node->children[i], playerbb, outDynamics, outStatics);
         }
     }
 }
@@ -265,20 +264,20 @@ void CCollisionManager::HandleCollision(CPlayer* player, const ColliderInfo& col
     if (overlap.x < overlap.z)
     {
         if (playerPos.x < objBox.Center.x)
-            playerPos.x = objMin.x - playerBox.Extents.x; // 왼쪽으로 밀어냄
+            playerPos.x = objMin.x - playerBox.Extents.x;
         else
-            playerPos.x = objMax.x + playerBox.Extents.x; // 오른쪽으로 밀어냄
+            playerPos.x = objMax.x + playerBox.Extents.x;
     }
     else
     {
         if (playerPos.z < objBox.Center.z)
-            playerPos.z = objMin.z - playerBox.Extents.z; // 아래로 밀어냄
+            playerPos.z = objMin.z - playerBox.Extents.z;
         else
-            playerPos.z = objMax.z + playerBox.Extents.z; // 위로 밀어냄
+            playerPos.z = objMax.z + playerBox.Extents.z;
     }
 
     // 플레이어 위치 갱신 및 상태 초기화
     player->SetPosition(playerPos);
-    player->SetVelocity({ 0.0f, 0.0f, 0.0f }); // 필요에 따라 x, z 속도만 0으로 만들 수도 있음
-    player->CalculateBoundingBox();            // 밀려난 위치 기준으로 바운딩 박스 재계산
+    player->SetVelocity({ 0.0f, 0.0f, 0.0f });
+    player->CalculateBoundingBox();
 }
