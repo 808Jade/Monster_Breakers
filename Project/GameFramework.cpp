@@ -675,7 +675,7 @@ void CGameFramework::FrameAdvance()
 		return;
 	}
 
-	m_GameTimer.Tick(0.0f);
+	m_GameTimer.Tick(60.0f);
 	HRESULT hResult = m_pd3dCommandAllocator->Reset();
 	hResult = m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
 
@@ -786,32 +786,118 @@ void CGameFramework::UpdateItemRotation(long long itemID, const XMFLOAT3& look, 
 }
 
 
+//void CGameFramework::OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int state)
+//{
+//	auto it = g_monsters.find(monsterID);
+//	if (it != g_monsters.end())
+//	{
+//
+//		// 기존 몬스터 위치/상태/HP 갱신
+//		it->second->SetPosition(pos);
+//		UpdateMonsterState(it->second, state);
+//
+//		cout << "[OnMonsterSpawned] ID=" << monsterID << " pos=(" << pos.x << "," << pos.y << "," << pos.z << ") 갱신\n";
+//	}
+//	else
+//	{
+//		//// 몬스터 객체 새로 생성 (생성자 파라미터는 적절히 수정)
+//		//CSpider* pMonster = new CSpider(pd3dDevice, pd3dCommandList, pRootSignature, pModel, 5);
+//		//pMonster->SetPosition(pos);
+//		//UpdateMonsterState(pMonster, state);
+//
+//
+//		//g_monsters[monsterID] = pMonster;
+//
+//		//// 씬에서 관리하는 리스트나 배열에도 추가할 수 있음
+//
+//
+//
+//	}
+//}
+
 void CGameFramework::OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int state)
 {
 	auto it = g_monsters.find(monsterID);
 	if (it != g_monsters.end())
 	{
+		// ── 기존: 이미 등록된 몬스터 위치/상태 갱신 (리스폰 포함) ──
+		CMonster* pMonster = it->second;
 
-		// 기존 몬스터 위치/상태/HP 갱신
-		it->second->SetPosition(pos);
-		UpdateMonsterState(it->second, state);
+		// 죽었다가 다시 스폰되는 경우 → 상태 초기화
+		if (pMonster->IsDead())
+		{
+			pMonster->ResetHP();
+		}
 
-		cout << "[OnMonsterSpawned] ID=" << monsterID << " pos=(" << pos.x << "," << pos.y << "," << pos.z << ") 갱신\n";
+		pMonster->SetPosition(pos);
+		UpdateMonsterState(pMonster, state);
+
+		cout << "[OnMonsterSpawned] 갱신 ID=" << monsterID
+			<< " pos=(" << pos.x << "," << pos.y << "," << pos.z << ")\n";
 	}
 	else
 	{
-		//// 몬스터 객체 새로 생성 (생성자 파라미터는 적절히 수정)
-		//CSpider* pMonster = new CSpider(pd3dDevice, pd3dCommandList, pRootSignature, pModel, 5);
-		//pMonster->SetPosition(pos);
-		//UpdateMonsterState(pMonster, state);
+		// ── 새 ID: MONSTER_DESCS 테이블로 모델 파일·HP 조회 후 동적 생성 ──
 
+		// 서버 ID 규칙: startID, startID+1, startID+2 → 3마리씩 묶음
+		// MONSTER_DESCS[i].startID 기준으로 어느 종류인지 역추산
+		const MonsterDesc* pDesc = nullptr;
+		for (const auto& desc : MONSTER_DESCS)
+		{
+			int offset = monsterID - desc.startID;
+			if (offset >= 0 && offset < 3)   // 3마리 묶음
+			{
+				pDesc = &desc;
+				break;
+			}
+		}
 
-		//g_monsters[monsterID] = pMonster;
+		if (!pDesc)
+		{
+			cout << "[OnMonsterSpawned] 알 수 없는 ID=" << monsterID << " → 스킵\n";
+			return;
+		}
 
-		//// 씬에서 관리하는 리스트나 배열에도 추가할 수 있음
+		// CommandList 사용을 위해 Reset 필요 (ResetCommandList 헬퍼가 있으면 활용)
+		m_pd3dCommandAllocator->Reset();
+		m_pd3dCommandList->Reset(m_pd3dCommandAllocator, nullptr);
 
+		CMonster* pMonster = new CMonster(
+			m_pd3dDevice,
+			m_pd3dCommandList,
+			m_ppScenes[m_nCurrentScene]->GetGraphicsRootSignature(),
+			pDesc->modelPath,
+			5,          // nAnimationTracks: Idle/Walk/Attack/GetHit/Death
+			nullptr,    // pModel: nullptr → 내부에서 파일 로드
+			pDesc->hp,
+			monsterID
+		);
 
+		pMonster->SetPosition(pos);
+		if (pDesc->scale != 1.0f)
+			pMonster->SetScale(pDesc->scale, pDesc->scale, pDesc->scale);
 
+		// 플레이어 참조 연결 (HP바 LookAt용)
+		CScene* pScene = m_ppScenes[m_nCurrentScene];
+		if (pScene && pScene->m_pPlayer)
+			pMonster->SetPlayer(pScene->m_pPlayer);
+
+		UpdateMonsterState(pMonster, state);
+
+		// Scene의 m_Monsters 벡터에 추가 (Render/Animate 루프에 포함됨)
+		pScene->m_Monsters.push_back(pMonster);
+
+		// Upload Buffer 해제 (GPU 업로드 완료 후)
+		m_pd3dCommandList->Close();
+		ID3D12CommandList* ppCmdLists[] = { m_pd3dCommandList };
+		m_pd3dCommandQueue->ExecuteCommandLists(1, ppCmdLists);
+		WaitForGpuComplete();   // 기존 헬퍼 함수 사용
+
+		pMonster->ReleaseUploadBuffers();
+
+		cout << "[OnMonsterSpawned] 새 몬스터 생성 ID=" << monsterID
+			<< " 모델=" << pDesc->modelPath
+			<< " pos=(" << pos.x << "," << pos.y << "," << pos.z << ")\n";
 	}
 }
 
@@ -840,10 +926,11 @@ void CGameFramework::UpdateMonsterPosition(int monsterID, const XMFLOAT3& pos, c
 		std::cout << "[Error] Monster ID not found: " << monsterID << std::endl;
 		return;
 	}
-	printf("[Net] Monster %d → pos=(%.1f, %.1f, %.1f) state=%d\n",
-		monsterID, pos.x, pos.y, pos.z, state);
+/*	printf("[Net] Monster %d → pos=(%.1f, %.1f, %.1f) state=%d\n",
+		monsterID, pos.x, pos.y, pos.z, state);*/
 	CMonster* pMonster = it->second;
 	pMonster->SetPosition(pos);
+	//pMonster->CalculateBoundingBox();
 
 	//pMonster->Rotate(rot);
 	float len = sqrtf(rot.x * rot.x + rot.z * rot.z);

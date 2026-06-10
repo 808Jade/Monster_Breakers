@@ -140,6 +140,7 @@ struct sc_packet_enter {
 	uint8_t				animState;
 	short				hp;
 	uint8_t				job;
+	char				playerID[MAX_ID_LENGTH];
 
 };
 
@@ -147,6 +148,7 @@ struct sc_packet_leave {
 	unsigned char		size;
 	char				type;
 	long long			id;
+	char				playerID[MAX_ID_LENGTH];
 };
 
 
@@ -190,33 +192,30 @@ struct cs_packet_use_gold {
 // skill
 
 enum class SkillSlot : uint8_t {
-	SKILL_Q = 0,
-	SKILL_E = 1,
-	SKILL_R = 2,   // 우클릭
+	SLOT_R = 0,
+	SLOT_Q = 1,
+	SLOT_E = 2,
 };
 
-enum class SkillType : uint8_t {
-	SKILL_FIREBALL = 0
-};
 
 struct cs_packet_skill_upgrade {
-	unsigned char size;
-	char          type;
-	SkillSlot     slot;   // Q=0, E=1, R=2
+	unsigned char		size;
+	char				type;
+	SkillSlot			slot;   // Q=0, E=1, R=2
 };
 
 struct sc_packet_skill_upgrade {
-	unsigned char size;
-	char          type;
-	long long     playerID;
-	SkillSlot     slot;
-	int           newValue;
+	unsigned char		size;
+	char				type;
+	long long			playerID;
+	SkillSlot			slot;
+	int					level;
+	int					newValue;
 };
 
 struct cs_packet_skill {
 	unsigned char		size;
 	char				type;
-	SkillType			skillType;
 	XMFLOAT3			position;
 	XMFLOAT3			look;
 };
@@ -225,7 +224,6 @@ struct sc_packet_skill {
 	unsigned char		size;
 	char				type;
 	long long			playerID;
-	SkillType			skillType;
 	XMFLOAT3			position;
 	XMFLOAT3			look;
 };

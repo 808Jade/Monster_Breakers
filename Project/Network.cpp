@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Network.h"
 #include "CMonster.h"
 #include "GameFramework.h"
@@ -92,7 +92,7 @@ void send_hit_damage(long long monsterID, int damage) // 이 함수를 플레이
     pkt.damage = damage;
     send_packet(&pkt);
 
-    std::cout << "[HIT] 몬스터 ID=" << monsterID << " 데미지=" << damage << " 전송\n";
+    std::cout << "[HIT] monster ID=" << monsterID << " damage=" << damage << " sent\n";
 }
 
 
@@ -146,18 +146,16 @@ void send_taunt_packet(float range)
 }
 
 // 법사
-void send_skill_packet(SkillType skillType, const XMFLOAT3& position, const XMFLOAT3& look) //파이어 볼
+void send_skill_packet(const XMFLOAT3& position, const XMFLOAT3& look)
 {
     cs_packet_skill pkt{};
     pkt.size = sizeof(pkt);
     pkt.type = CS_P_SKILL;
-    pkt.skillType = skillType;
     pkt.position = position;
     pkt.look = look;
     send_packet(&pkt);
 
-    std::cout << "[SKILL] cs_packet_skill 전송 | type=" << (int)pkt.type
-        << " size=" << (int)pkt.size << " skillType=" << (int)pkt.skillType << "\n";
+    std::cout << "[FIREBALL] cs_packet_skill 전송 | size=" << (int)pkt.size << "\n";
 }
 
 void send_buff_atk_packet()
@@ -446,16 +444,38 @@ void ProcessPacket(char* ptr)
 
         std::cout << "[Client] Player Remove: ID=" << other_id << std::endl;
 
+        auto slotIt = g_other_player_slots.find(other_id);
+        if (slotIt != g_other_player_slots.end())
+        {
+            int slot = slotIt->second;
+
+            CScene* scene = gGameFramework.GetCurrentScene();
+            if (scene && scene->m_ppOtherPlayers)
+            {
+                OtherPlayer* target = scene->m_ppOtherPlayers[slot];
+                if (target)
+                    target->isConnedted = false;
+            }
+
+            // 슬롯 인덱스 반환 (job 별로 slot 범위를 역추산)
+            if (slot < 2) { g_knightIndex = min(g_knightIndex, slot); }
+            else if (slot < 4) { g_wizardIndex = min(g_wizardIndex, slot); }
+            else { g_thiefIndex = min(g_thiefIndex, slot); }
+
+            g_other_player_slots.erase(slotIt);
+            g_other_players.erase(other_id);
+        }
+
         break;
     }
 
     //case SC_P_RESPAWN:
     //{
     //    sc_packet_respawn* packet = reinterpret_cast<sc_packet_respawn*>(ptr);
-
+    //
     //    cout << "[수신] SC_P_RESPAWN | playerID=" << packet->playerID << " HP=" << packet->hp
     //        << " pos=(" << packet->position.x << "," << packet->position.y << ","  << packet->position.z << ")\n";
-
+    //
     //    // 랜더링 만 하면 될듯
     //    break;
     //}
@@ -474,30 +494,19 @@ void ProcessPacket(char* ptr)
     {
         sc_packet_skill* packet = reinterpret_cast<sc_packet_skill*>(ptr);
 
-        std::cout << "[SKILL] SC_P_SKILL 수신 | playerID=" << packet->playerID
-            << " skillType=" << (int)packet->skillType
-            << " pos=(" << packet->position.x << ", " << packet->position.y << ", " << packet->position.z << ")\n";
+        std::cout << "[SKILL] SC_P_SKILL 수신 | playerID=" << packet->playerID << " pos=(" << packet->position.x << ", " << packet->position.y << ", " << packet->position.z << ")\n";
+
 
         if (packet->playerID == g_myid) {
             std::cout << "[SKILL] 내 패킷 루프백 → 무시\n";
             break;
         }
+
         CScene* scene = gGameFramework.GetCurrentScene();
         if (!scene) break;
+        scene->m_pFireballSystem->Emit(packet->position, packet->look);
 
-        switch (packet->skillType)
-        {
-        case SkillType::SKILL_FIREBALL:
-            scene->m_pFireballSystem->Emit(packet->position, packet->look);
-/*            std::cout << "[SKILL] 파이어볼 Emit: pos=("
-                << packet->position.x << ", "
-                << packet->position.y << ", "
-                << packet->position.z << ")\n";*/
-            break;
-
-            // 다른 스킬 타입도 여기에 추가
-        }
-        break;
+ 
     }
 
     case SC_P_SHIELD_BLOCK: // 방패막기
@@ -581,6 +590,18 @@ void ProcessPacket(char* ptr)
         scene->m_pBeamSystem->Emit(casterPos, targetPos);
         std::cout << "[SC_P_BUFF_ATK 버프] Emit: casterPos=(" << casterPos.x << "," << casterPos.y << "," << casterPos.z
 			<< ") targetPos=(" << targetPos.x << "," << targetPos.y << "," << targetPos.z << ")\n";
+
+
+        if (scene && scene->m_pPlayer)
+        {
+            if (packet->targetID == g_myid)
+            {
+                scene->m_pPlayer->damage = packet->newDamage;
+                scene->m_pPlayer->m_bIsAtkBuffed = (packet->newDamage > 10);
+                cout << "[BUFF_ATK] 내 공격력 갱신: " << packet->newDamage << "\n";
+            }
+        }
+
         std::cout << "[SC_P_BUFF_ATK 버프] | playerID=" << packet->playerID << " newDamage=" << packet->newDamage << "\n";
         break;
     }
@@ -625,11 +646,7 @@ void ProcessPacket(char* ptr)
         CScene* scene = gGameFramework.GetCurrentScene();
         if (!scene || !scene->m_pWeaponThrowSystem) break;
 
-        /* CGameObject* pWeapon = packet->FindFrame("SM_Weapon_01");
-        if (!pWeapon) break;
-
-        scene->m_pWeaponThrowSystem->Emit(packet->weaponPosition, p->look, 30.0f, pWeapon);
-        );*/
+       scene->m_pWeaponThrowSystem->Emit(packet->weaponPosition, packet->weaponRotation, 30.0f);
 
         std::cout << "[수신] SC_P_WEAPON_POS | playerID=" << packet->playerID
             << " pos=(" << packet->weaponPosition.x << "," << packet->weaponPosition.y << "," << packet->weaponPosition.z << ")\n";
@@ -666,6 +683,12 @@ void ProcessPacket(char* ptr)
         sc_packet_update_monster_hp* packet = reinterpret_cast<sc_packet_update_monster_hp*>(ptr);
 
         std::cout << "[몬스터] HP 갱신 수신 | ID=" << packet->monsterID << " HP=" << packet->hp << "\n";
+
+        auto it = g_monsters.find(packet->monsterID);
+        if (it != g_monsters.end())
+        {
+            it->second->SetHP((float)packet->hp);
+        }
 
         break;
     }

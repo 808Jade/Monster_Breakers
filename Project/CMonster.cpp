@@ -21,6 +21,9 @@ CMonster::CMonster(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dComm
     for (int i = 0; i < nAnimationTracks; ++i)
         m_pSkinnedAnimationController->SetTrackAnimationSet(i, i);
 
+    m_pSkinnedAnimationController->SetTrackType(3, ANIMATION_TYPE_ONCE); // GetHit
+    m_pSkinnedAnimationController->SetTrackType(4, ANIMATION_TYPE_ONCE); // Death
+
     // Idle만 활성화
     for (int i = 1; i < nAnimationTracks; ++i)
         m_pSkinnedAnimationController->SetTrackEnable(i, false);
@@ -101,10 +104,8 @@ void CMonster::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCame
         XMFLOAT3 pos = GetPosition();
 
         m_pHpbar->SetPosition(pos.x, pos.y + 2.5f, pos.z);
-        if(m_pPlayer)
-            m_pHpbar->LookAt(m_pPlayer->GetPosition(), XMFLOAT3(0.0f, 1.0f, 0.0f));
+        m_pHpbar->LookAt(pCamera->GetPosition(), XMFLOAT3(0.0f, 1.0f, 0.0f));
         m_pHpbar->SetHpRatio(m_fHpRatio);
-
         m_pHpbar->Render(pd3dCommandList, pCamera);
     }
 }

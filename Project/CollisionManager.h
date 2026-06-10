@@ -2,9 +2,12 @@
 
 #include <vector>
 #include "QuadTree.h"
+#include "CFireballSystem.h"
+#include "CWeaponThrowSystem.h"
 
 class CGameObject;
 class CPlayer;
+class CMonster;
 
 class CCollisionManager
 {
@@ -12,7 +15,13 @@ private:
     CQuadTree* m_pQuadTree = NULL;
     std::vector<CGameObject*> m_objects;
     std::vector<ColliderInfo> m_colliderinfos;
-    int m_frameCounter = 0;
+
+    std::vector<CMonster*>* m_pMonsters = nullptr; 
+    CFireballSystem* m_pFireballSystem = nullptr;
+    CWeaponThrowSystem* m_pWeaponThrowSystem = nullptr;
+  
+    int frameCounter = 0;
+    bool m_bHitProcessed = false;
 
 public:
     CCollisionManager();
@@ -24,9 +33,13 @@ public:
     void InsertCollider(const ColliderInfo& collider);
 
     void PrintTree();
-
+  
     bool CheckIntersection(const BoundingBox& bounds, const ColliderInfo& col);
-
+  
+    void SetMonsters(std::vector<CMonster*>* monsters) { m_pMonsters = monsters; }
+    void SetFireballSystem(CFireballSystem* p) { m_pFireballSystem = p; }
+    void SetWeaponThrowSystem(CWeaponThrowSystem* p) { m_pWeaponThrowSystem = p; }
+  
     void Update(CPlayer* player);
 
     bool IsColliding(const BoundingBox& box1, const BoundingBox& box2);

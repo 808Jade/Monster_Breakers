@@ -97,7 +97,6 @@ public:
     void PrintTree();
 
     QuadTreeNode* FindNode(QuadTreeNode* node, const BoundingBox& aabb);
-
 private:
     void PreBuild(QuadTreeNode* node, int depth);
 

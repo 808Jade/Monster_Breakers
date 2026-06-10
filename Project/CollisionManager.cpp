@@ -55,6 +55,108 @@ bool CCollisionManager::CheckIntersection(const BoundingBox& bounds, const Colli
 
 void CCollisionManager::Update(CPlayer* player)
 {
+    player->CalculateBoundingBox();
+
+    CTerrainPlayer* tp = dynamic_cast<CTerrainPlayer*>(player);
+    if (!tp) return;
+
+    AnimationState curAnim = tp->m_currentAnim;
+    bool isAttacking = (curAnim == AnimationState::ATTACK);  // 좌클릭 - 모든 직업 공통
+    bool isSkill1 = (curAnim == AnimationState::SKILL1);  // 우클릭 - level[0]
+    bool isSkill2 = (curAnim == AnimationState::SKILL2);  // Q      - level[1]
+    bool isSkill3 = (curAnim == AnimationState::SKILL3);  // E      - level[2]
+    bool isMage = (player->m_ePlayerClass == PlayerClass::MAGE);
+    bool isRogue = (player->m_ePlayerClass == PlayerClass::ROGUE);
+    bool isKnight = (player->m_ePlayerClass == PlayerClass::KNIGHT);
+
+    // ── 파이어볼 충돌 (법사 SKILL1) ──────────────────
+    if (isMage && m_pFireballSystem && m_pMonsters)
+    {
+        auto activeParticles = m_pFireballSystem->GetActiveParticles();
+        for (CMonster* monster : *m_pMonsters)
+        {
+            if (!monster || monster->IsDead()) continue;
+            monster->CalculateBoundingBox();
+            BoundingBox monsterBox = monster->GetBoundingBox();
+
+            for (auto& [idx, fpos] : activeParticles)
+            {
+                BoundingSphere sphere(fpos, 1.5f);
+                if (sphere.Intersects(monsterBox))
+                {
+                    int dmg = player->damage + player->level[0] * 10;
+                    cout << "Fireball hit: " << monster->GetFrameName() << " dmg=" << dmg << endl;
+                    monster->TakeDamage(dmg);
+                    m_pFireballSystem->DeactivateAt(idx);  // 파이어볼 소멸
+                    break;
+                }
+            }
+        }
+    }
+
+    // ── 투척 무기 충돌 (도적 SKILL1) ─────────────────
+    if (isRogue && m_pWeaponThrowSystem && m_pWeaponThrowSystem->IsActive() && m_pMonsters)
+    {
+        BoundingSphere throwSphere(
+            m_pWeaponThrowSystem->GetPosition(),
+            m_pWeaponThrowSystem->GetHitRadius());
+
+        for (CMonster* monster : *m_pMonsters)
+        {
+            if (!monster || monster->IsDead()) continue;
+            monster->CalculateBoundingBox();
+            if (throwSphere.Intersects(monster->GetBoundingBox()))
+            {
+                int dmg = player->damage + player->level[0] * 10;
+                cout << "Throw hit: " << monster->GetFrameName() << " dmg=" << dmg << endl;
+                monster->TakeDamage(dmg);
+                m_pWeaponThrowSystem->Deactivate();  // 무기 소멸 + 손 무기 복원
+                break;
+            }
+        }
+    }
+
+    // ── 무기 충돌 (weapon BoundingBox 기반) ──────────────
+        // 좌클릭(ATTACK): 모든 직업 공통, 기본 damage
+        // 기사  Q(SKILL2): level[1] 보너스
+        // 도적  Q(SKILL2): level[1] 보너스
+        // 법사는 weapon 충돌 없음
+
+    int weaponDmg = 0;
+    bool isWeaponSwing = false;
+
+    if (isAttacking)
+    {
+        isWeaponSwing = true;
+        weaponDmg = player->damage;  // 기본 공격 - 레벨 보너스 없음
+    }
+    else if (!isMage && isSkill2)   // Q - 기사/도적
+    {
+        isWeaponSwing = true;
+        weaponDmg = player->damage + player->level[1] * 10;  // Q 스킬 레벨
+    }
+
+    if (isWeaponSwing && !m_bHitProcessed && m_pMonsters)
+    {
+        BoundingBox weaponBox = player->GetWeaponAttackBoundingBox();
+        for (CMonster* monster : *m_pMonsters)
+        {
+            if (!monster || monster->IsDead()) continue;
+            monster->CalculateBoundingBox();
+            if (weaponBox.Intersects(monster->GetBoundingBox()))
+            {
+                cout << "Weapon hit: " << monster->GetFrameName() << " dmg=" << weaponDmg << endl;
+                monster->TakeDamage(weaponDmg);
+                m_bHitProcessed = true;
+            }
+        }
+    }
+
+    // 공격 애니메이션 종료 시 히트 플래그 리셋
+    if (!isWeaponSwing)
+        m_bHitProcessed = false;
+
+    // ── 환경 충돌 (쿼드트리) ─────────────────────────
     // 플레이어가 속한 노드 탐색
     QuadTreeNode* playerNode = m_pQuadTree->FindNode(m_pQuadTree->root, player->GetBoundingBox());
     if (!playerNode) return;
@@ -132,6 +234,8 @@ void CCollisionManager::CollectNearbyObjects(QuadTreeNode* node, const BoundingB
 
 void CCollisionManager::HandleCollision(CPlayer* player, CGameObject* obj)
 {
+    // 몬스터는 여기 들어오지 않지만 방어적으로 차단
+    if (dynamic_cast<CMonster*>(obj) != nullptr) return;
     std::string ObjectFrameName = obj->GetFrameName();
 
     //if (m_frameCounter++ % 60 == 0)
@@ -139,12 +243,24 @@ void CCollisionManager::HandleCollision(CPlayer* player, CGameObject* obj)
 
     bool isMonster = (dynamic_cast<CMonster*>(obj) != nullptr);
     bool isAttacking = (dynamic_cast<CTerrainPlayer*>(player)->m_currentAnim == AnimationState::ATTACK);
-    bool isSwordHit = player->GetSwordAttackBoundingBox().Intersects(obj->GetBoundingBox());
+
+  //  bool isSwordHit = player->GetSwordAttackBoundingBox().Intersects(obj->GetBoundingBox());
+//
+  //  if (isMonster && isAttacking && isSwordHit)
+  //  {
+//
+  //      //std::cout << "Sword hit ! - " << ObjectFrameName << std::endl;
+		//dynamic_cast<CMonster*>(obj)->TakeDamage(player->damage);
+  //      return;
+  //  }
+
+    BoundingBox swordBox = player->GetWeaponAttackBoundingBox();
+    bool isValidBox = (swordBox.Extents.x > 0.0f || swordBox.Extents.y > 0.0f || swordBox.Extents.z > 0.0f);
+    bool isSwordHit = isValidBox && swordBox.Intersects(obj->GetBoundingBox());
 
     if (isMonster && isAttacking && isSwordHit)
     {
-        //std::cout << "Sword hit ! - " << ObjectFrameName << std::endl;
-		dynamic_cast<CMonster*>(obj)->TakeDamage(player->damage);
+        dynamic_cast<CMonster*>(obj)->TakeDamage(player->damage);
         return;
     }
 

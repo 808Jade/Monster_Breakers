@@ -63,6 +63,7 @@ private:
 public:
 	void AddRef() { m_nReferences++; }
 	void Release() { if (--m_nReferences <= 0) delete this; }
+	int GetSubMeshCount() const { return m_nSubMeshes; }
 
 public:
 	char							m_pstrMeshName[64] = { 0 };

@@ -48,12 +48,33 @@ public:
         float                      fScale = 1.0f);*/
 
     Hpbar* m_pHpbar = nullptr;
+
+
+    void ResetHP() {
+        m_fMonsterHP = m_fMaxHP;
+        m_fHpRatio = 1.0f;
+        m_eState = MonsterState::Idle;  // Death 상태 해제
+
+        // 모든 트랙 끄고 Idle만 켜기
+        if (m_pSkinnedAnimationController) {
+            for (int i = 1; i <= 4; ++i)
+                m_pSkinnedAnimationController->SetTrackEnable(i, false);
+            m_pSkinnedAnimationController->SetTrackPosition(0, 0.0f);
+            m_pSkinnedAnimationController->SetTrackEnable(0, true);
+        }
+    }
+
+    void SetHP(float hp) {
+        m_fMonsterHP = hp;
+        m_fHpRatio = m_fMonsterHP / m_fMaxHP;
+    }
+
 private:
     CPlayer* m_pPlayer = nullptr;
     int          m_nMonsterID = -1;
 
     float        m_fMonsterHP = 100.0f;
-    float        m_fMaxHP = 100.0f;
+    float        m_fMaxHP = 1000.0f;
     float        m_fHpRatio = 1.0f;
 
     MonsterState m_eState = MonsterState::Idle;

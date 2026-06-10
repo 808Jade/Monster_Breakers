@@ -73,8 +73,11 @@ public:
 	bool	alreadyHeld = false;
 	float	currentHP = 100.f;
 	int		Pgold = 1000;
-	float damage = 1.f;
+	float	damage = 10.f;
+	bool	 m_bIsAtkBuffed = false;
+
 	int level[3] = { 1,1,1 };
+	PlayerClass          m_ePlayerClass = PlayerClass::UNKNOWN;
 
 	// 아이템
 	int m_nSelectedInventoryIndex = -1;  // 기본값은 0번 (1번 슬롯)
@@ -123,7 +126,7 @@ public:
 		outBox.Extents = XMFLOAT3(cylinder.Radius, cylinder.Height * 0.5f, cylinder.Radius);
 	}
 	void GenerateSwordAttackBoundingBox();
-	BoundingBox GetSwordAttackBoundingBox();
+	BoundingBox GetWeaponAttackBoundingBox();
 
 	virtual void Update(float fTimeElapsed);
 
@@ -163,7 +166,6 @@ public:
 	CText* m_pText = nullptr;
 	CText* m_plevel[3] = { nullptr, nullptr, nullptr };
 	bool                m_bCrackTriggered = false;
-	PlayerClass          m_ePlayerClass = PlayerClass::UNKNOWN;
 	//server
 	AnimationState m_currentAnim = AnimationState::IDLE;
 

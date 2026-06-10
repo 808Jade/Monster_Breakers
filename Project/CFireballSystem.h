@@ -32,6 +32,9 @@ public:
     virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
     void ReleaseUploadBuffers();
 
+    std::vector< std::pair<int, XMFLOAT3>> GetActiveParticles() const;
+    void DeactivateAt(int index) { m_Particles[index].active = 0; m_bNeedUpload = true; }
+
 private:
     void CreateQuadMesh(ID3D12Device* pd3dDevice);
     void CreateParticleBuffer(ID3D12Device* pd3dDevice);
