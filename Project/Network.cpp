@@ -646,7 +646,7 @@ void ProcessPacket(char* ptr)
         CScene* scene = gGameFramework.GetCurrentScene();
         if (!scene || !scene->m_pWeaponThrowSystem) break;
 
-       // scene->m_pWeaponThrowSystem->Emit(packet->weaponPosition, packet->look, 30.0f);
+       scene->m_pWeaponThrowSystem->Emit(packet->weaponPosition, packet->weaponRotation, 30.0f);
 
         std::cout << "[수신] SC_P_WEAPON_POS | playerID=" << packet->playerID
             << " pos=(" << packet->weaponPosition.x << "," << packet->weaponPosition.y << "," << packet->weaponPosition.z << ")\n";
