@@ -134,7 +134,7 @@ void CScene::BuildDefaultLightsAndMaterials(bool toggle)
 
 void CScene::InitializeCollisionSystem()
 {
-	BoundingBox worldBounds(XMFLOAT3(-20.0f, -10.f, -66.0f), XMFLOAT3(150.0f, 100.0f, 170.0f));
+	BoundingBox worldBounds(XMFLOAT3(-20.0f, 0.f, 40.0f), XMFLOAT3(150.0f, 100.0f, 170.0f));
 	m_CollisionManager.Build(worldBounds, 35, 4);
 
 	for (auto* obj : m_GameObjects) {

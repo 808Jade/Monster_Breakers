@@ -506,6 +506,7 @@ void CTerrainPlayer::OnPlayerUpdateCallback(float fTimeElapsed)
 	float terrainX = -152.8f;
 	float terrainY = -9.0f;
 	float terrainZ = -115.8f;
+	float playerFootOffset = -0.13f;
 
 	float localX = xmf3PlayerPosition.x - terrainX;
 	float localZ = xmf3PlayerPosition.z - terrainZ;
@@ -517,13 +518,13 @@ void CTerrainPlayer::OnPlayerUpdateCallback(float fTimeElapsed)
 
 	float finalWorldHeight = localHeight + terrainY;
 
-	if (xmf3PlayerPosition.y < finalWorldHeight)
+	if (xmf3PlayerPosition.y < finalWorldHeight + playerFootOffset)
 	{
 		XMFLOAT3 xmf3PlayerVelocity = GetVelocity();
 		xmf3PlayerVelocity.y = 0.0f;
 		SetVelocity(xmf3PlayerVelocity);
 
-		xmf3PlayerPosition.y = finalWorldHeight;
+		xmf3PlayerPosition.y = finalWorldHeight + playerFootOffset;
 		SetPosition(xmf3PlayerPosition);
 	}
 }
@@ -538,6 +539,7 @@ void CTerrainPlayer::OnCameraUpdateCallback(float fTimeElapsed)
 	float terrainX = -152.8f;
 	float terrainY = -9.0f;
 	float terrainZ = -115.8f;
+	float playerFootOffset = -0.13f;
 
 	float localX = xmf3CameraPosition.x - terrainX;
 	float localZ = xmf3CameraPosition.z - terrainZ;
@@ -549,9 +551,9 @@ void CTerrainPlayer::OnCameraUpdateCallback(float fTimeElapsed)
 
 	float finalWorldHeight = localHeight + terrainY;
 
-	if (xmf3CameraPosition.y <= finalWorldHeight)
+	if (xmf3CameraPosition.y <= finalWorldHeight + playerFootOffset)
 	{
-		xmf3CameraPosition.y = finalWorldHeight;
+		xmf3CameraPosition.y = finalWorldHeight + playerFootOffset;
 		m_pCamera->SetPosition(xmf3CameraPosition);
 
 		if (m_pCamera->GetMode() == THIRD_PERSON_CAMERA)
