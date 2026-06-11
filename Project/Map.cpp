@@ -326,7 +326,7 @@ void Map::BuildWorldBoundingBoxes()
 		if (!hasBox) continue;
 
 		// [임시]
-		float scaleFactor = 0.4f; // 1.0f = 100%, 0.8f = 80% 크기
+		float scaleFactor = 0.3f; // 1.0f = 100%, 0.8f = 80% 크기
 		localBox.Extents.x *= scaleFactor;
 		localBox.Extents.y *= scaleFactor;
 		localBox.Extents.z *= scaleFactor;
