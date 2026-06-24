@@ -981,3 +981,14 @@ void CGameFramework::UpdateMonsterPosition(int monsterID, const XMFLOAT3& pos, c
 	}
 	UpdateMonsterState(pMonster, state);
 }
+
+void CGameFramework::OnBossSpawned(const XMFLOAT3& pos)
+{
+	CScene* scene = m_ppScenes[m_nCurrentScene];
+	if (!scene || !scene->m_pBoss) return;
+
+	scene->m_pBoss->ResetHP();
+	scene->m_pBoss->SetPosition(pos.x, pos.y, pos.z);
+	scene->m_pBoss->TransitionTo(BossState::Idle);
+
+}

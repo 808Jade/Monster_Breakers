@@ -84,6 +84,7 @@ public:
 	}
 
 	void OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int state);
+	void OnBossSpawned(const XMFLOAT3& pos);
 	void UpdateMonsterState(CMonster* pMonster, int state);
 	void UpdateMonsterPosition(int monsterID, const XMFLOAT3& pos, const XMFLOAT3& rot, int state);
 

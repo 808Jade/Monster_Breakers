@@ -174,7 +174,7 @@ void CBossMonster::TransitionTo(BossState newState)
         // 공격/포효/죽음은 해당 클립의 실제 길이만큼 재생 후 다음 상태로 전환
         m_fStateDuration = GetAnimationLength(newTrack);
 
-    ScheduleSlams(newState);
+    //ScheduleSlams(newState);
 }
 
 void CBossMonster::TakeDamage(float damage)
@@ -200,31 +200,36 @@ void CBossMonster::Animate(float fTimeElapsed)
 
     // 이번 상태(Attack01/Taunt)에 예약된 슬램(바닥 공격범위) 트리거 체크
     // - early return보다 먼저 와야 함: 슬램은 상태가 끝나기 전(클립 70% 등) 중간에 터져야 하니까
-    while (m_nNextSlamIndex < m_vPendingSlams.size() && m_fStateTimer >= m_vPendingSlams[m_nNextSlamIndex].fSpawnAt)
+   /* while (m_nNextSlamIndex < m_vPendingSlams.size() && m_fStateTimer >= m_vPendingSlams[m_nNextSlamIndex].fSpawnAt)
     {
         TriggerSlam(m_vPendingSlams[m_nNextSlamIndex].fWarmup);
         ++m_nNextSlamIndex;
-    }
+    }*/
 
-    if (m_fStateTimer < m_fStateDuration) return;
+    //if (m_fStateTimer < m_fStateDuration) return;
+    //if (m_eState == BossState::Idle)
+    //{
+    //    // 3초 Idle가 끝나면 랜덤 패턴으로 공격(혹은 포효)
+    //    switch (ChooseRandomAttack())
+    //    {
+    //    case 2: TransitionTo(BossState::Attack01); break;
+    //    case 3: TransitionTo(BossState::Attack02); break;
+    //    case 4: TransitionTo(BossState::Taunt);   break;
+    //    }
+    //    // 공격 판정/플레이어 데미지 처리는 여기서 트랙 전환 시점에 걸기
+    //}
+    //else
+    //{
+    //    // 공격/포효 애니메이션이 끝났으면 다시 Idle로 복귀
+    //    TransitionTo(BossState::Idle);
+    //}
 
-    if (m_eState == BossState::Idle)
-    {
-        // 3초 Idle가 끝나면 랜덤 패턴으로 공격(혹은 포효)
-        switch (ChooseRandomAttack())
-        {
-        case 2: TransitionTo(BossState::Attack01); break;
-        case 3: TransitionTo(BossState::Attack02); break;
-        case 4: TransitionTo(BossState::Taunt);   break;
+    if (m_fStateTimer >= m_fStateDuration) {
+        if (m_eState != BossState::Idle && m_eState != BossState::Walk) {
+            TransitionTo(BossState::Idle);   // 애니메이션 끝 → Idle 대기
         }
+    }
 
-        // 공격 판정/플레이어 데미지 처리는 여기서 트랙 전환 시점에 걸기
-    }
-    else
-    {
-        // 공격/포효 애니메이션이 끝났으면 다시 Idle로 복귀
-        TransitionTo(BossState::Idle);
-    }
 }
 
 void CBossMonster::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)

@@ -387,7 +387,7 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 	m_pBoss = new CBossMonster(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature,
 		"Model/Monster/DemonKingPA.bin", nullptr, 50000.f, 90001);
 	m_pBoss->SetFrameName("Boss");
-	m_pBoss->SetPosition(XMFLOAT3(-6.0f, 0.2f, 22.0f));
+	m_pBoss->SetPosition(XMFLOAT3(-9999.0f, -9999.0f, -9999.0f));
 
 	m_pGroundAttackRangeEffect = new CGroundAttackRangeEffect();
 	m_pGroundAttackRangeEffect->Create(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, 4);
