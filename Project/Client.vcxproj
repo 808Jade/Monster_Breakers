@@ -142,7 +142,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="CAttackRangeEffect.cpp" />
     <ClCompile Include="CBeamSystem.cpp" />
+    <ClCompile Include="CBossMonster.cpp" />
     <ClCompile Include="CCubeMesh.cpp" />
     <ClCompile Include="CCubeShader.cpp" />
     <ClCompile Include="CDebugShader.cpp" />
@@ -178,7 +180,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="CAttackRangeEffect.h" />
     <ClInclude Include="CBeamSystem.h" />
+    <ClInclude Include="CBossMonster.h" />
     <ClInclude Include="CCubeMesh.h" />
     <ClInclude Include="CCubeShader.h" />
     <ClInclude Include="CDebugShader.h" />

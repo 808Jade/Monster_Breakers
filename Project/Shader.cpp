@@ -829,3 +829,67 @@ D3D12_SHADER_BYTECODE CHpbarShader::CreatePixelShader()
 {
 	return CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSHpbar", "ps_5_1", &m_pd3dPixelShaderBlob);
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+D3D12_INPUT_LAYOUT_DESC CGroundRangeShader::CreateInputLayout()
+{
+	// CHpbarShader와 동일: POSITION(0), TEXCOORD(12) - CRectMesh 버텍스 포맷과 일치
+	UINT n = 2;
+	D3D12_INPUT_ELEMENT_DESC* p = new D3D12_INPUT_ELEMENT_DESC[n];
+
+	p[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	p[1] = { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+
+	D3D12_INPUT_LAYOUT_DESC d;
+	d.pInputElementDescs = p;
+	d.NumElements = n;
+	return d;
+}
+
+D3D12_DEPTH_STENCIL_DESC CGroundRangeShader::CreateDepthStencilState()
+{
+	// 바닥(지형) 위에 살짝 띄워서 그리되, 깊이를 기록하진 않음(다른 투명 효과를 가리지 않게)
+	D3D12_DEPTH_STENCIL_DESC d;
+	::ZeroMemory(&d, sizeof(d));
+	d.DepthEnable = TRUE;
+	d.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+	d.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	d.StencilEnable = FALSE;
+	return d;
+}
+
+D3D12_BLEND_DESC CGroundRangeShader::CreateBlendState()
+{
+	// 알파 블렌딩(반투명 경고 표시)
+	D3D12_BLEND_DESC d;
+	::ZeroMemory(&d, sizeof(d));
+	d.RenderTarget[0].BlendEnable = TRUE;
+	d.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+	d.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+	d.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+	d.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+	d.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+	d.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+	d.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOOP;
+	d.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+	return d;
+}
+
+D3D12_RASTERIZER_DESC CGroundRangeShader::CreateRasterizerState()
+{
+	auto rs = CShader::CreateRasterizerState();
+	rs.CullMode = D3D12_CULL_MODE_NONE; // 바닥에 눕혀놓을 때 와인딩 방향에 상관없이 보이게
+	return rs;
+}
+
+D3D12_SHADER_BYTECODE CGroundRangeShader::CreateVertexShader()
+{
+	// 기존 VSTextured를 그대로 재사용(월드*뷰*프로젝션 변환 + uv 통과)
+	return CShader::CompileShaderFromFile(L"Shaders.hlsl", "VSTextured", "vs_5_1", &m_pd3dVertexShaderBlob);
+}
+
+D3D12_SHADER_BYTECODE CGroundRangeShader::CreatePixelShader()
+{
+	return CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSGroundRange", "ps_5_1", &m_pd3dPixelShaderBlob);
+}
