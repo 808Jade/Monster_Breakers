@@ -1,6 +1,7 @@
 ﻿#include "stdafx.h"
 #include "Network.h"
 #include "CMonster.h"
+#include "CBossMonster.h"
 #include "GameFramework.h"
 #include <iostream>
 
@@ -34,8 +35,10 @@ std::unordered_map<long long, Item*> g_items;
 std::mutex g_item_mutex;
 
 
-std::mutex                        g_pendingMonsterMutex;
-std::vector<PendingMonsterSpawn>  g_pendingMonsterSpawns;
+std::mutex                          g_pendingMonsterMutex;
+std::vector<PendingMonsterSpawn>    g_pendingMonsterSpawns;
+std::mutex                          g_pendingBossMutex;
+std::vector<PendingBossSpawn>       g_pendingBossSpawns;
 
 // =================================================================
 //           otherplayer player 렌더링을 위한 other player 오브젝트 및 관리
@@ -648,8 +651,6 @@ void ProcessPacket(char* ptr)
 
        scene->m_pWeaponThrowSystem->Emit(packet->weaponPosition, packet->weaponRotation, 30.0f);
 
-        std::cout << "[수신] SC_P_WEAPON_POS | playerID=" << packet->playerID
-            << " pos=(" << packet->weaponPosition.x << "," << packet->weaponPosition.y << "," << packet->weaponPosition.z << ")\n";
         break;
     }
     
@@ -723,15 +724,52 @@ void ProcessPacket(char* ptr)
         break;
 
     }
+
     case SC_P_BOSS_SPAWN:
     {
         sc_packet_boss_spawn* packet = reinterpret_cast<sc_packet_boss_spawn*>(ptr);
 
-        //이곳에 랜더링함수 
+        if (gGameFramework.isLoading || gGameFramework.isStartScene) {
+            std::lock_guard<std::mutex> lock(g_pendingBossMutex);
+            g_pendingBossSpawns.push_back({ packet->bossID, packet->position, packet->hp, packet->maxHp });
+            cout << "[BOSS] 로딩중 보관 ID=" << packet->bossID << "\n";
+            break;
+        }
 
-        cout << "[BOSS] SC_P_BOSS_SPAWN 수신 ID=" << packet->bossID << "\n";
+        gGameFramework.OnBossSpawned(packet->position);
+        break;
+    }
 
+    case SC_P_BOSS_MOVE:
+    {
+        sc_packet_boss_move* packet = reinterpret_cast<sc_packet_boss_move*>(ptr);
 
+        CScene* scene = gGameFramework.GetCurrentScene();
+        if (!scene || !scene->m_pBoss) break;
+
+        scene->m_pBoss->SetPosition(packet->position.x, packet->position.y, packet->position.z);
+
+        // Walk / Idle 전환
+        BossState cur = scene->m_pBoss->GetState();
+        if (packet->isMoving) {
+            if (cur == BossState::Idle || cur == BossState::Walk)
+                scene->m_pBoss->TransitionTo(BossState::Walk);
+        }
+        else {
+            if (cur == BossState::Walk)
+                scene->m_pBoss->TransitionTo(BossState::Idle);
+        }
+        break;
+    }
+
+    case SC_P_BOSS_DEATH:
+    {
+        sc_packet_boss_death* packet = reinterpret_cast<sc_packet_boss_death*>(ptr);
+        cout << "[BOSS] 사망 수신\n";
+
+        CScene* scene = gGameFramework.GetCurrentScene();
+        if (scene && scene->m_pBoss)
+            scene->m_pBoss->TransitionTo(BossState::Death);
         break;
     }
 
@@ -739,30 +777,40 @@ void ProcessPacket(char* ptr)
     {
         sc_packet_boss_hp* packet = reinterpret_cast<sc_packet_boss_hp*>(ptr);
 
-        //이곳에 랜더링함수 
+        CScene* scene = gGameFramework.GetCurrentScene();
+        if (scene && scene->m_pBoss) {
+            scene->m_pBoss->SetHP((float)packet->hp);
+        }
 
-        cout << "[BOSS] SC_P_BOSS_HP 수신 HP=" << packet->hp << "/" << packet->maxHp << "\n";
+        //cout << "[BOSS] SC_P_BOSS_HP 수신 HP=" << packet->hp << "/" << packet->maxHp << "\n";
+
         break;
     }
 
     case SC_P_BOSS_PATTERN:
     {
         sc_packet_boss_pattern* packet = reinterpret_cast<sc_packet_boss_pattern*>(ptr);
+        //cout << "[BOSS] 패턴 수신 패턴=" << (int)packet->patternType << "\n";
 
-        //이곳에 랜더링함수 
+        CScene* scene = gGameFramework.GetCurrentScene();
+        if (!scene || !scene->m_pBoss) break;
 
-        cout << "[BOSS] SC_P_BOSS_PATTERN 수신 패턴=" << (int)packet->patternType
-            << " 범위=" << packet->attackRange << "\n";
-        break;
-    }
+        switch (packet->patternType) {
+        case 0: scene->m_pBoss->TransitionTo(BossState::Attack01); break; // NORMAL
+        case 1: scene->m_pBoss->TransitionTo(BossState::Attack02); break; // SLAM
+        case 2: scene->m_pBoss->TransitionTo(BossState::Taunt);    break; // SWEEP
+        }
 
-    case SC_P_BOSS_DEATH:
-    {
-        sc_packet_boss_death* packet = reinterpret_cast<sc_packet_boss_death*>(ptr);
+        // 공격범위 이펙트
+        if (scene->m_pGroundAttackRangeEffect) {
+            XMFLOAT4 color =
+                packet->patternType == 1 ? XMFLOAT4(1.0f, 0.1f, 0.05f, 1.0f) :  // SLAM: 빨강
+                packet->patternType == 2 ? XMFLOAT4(1.0f, 0.5f, 0.0f, 1.0f) :  // SWEEP: 주황
+                XMFLOAT4(1.0f, 0.8f, 0.0f, 1.0f);   // NORMAL: 노랑
+            float warmup = packet->patternType == 0 ? 0.3f : 0.6f;
 
-        //이곳에 랜더링함수 
-
-        cout << "[BOSS] SC_P_BOSS_DEATH 수신\n";
+            scene->m_pGroundAttackRangeEffect->Spawn(packet->attackCenter, packet->attackRange, warmup, color);
+        }
         break;
     }
 
@@ -836,6 +884,7 @@ void LoadingDoneToServer()
     }
     g_pendingEnters.clear();
     }
+
     {
         std::lock_guard<std::mutex> lock(g_pendingMonsterMutex);
         for (auto& m : g_pendingMonsterSpawns) {
@@ -843,6 +892,15 @@ void LoadingDoneToServer()
             gGameFramework.OnMonsterSpawned(m.monsterID, m.position, m.state);
         }
         g_pendingMonsterSpawns.clear();
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(g_pendingBossMutex);
+        for (auto& b : g_pendingBossSpawns) {
+            cout << "[BOSS] pending 처리 ID=" << b.bossID << "\n";
+            gGameFramework.OnBossSpawned(b.position);
+        }
+        g_pendingBossSpawns.clear();
     }
     std::cout << "[Client] LodingDone ! " << std::endl;
 }

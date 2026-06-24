@@ -40,8 +40,18 @@ struct PendingMonsterSpawn {
     int      state;
 };
 
-extern std::mutex                        g_pendingMonsterMutex;
-extern std::vector<PendingMonsterSpawn>  g_pendingMonsterSpawns;
+struct PendingBossSpawn {
+    long long bossID;
+    XMFLOAT3  position;
+    int       hp;
+    int       maxHp;
+};
+
+extern std::mutex                           g_pendingMonsterMutex;
+extern std::vector<PendingMonsterSpawn>     g_pendingMonsterSpawns;
+
+extern std::mutex                           g_pendingBossMutex;
+extern std::vector<PendingBossSpawn>        g_pendingBossSpawns;
 
 // otherplayer
 extern std::unordered_map<long long, OtherPlayer*> g_other_players;
