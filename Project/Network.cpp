@@ -723,6 +723,48 @@ void ProcessPacket(char* ptr)
         break;
 
     }
+    case SC_P_BOSS_SPAWN:
+    {
+        sc_packet_boss_spawn* packet = reinterpret_cast<sc_packet_boss_spawn*>(ptr);
+
+        //이곳에 랜더링함수 
+
+        cout << "[BOSS] SC_P_BOSS_SPAWN 수신 ID=" << packet->bossID << "\n";
+
+
+        break;
+    }
+
+    case SC_P_BOSS_HP:
+    {
+        sc_packet_boss_hp* packet = reinterpret_cast<sc_packet_boss_hp*>(ptr);
+
+        //이곳에 랜더링함수 
+
+        cout << "[BOSS] SC_P_BOSS_HP 수신 HP=" << packet->hp << "/" << packet->maxHp << "\n";
+        break;
+    }
+
+    case SC_P_BOSS_PATTERN:
+    {
+        sc_packet_boss_pattern* packet = reinterpret_cast<sc_packet_boss_pattern*>(ptr);
+
+        //이곳에 랜더링함수 
+
+        cout << "[BOSS] SC_P_BOSS_PATTERN 수신 패턴=" << (int)packet->patternType
+            << " 범위=" << packet->attackRange << "\n";
+        break;
+    }
+
+    case SC_P_BOSS_DEATH:
+    {
+        sc_packet_boss_death* packet = reinterpret_cast<sc_packet_boss_death*>(ptr);
+
+        //이곳에 랜더링함수 
+
+        cout << "[BOSS] SC_P_BOSS_DEATH 수신\n";
+        break;
+    }
 
     default:
 
