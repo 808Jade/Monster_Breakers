@@ -161,6 +161,7 @@ public:
 	static CShader* m_pStandardShader;
 	static CShader* m_pSkinnedAnimationShader;
 	static CShader* m_pHpbarShader;
+	static CShader* m_pGroundRangeShader;
 
 	static void CMaterial::PrepareShaders(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
 

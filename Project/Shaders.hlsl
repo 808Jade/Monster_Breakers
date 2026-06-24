@@ -706,6 +706,30 @@ float4 PSHpbar(VS_HPBAR_OUT input) : SV_TARGET
     return gMaterial.m_cDiffuse;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ===== 보스 등의 바닥 공격범위 표시(텔레그래프) =====
+// VSTextured(이미 정의됨)를 그대로 사용하고, 픽셀 셰이더에서 원형 경고 패턴을 그린다.
+// gMaterial.m_cDiffuse.rgb  : 경고 색상
+// gMaterial.m_cDiffuse.a    : 전체 페이드(등장/소멸, 0~1) - CPU에서 매 프레임 갱신
+// gMaterial.m_cSpecular.a   : 워밍업 진행도(0~1, 중심에서 차오름) - CPU에서 매 프레임 갱신
+float4 PSGroundRange(VS_TEXTURED_OUTPUT input) : SV_TARGET
+{
+    float2 c = (input.uv - 0.5f) * 2.0f; // -1..1, 메쉬가 SetScale(radius,1,radius)로 맞춰진다고 가정
+    float dist = length(c);
+
+    float progress = saturate(gMaterial.m_cSpecular.a);
+    float fade = saturate(gMaterial.m_cDiffuse.a);
+
+    // 중심에서 progress 비율까지 옅게 채워짐(타격 시점에 가까워질수록 꽉 찬다)
+    float fill = 1.0f - smoothstep(progress - 0.04f, progress, dist);
+    // 전체 반경 둘레에 항상 표시되는 밝은 테두리 링
+    float ring = smoothstep(0.82f, 0.9f, dist) - smoothstep(0.94f, 1.0f, dist);
+
+    float alpha = saturate(fill * 0.45f + ring) * fade;
+    clip(alpha - 0.01f);
+
+    return float4(gMaterial.m_cDiffuse.rgb, alpha);
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct VS_BEAM_INPUT
 {
     float3 position : POSITION;

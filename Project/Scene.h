@@ -10,6 +10,8 @@
 #include "Object_Items.h"
 #include "OtherPlayer.h"
 #include "CMonster.h"
+#include "CBossMonster.h"
+#include "CAttackRangeEffect.h"
 #include "Map.h"
 #include "CollisionManager.h"
 #include "CParticle.h"
@@ -220,6 +222,8 @@ public:
 
 	std::vector<CGameObject*> m_GameObjects;  
 	std::vector<CMonster*>	  m_Monsters;
+	CBossMonster* m_pBoss = nullptr;
+	CGroundAttackRangeEffect* m_pGroundAttackRangeEffect = nullptr;
 	std::vector<CShader*>     m_Shaders;
 	
 	CLoadedModelInfo* m_pModel = NULL; // 플레이어 모델

@@ -211,6 +211,8 @@ void CScene::GenerateGameObjectsBoundingBox()
 		obj->CalculateBoundingBox();
 	}
 
+	if (m_pBoss) m_pBoss->CalculateBoundingBox();
+
 	if (m_pMap) {
 		m_pMap->BuildWorldBoundingBoxes();
 	}
@@ -381,6 +383,15 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 			m_Monsters.push_back(monster);
 		}
 	}
+
+	m_pBoss = new CBossMonster(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature,
+		"Model/Monster/DemonKingPA.bin", nullptr, 50000.f, 90001);
+	m_pBoss->SetFrameName("Boss");
+	m_pBoss->SetPosition(XMFLOAT3(-6.0f, 0.2f, 22.0f));
+
+	m_pGroundAttackRangeEffect = new CGroundAttackRangeEffect();
+	m_pGroundAttackRangeEffect->Create(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, 4);
+	m_pBoss->SetGroundAttackRangeEffect(m_pGroundAttackRangeEffect);
 
 	// otherplayer 설정
 	m_nOtherPlayers = 6;
@@ -753,6 +764,9 @@ void CScene::ReleaseObjects()
 	}
 	m_Monsters.clear();
 
+	if (m_pBoss) { m_pBoss->Release(); m_pBoss = nullptr; }
+	if (m_pGroundAttackRangeEffect) { delete m_pGroundAttackRangeEffect; m_pGroundAttackRangeEffect = nullptr; }
+
 	for (auto* player : m_vPlayers)
 	{
 		if (player) player->Release();
@@ -1059,7 +1073,8 @@ void CScene::ReleaseUploadBuffers()
 	if (m_pSkyBox) m_pSkyBox->ReleaseUploadBuffers();
 	if (m_pTerrain) m_pTerrain->ReleaseUploadBuffers();
 	if (m_pMap) m_pMap->ReleaseUploadBuffers();
-
+	if (m_pBoss) m_pBoss->ReleaseUploadBuffers();
+	if (m_pGroundAttackRangeEffect) m_pGroundAttackRangeEffect->ReleaseUploadBuffers();
 	for (auto* shader : m_Shaders) if (shader) shader->ReleaseUploadBuffers();
 	for (auto* obj : m_GameObjects) if (obj) obj->ReleaseUploadBuffers();
 	for (auto* monster : m_Monsters) if (monster) monster->ReleaseUploadBuffers();
@@ -1495,7 +1510,8 @@ void CScene::AnimateObjects(float fTimeElapsed)
 				m_fSkillCooldown[i] = 0.0f;
 		}
 	}
-
+	if(m_pBoss) m_pBoss->Animate(fTimeElapsed);
+	if (m_pGroundAttackRangeEffect) m_pGroundAttackRangeEffect->Animate(fTimeElapsed);
 	if (m_pFireballSystem) m_pFireballSystem->Animate(fTimeElapsed);
 	if (m_pGreenSpiritSystem) m_pGreenSpiritSystem->Animate(fTimeElapsed);
 	if (m_pWeaponThrowSystem) m_pWeaponThrowSystem->Animate(fTimeElapsed);
@@ -1554,6 +1570,9 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 	//if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
 
 	m_CollisionManager.Update(m_pPlayer);
+
+	if (m_pBoss) m_pBoss->Render(pd3dCommandList, pCamera);
+	if (m_pGroundAttackRangeEffect) m_pGroundAttackRangeEffect->Render(pd3dCommandList, pCamera);
 
 	for (auto* monster : m_Monsters)
 	{
@@ -1647,6 +1666,12 @@ void CScene::RenderShadowPass(ID3D12GraphicsCommandList* pd3dCommandList)
 		if (!monster) continue;
 		m_pSkinnedShadowShader->OnPrepareRender(pd3dCommandList);
 		monster->RenderShadow(pd3dCommandList);
+	}
+
+	if (m_pBoss)
+	{
+		m_pSkinnedShadowShader->OnPrepareRender(pd3dCommandList);
+		m_pBoss->RenderShadow(pd3dCommandList);
 	}
 
 	// Player (스키닝이라고 가정)
