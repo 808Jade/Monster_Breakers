@@ -153,10 +153,8 @@ void CScene::InitializeCollisionSystem()
 		int modelIndex = pair.first;
 		const InstanceGroup& group = pair.second;
 
-		// 원본 모델(pModel)이 없는 방어 코드
 		if (!group.pModel) continue;
 
-		// 그룹의 원본 베이스 모델 이름 확인
 		std::string strFrameName = group.pModel->GetFrameName();
 
 		if (std::string::npos != strFrameName.find("hill") ||
@@ -182,18 +180,13 @@ void CScene::InitializeCollisionSystem()
 		}
 
 		// 캐시된 월드 바운딩 박스 배열을 순회하며 쿼드트리에 밀어 넣기
-		for (size_t i = 0; i < group.vWorldBoundingBoxes.size(); ++i)
+		for (size_t i = 0; i < group.vWorldColliders.size(); ++i)
 		{
-			// Map 클래스에서 이미 계산해둔 완벽한 월드 좌표 기준의 AABB
-			const BoundingBox& worldBox = group.vWorldBoundingBoxes[i];
-
-			// 정적 충돌용 ColliderInfo 생성
-			// (AABB타입, pOwner는 nullptr, 모델 인덱스, 인스턴스의 고유 ID)
-			ColliderInfo collider(worldBox, nullptr, modelIndex, static_cast<int>(i));
-
-			// 쿼드트리에 정적 충돌체 삽입
-			m_CollisionManager.InsertCollider(collider); // 또는 InsertCollider(collider)
+			ColliderInfo collider = group.vWorldColliders[i];
+			collider.pOwner = nullptr;
+			m_CollisionManager.InsertCollider(collider);
 		}
+
 	}
 
 	//m_CollisionManager.PrintTree();
@@ -350,8 +343,10 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 		2049,                        
 		2049,                         
 		XMFLOAT3(fScaleX, fScaleY, fScaleZ),
-		XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f) 
+		XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f)
 	);
+
+	m_CollisionManager.InitializeDebugObjects(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 
 	m_pFireballSystem = new CFireballSystem(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 	m_pGreenSpiritSystem = new CGreenSpiritSystem(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
@@ -1463,7 +1458,10 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 				}
 				TriggerSkillCooldown(2);
 			}
-			break;	
+			break;
+		case 'P':
+			m_bDebugMode = !m_bDebugMode;
+			break;
 		}
 		break;
 	}
@@ -1554,6 +1552,8 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 	//if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
 
 	m_CollisionManager.Update(m_pPlayer);
+	if (m_bDebugMode)
+		m_CollisionManager.RenderDebug(pd3dCommandList, pCamera);
 
 	for (auto* monster : m_Monsters)
 	{

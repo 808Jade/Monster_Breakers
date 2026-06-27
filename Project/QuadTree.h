@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-//#include "Object.h"
 class CGameObject;
 
 enum class ColliderType

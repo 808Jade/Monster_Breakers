@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Object.h"
+#include "QuadTree.h"
 
 class CInstancedStandardShader;
 
@@ -34,11 +35,10 @@ struct InstanceGroup
     UINT nInstances;                               // 그릴 개수
     std::vector<VS_INSTANCE_DATA> vInstanceData;   // CPU에 모아둔 행렬들
 
-    // TODO: 이게 뒤에 필요하게 되는데, 어떻게 설계를 할건지.. 임시로 둔다
     ID3D12Resource* pInstanceBuffer;               // GPU 메모리에 올라간 실제 버퍼 (완성품)
     D3D12_VERTEX_BUFFER_VIEW instanceBufferView;   // GPU에게 이 버퍼를 설명해주는 명세서
 
-    std::vector<BoundingBox> vWorldBoundingBoxes;  // 인스턴스별 월드 AABB 캐시
+    std::vector<ColliderInfo> vWorldColliders;  // 인스턴스별 월드 ColliderInfo 캐시
 };
 
 class Map : public CGameObject
@@ -68,7 +68,6 @@ public:
 
 	std::vector<MapObjectInstance> m_vObjectInstances;
 	std::vector<CGameObject*> m_vLoadedModelInfo;
-    //std::vector<CGameObject*> m_vMapObjects; // 이제 필요 없
     std::map<int, InstanceGroup> m_mInstanceGroups;
     std::vector<ID3D12Resource*> m_vUploadBuffers; // 임시 보관소
 };

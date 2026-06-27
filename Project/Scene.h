@@ -242,6 +242,7 @@ public:
 	LIGHTS								*m_pcbMappedLights = NULL;
 
 	CCollisionManager					m_CollisionManager;
+	bool								m_bDebugMode = false;
 
 	CFireballSystem* m_pFireballSystem = nullptr;
 	CGreenSpiritSystem* m_pGreenSpiritSystem = nullptr;

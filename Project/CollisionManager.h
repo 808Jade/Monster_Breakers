@@ -4,6 +4,8 @@
 #include "QuadTree.h"
 #include "CFireballSystem.h"
 #include "CWeaponThrowSystem.h"
+#include "CDebugShader.h"
+#include "CCubeMesh.h"
 
 class CGameObject;
 class CPlayer;
@@ -15,13 +17,16 @@ private:
     CQuadTree* m_pQuadTree = NULL;
     std::vector<CGameObject*> m_objects;
     std::vector<ColliderInfo> m_colliderinfos;
-
     std::vector<CMonster*>* m_pMonsters = nullptr; 
+
     CFireballSystem* m_pFireballSystem = nullptr;
     CWeaponThrowSystem* m_pWeaponThrowSystem = nullptr;
   
     int frameCounter = 0;
     bool m_bHitProcessed = false;
+
+    CGameObject* m_pDebugCube;
+    CGameObject* m_pDebugSphere;
 
 public:
     CCollisionManager();
@@ -43,6 +48,9 @@ public:
     void Update(CPlayer* player);
 
     bool IsColliding(const BoundingBox& box1, const BoundingBox& box2);
+
+    void InitializeDebugObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
+    void RenderDebug(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
 
 private:
     void CollectNearbyObjects(QuadTreeNode* node, const BoundingBox& aabb,
