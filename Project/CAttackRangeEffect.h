@@ -19,6 +19,13 @@ public:
     void Spawn(const XMFLOAT3& xmf3Center, float fRadius, float fWarmupTime,
         const XMFLOAT4& xmf4Color = XMFLOAT4(1.0f, 0.15f, 0.05f, 1.0f));
 
+    // 부채꼴(콘) 범위 버전 - SWEEP 등 방향성 공격
+    // xmf3Direction : 부채꼴이 향하는 방향(보통 공격자의 m_look, 월드 XZ 평면 벡터, Y는 무시됨)
+    // fHalfAngleDeg : 부채꼴의 "절반" 각도(도). 예) 전방 120도 콘이면 60을 전달
+    void Spawn(const XMFLOAT3& xmf3Center, float fRadius, float fWarmupTime,
+        const XMFLOAT3& xmf3Direction, float fHalfAngleDeg,
+        const XMFLOAT4& xmf4Color = XMFLOAT4(1.0f, 0.15f, 0.05f, 1.0f));
+
     void Animate(float fTimeElapsed);
     void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
 
@@ -31,9 +38,19 @@ private:
         float        fWarmupTime = 1.0f;
         float        fFadeOutTime = 0.18f; // 타격 순간 이후 사라지는 시간
         XMFLOAT3     xmf3Color = XMFLOAT3(1.0f, 0.15f, 0.05f);
+
+        // 부채꼴(콘) 표시용 - bSector=false면 그냥 원형(기존 동작)
+        bool         bSector = false;
+        float        fFacingAngle = 0.0f;   // 메쉬 로컬 좌표계 기준 정면 각도(라디안)
+        float        fHalfAngle = XM_PI;    // 부채꼴 절반각(라디안). 원형일 땐 의미 없음
     };
 
     void PlaceFlatOnGround(CGameObject* pObject, const XMFLOAT3& xmf3Center, float fRadius);
+    int  AcquireSlot(); // 비활성 슬롯 또는 라운드로빈으로 재사용할 인덱스 선택
+
+    // 월드 XZ 방향 벡터를 PSGroundRange가 쓰는 "메쉬 로컬 평면" 각도로 변환.
+    // PlaceFlatOnGround의 RotationX(90도) 매핑과 한 곳에서만 맞춰주면 됨.
+    static float WorldDirectionToLocalAngle(const XMFLOAT3& xmf3Direction);
 
     std::vector<Indicator> m_vIndicators;
     int                     m_nNextIndex = 0; // 풀이 가득 찼을 때 다음에 재사용할 인덱스(라운드로빈)

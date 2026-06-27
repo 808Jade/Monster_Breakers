@@ -711,6 +711,10 @@ float4 PSHpbar(VS_HPBAR_OUT input) : SV_TARGET
 // gMaterial.m_cDiffuse.rgb  : 경고 색상
 // gMaterial.m_cDiffuse.a    : 전체 페이드(등장/소멸, 0~1) - CPU에서 매 프레임 갱신
 // gMaterial.m_cSpecular.a   : 워밍업 진행도(0~1, 중심에서 차오름) - CPU에서 매 프레임 갱신
+// gMaterial.m_cEmissive.x   : 부채꼴 모드 여부(0=원형, 1=부채꼴)
+// gMaterial.m_cEmissive.y   : 부채꼴 정면 각도(라디안, 메쉬 로컬 평면 기준)
+// gMaterial.m_cEmissive.z   : 부채꼴 half-angle(라디안) - 정면 기준 좌우로 이 각도까지만 표시
+
 float4 PSGroundRange(VS_TEXTURED_OUTPUT input) : SV_TARGET
 {
     float2 c = (input.uv - 0.5f) * 2.0f; // -1..1, 메쉬가 SetScale(radius,1,radius)로 맞춰진다고 가정
@@ -725,6 +729,26 @@ float4 PSGroundRange(VS_TEXTURED_OUTPUT input) : SV_TARGET
     float ring = smoothstep(0.82f, 0.9f, dist) - smoothstep(0.94f, 1.0f, dist);
 
     float alpha = saturate(fill * 0.45f + ring) * fade;
+    bool bSector = gMaterial.m_cEmissive.x > 0.5f;
+    if (bSector)
+    {
+        // c가 0벡터에 가까우면(중심) 각도가 불안정하므로 그대로 통과시킨다.
+        if (dist > 0.001f)
+        {
+            float pixelAngle = atan2(c.x, c.y); // CPU의 WorldDirectionToLocalAngle()과 동일한 축 매핑(atan2(dx, dz))
+            float facingAngle = gMaterial.m_cEmissive.y;
+            float halfAngle = gMaterial.m_cEmissive.z;
+
+            // 두 각도 차이를 -PI..PI로 정규화
+            float diff = pixelAngle - facingAngle;
+            diff = diff - floor((diff + 3.14159265f) / (2.0f * 3.14159265f)) * (2.0f * 3.14159265f);
+
+            // 부채꼴 가장자리를 살짝 부드럽게(에일리어싱 방지)
+            float edgeSoftness = 0.04f;
+            float sectorMask = 1.0f - smoothstep(halfAngle - edgeSoftness, halfAngle + edgeSoftness, abs(diff));
+            alpha *= sectorMask;
+        }
+    }
     clip(alpha - 0.01f);
 
     return float4(gMaterial.m_cDiffuse.rgb, alpha);
