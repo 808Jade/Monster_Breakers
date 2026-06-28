@@ -104,5 +104,5 @@ private:
     // 매 프레임 불필요한 mesh 재생성을 막기 위한 이전 폭 캐시
     float m_fPrevHpbarWidth = -1.0f;
 
-    bool m_bHpbarVisible = true;
+    bool m_bHpbarVisible = false;
 };
