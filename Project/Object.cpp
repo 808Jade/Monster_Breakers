@@ -1535,9 +1535,9 @@ CHeightMapTerrain::CHeightMapTerrain(ID3D12Device *pd3dDevice, ID3D12GraphicsCom
 	//SetMaterial(0, pTerrainMaterial);
 
 	// 터레인 보정 (2/4)
-	float worldPosX = -152.8f;
-	float worldPosY = -9.0f;
-	float worldPosZ = -115.8f;
+	float worldPosX = -156.71f;
+	float worldPosY = -14.43f;
+	float worldPosZ = -255.0f;
 
 	SetPosition(worldPosX, worldPosY, worldPosZ);
 	UpdateTransform(NULL);

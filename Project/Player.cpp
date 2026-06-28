@@ -503,10 +503,10 @@ void CTerrainPlayer::OnPlayerUpdateCallback(float fTimeElapsed)
 	XMFLOAT3 xmf3PlayerPosition = GetPosition();
 
 	// 터레인 보정 (3/4)
-	float terrainX = -152.8f;
-	float terrainY = -9.0f;
-	float terrainZ = -115.8f;
-	float playerFootOffset = -0.13f;
+	float terrainX = -156.71f;
+	float terrainY = -14.43f;
+	float terrainZ = -255.0f;
+	float playerFootOffset = -0.0f;
 
 	float localX = xmf3PlayerPosition.x - terrainX;
 	float localZ = xmf3PlayerPosition.z - terrainZ;
@@ -536,10 +536,10 @@ void CTerrainPlayer::OnCameraUpdateCallback(float fTimeElapsed)
 	XMFLOAT3 xmf3CameraPosition = m_pCamera->GetPosition();
 
 	// 터레인 보정 (4/4)
-	float terrainX = -152.8f;
-	float terrainY = -9.0f;
-	float terrainZ = -115.8f;
-	float playerFootOffset = -0.13f;
+	float terrainX = -156.71f;
+	float terrainY = -14.43f;
+	float terrainZ = -255.0f;
+	float playerFootOffset = -0.0f;
 
 	float localX = xmf3CameraPosition.x - terrainX;
 	float localZ = xmf3CameraPosition.z - terrainZ;
