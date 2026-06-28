@@ -293,8 +293,8 @@ void Map::BuildWorldBoundingBoxes()
 	for (auto& [idx, group] : m_mInstanceGroups)
 	{
 		if (!group.pModel) continue;
-		group.vWorldBoundingBoxes.clear();
-		group.vWorldBoundingBoxes.reserve(group.nInstances);
+		group.vWorldColliders.clear();
+		group.vWorldColliders.reserve(group.nInstances);
 
 		// 모델 계층 전체를 순회해 로컬 공간 AABB를 머지
 		// 처리할 객체의 bounding타입에 따라 다르게 측정
@@ -325,45 +325,78 @@ void Map::BuildWorldBoundingBoxes()
 
 		if (!hasBox) continue;
 
-		// [임시]
-		float scaleFactor = 0.4f; // 1.0f = 100%, 0.8f = 80% 크기
-		localBox.Extents.x *= scaleFactor;
-		localBox.Extents.y *= scaleFactor;
-		localBox.Extents.z *= scaleFactor;
-
 		// 각 인스턴스의 월드 행렬로 변환 후 캐시에 저장
 		for (const auto& inst : group.vInstanceData)
 		{
-			// gpuData.worldMatrix는 GPU용으로 이미 transpose됐으므로 원래 행렬로 복원
 			XMMATRIX worldMat = XMMatrixTranspose(XMLoadFloat4x4(&inst.worldMatrix));
 			BoundingBox worldBox;
 			localBox.Transform(worldBox, worldMat);
-			group.vWorldBoundingBoxes.push_back(worldBox);
+			group.vWorldColliders.push_back(worldBox);
+		}
+
+
+		// 모델 이름을 통해 충돌체 타입(형태) 미리 결정
+		std::string strFrameName = group.pModel->GetFrameName();
+		bool isSphere = (strFrameName.find("well") != std::string::npos ||
+						 strFrameName.find("pot") != std::string::npos);
+		const std::vector<std::string> targetNamesObb = {
+			"rock", "Bakery_market_with_food", "BakeryMarket", "BakeryMarket_no_dop",
+			"barrel", "barrel_fish", "bench", "big_fire", "big_log", "big_log_half_02",
+			"boat", "cauldron", "cauldron with food", "chair", "church", "fence_01",
+			"fish_market", "Fish_market_with_sections", "house_01", "lamp_post",
+			"leather_dressing_frame", "loaf_basket", "log", "log_half_01", "maneken",
+			"Meat_market_with_objects", "MeatMarket", "rune_stone", "staked_fence",
+			"stone_fence_01", "stone_pillar", "street_latern_01", "street_latern_02",
+			"Table_with_weapon", "Vegetable_market_with_objects", "Weapon_Market_with_objects",
+			"weapon_rack", "wooden_basin", "wood_fence_gate_01", "wood_fence_gate_02", "fence", "cart"
+		};
+		bool isOBB = false;
+		for (const auto& name : targetNamesObb) {
+			if (strFrameName.find(name) != std::string::npos) {
+				isOBB = true;
+				break;
+			}
+		}
+
+
+		// 각 인스턴스의 월드 행렬로 변환 후 캐시에 저장
+		for (int instID = 0; instID < group.vInstanceData.size(); ++instID)
+		{
+			const auto& inst = group.vInstanceData[instID];
+
+			// gpuData.worldMatrix는 GPU용으로 이미 transpose됐으므로 원래 행렬로 복원
+			XMMATRIX worldMat = XMMatrixTranspose(XMLoadFloat4x4(&inst.worldMatrix));
+
+			ColliderInfo collider;
+
+			if (isSphere)
+			{
+				BoundingBox worldBox;
+				localBox.Transform(worldBox, worldMat);
+
+				// AABB의 X,Y,Z 절반 크기 중 가장 긴 것을 반지름으로 사용
+				float radius = std::max({ worldBox.Extents.x, worldBox.Extents.y, worldBox.Extents.z });
+				BoundingSphere sphere(worldBox.Center, radius);
+
+				collider = ColliderInfo(sphere, nullptr, idx, instID);
+			}
+			else if (isOBB)
+			{
+				BoundingOrientedBox obb;
+				BoundingOrientedBox::CreateFromBoundingBox(obb, localBox); // 로컬 AABB에서 OBB 생성
+				obb.Transform(obb, worldMat);
+
+				collider = ColliderInfo(obb, nullptr, idx, instID);
+			}
+			else
+			{
+				BoundingBox worldBox;
+				localBox.Transform(worldBox, worldMat);
+
+				collider = ColliderInfo(worldBox, nullptr, idx, instID);
+			}
+
+			group.vWorldColliders.push_back(collider);
 		}
 	}
 }
-
-//// 플레이어 XZ 위치에서 가장 높은 오브젝트 상단 Y를 반환
-//float Map::GetHeight(float x, float z) const
-//{
-//	float maxHeight = 0.0f;
-//	bool  found = false;
-//
-//	for (const auto& [idx, group] : m_mInstanceGroups)
-//	{
-//		for (const BoundingBox& wb : group.vWorldBoundingBoxes)
-//		{
-//			float minX = wb.Center.x - wb.Extents.x;
-//			float maxX = wb.Center.x + wb.Extents.x;
-//			float minZ = wb.Center.z - wb.Extents.z;
-//			float maxZ = wb.Center.z + wb.Extents.z;
-//
-//			if (x >= minX && x <= maxX && z >= minZ && z <= maxZ)
-//			{
-//				float topY = wb.Center.y + wb.Extents.y;
-//				if (!found || topY > maxHeight) { maxHeight = topY; found = true; }
-//			}
-//		}
-//	}
-//	return maxHeight;
-//}

@@ -208,6 +208,98 @@ bool CCollisionManager::IsColliding(const BoundingBox& box1, const BoundingBox& 
     return true;
 }
 
+void CCollisionManager::InitializeDebugObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature)
+{
+    if (m_pDebugCube != nullptr) return;
+
+    m_pDebugCube = new CGameObject();
+
+    CCubeMesh* pUnitCubeMesh = new CCubeMesh(pd3dDevice, pd3dCommandList, 1.0f, 1.0f, 1.0f);
+    m_pDebugCube->SetMesh(pUnitCubeMesh);
+
+    CDebugShader* pWireframeShader = new CDebugShader();
+    pWireframeShader->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
+    m_pDebugCube->SetShader(pWireframeShader);
+}
+
+void CCollisionManager::RenderDebug(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
+{
+    if (!m_pDebugCube) return;
+
+    // 와이어프레임(선)으로 그리기 위한 파이프라인(PSO) 세팅
+    //pd3dCommandList->SetPipelineState(m_pWireframePSO);
+
+    for (const ColliderInfo& col : m_colliderinfos)
+    {
+        switch (col.type)
+        {
+        case ColliderType::AABB:
+        {
+            // 1. 충돌체의 중심(Center)과 크기(Extents)를 바탕으로 월드 행렬을 만듭니다.
+            // Extents는 절반 크기이므로 2배를 곱해 스케일을 맞춥니다.
+            DirectX::XMMATRIX matScale = DirectX::XMMatrixScaling(col.aabb.Extents.x * 2.0f, col.aabb.Extents.y * 2.0f, col.aabb.Extents.z * 2.0f);
+            DirectX::XMMATRIX matTrans = DirectX::XMMatrixTranslation(col.aabb.Center.x, col.aabb.Center.y, col.aabb.Center.z);
+
+            DirectX::XMFLOAT4X4 worldMat;
+            DirectX::XMStoreFloat4x4(&worldMat, matScale * matTrans);
+
+            // 2. 만들어둔 단일 객체의 월드 행렬을 지금 검사 중인 충돌체 위치로 '순간이동' 시킵니다.
+            m_pDebugCube->m_xmf4x4World = worldMat;
+
+            m_pDebugCube->Render(pd3dCommandList, pCamera);
+            break;
+        }
+
+        case ColliderType::OBB:
+        {
+            using namespace DirectX;
+
+            // 1. 크기 (Scale): Extents는 절반 크기이므로 2배를 곱해줍니다.
+            XMMATRIX matScale = XMMatrixScaling(col.obb.Extents.x * 2.0f,
+                col.obb.Extents.y * 2.0f,
+                col.obb.Extents.z * 2.0f);
+
+            // 2. 회전 (Rotation) [핵심!]: OBB가 가진 쿼터니언(Orientation) 정보를 회전 행렬로 변환합니다.
+            XMVECTOR quat = XMLoadFloat4(&col.obb.Orientation);
+            XMMATRIX matRot = XMMatrixRotationQuaternion(quat);
+
+            // 3. 이동 (Translation): 중심점 위치
+            XMMATRIX matTrans = XMMatrixTranslation(col.obb.Center.x,
+                col.obb.Center.y,
+                col.obb.Center.z);
+
+            // 4. 월드 행렬 조합 (★반드시 Scale -> Rotation -> Translation 순서로 곱해야 합니다★)
+            XMFLOAT4X4 worldMat;
+            XMStoreFloat4x4(&worldMat, matScale * matRot * matTrans);
+
+            // 5. AABB 그릴 때 쓰던 그 큐브 객체를 그대로 재사용해서 그립니다!
+            m_pDebugCube->m_xmf4x4World = worldMat;
+            m_pDebugCube->Render(pd3dCommandList, pCamera);
+
+            break;
+        }
+
+        case ColliderType::Sphere:
+        {
+            /*
+            XMMATRIX matScale = XMMatrixScaling(col.sphere.Radius, col.sphere.Radius, col.sphere.Radius);
+            XMMATRIX matTrans = XMMatrixTranslation(col.sphere.Center.x, col.sphere.Center.y, col.sphere.Center.z);
+
+            XMFLOAT4X4 worldMat;
+            XMStoreFloat4x4(&worldMat, matScale * matTrans);
+
+            m_pDebugSphere->SetWorldMatrix(worldMat);
+            m_pDebugSphere->Render(pd3dCommandList, pCamera);
+            */
+            break;
+        }
+        }
+    }
+
+    
+}
+
+
 void CCollisionManager::CollectNearbyObjects(QuadTreeNode* node, const BoundingBox& playerbb, std::vector<CGameObject*>& outDynamics, std::vector<ColliderInfo>& outStatics) 
 {
     if (!node) return;
@@ -234,7 +326,6 @@ void CCollisionManager::CollectNearbyObjects(QuadTreeNode* node, const BoundingB
 
 void CCollisionManager::HandleCollision(CPlayer* player, CGameObject* obj)
 {
-    // 몬스터는 여기 들어오지 않지만 방어적으로 차단
     if (dynamic_cast<CMonster*>(obj) != nullptr) return;
     std::string ObjectFrameName = obj->GetFrameName();
 
@@ -336,8 +427,8 @@ void CCollisionManager::HandleCollision(CPlayer* player, CGameObject* obj)
             else
                 playerPos.z = objMax.z + playerBox.Extents.z; // 위로 밀어냄
         }
-        player->SetPosition(playerPos); // 플레이어 위치 갱신
-        player->SetVelocity({ 0.0f, 0.0f, 0.0f }); // 속도 정지
+        player->SetPosition(playerPos);
+        player->SetVelocity({ 0.0f, 0.0f, 0.0f });
         player->CalculateBoundingBox();
         playerBox = player->GetBoundingBox();
     }
@@ -345,54 +436,129 @@ void CCollisionManager::HandleCollision(CPlayer* player, CGameObject* obj)
 
 void CCollisionManager::HandleCollision(CPlayer* player, const ColliderInfo& colinfo)
 {
-    // 현재 맵 인스턴스들은 모두 AABB로 처리되고 있으므로, AABB일 때만 밀어내기 적용
-    // 앞에서 걸러놓고, 여기로 들어오는 애들에 대해서는 그냥 다 AABB 처리를 해버리기
-    // string::find() 를 하지 않는다..? 결국 앞에서 하면 똑같은게 아닌가 싶긴 하지만..
-    if (colinfo.type != ColliderType::AABB) return;
-
     DirectX::XMFLOAT3 playerPos = player->GetPosition();
     BoundingBox playerBox = player->GetBoundingBox();
-    BoundingBox objBox = colinfo.aabb;
 
-    // Min, Max 계산
-    DirectX::XMFLOAT3 playerMin, playerMax, objMin, objMax;
-
-    playerMin.x = playerBox.Center.x - playerBox.Extents.x;
-    playerMin.y = playerBox.Center.y - playerBox.Extents.y;
-    playerMin.z = playerBox.Center.z - playerBox.Extents.z;
-    playerMax.x = playerBox.Center.x + playerBox.Extents.x;
-    playerMax.y = playerBox.Center.y + playerBox.Extents.y;
-    playerMax.z = playerBox.Center.z + playerBox.Extents.z;
-
-    objMin.x = objBox.Center.x - objBox.Extents.x;
-    objMin.y = objBox.Center.y - objBox.Extents.y;
-    objMin.z = objBox.Center.z - objBox.Extents.z;
-    objMax.x = objBox.Center.x + objBox.Extents.x;
-    objMax.y = objBox.Center.y + objBox.Extents.y;
-    objMax.z = objBox.Center.z + objBox.Extents.z;
-
-    // 겹침 크기 계산 (x, z축)
-    DirectX::XMFLOAT3 overlap;
-    overlap.x = std::min(playerMax.x, objMax.x) - std::max(playerMin.x, objMin.x);
-    overlap.z = std::min(playerMax.z, objMax.z) - std::max(playerMin.z, objMin.z);
-
-    // 겹침이 작은 축(더 얕게 파고든 축)을 기준으로 플레이어 위치 조정 (AABB Response)
-    if (overlap.x < overlap.z)
+    switch (colinfo.type)
     {
-        if (playerPos.x < objBox.Center.x)
-            playerPos.x = objMin.x - playerBox.Extents.x;
-        else
-            playerPos.x = objMax.x + playerBox.Extents.x;
-    }
-    else
+    case ColliderType::AABB:
     {
-        if (playerPos.z < objBox.Center.z)
-            playerPos.z = objMin.z - playerBox.Extents.z;
-        else
-            playerPos.z = objMax.z + playerBox.Extents.z;
+        BoundingBox objBox = colinfo.aabb;
+        DirectX::XMFLOAT3 playerMin, playerMax, objMin, objMax;
+
+        playerMin.x = playerBox.Center.x - playerBox.Extents.x;
+        playerMin.y = playerBox.Center.y - playerBox.Extents.y;
+        playerMin.z = playerBox.Center.z - playerBox.Extents.z;
+        playerMax.x = playerBox.Center.x + playerBox.Extents.x;
+        playerMax.y = playerBox.Center.y + playerBox.Extents.y;
+        playerMax.z = playerBox.Center.z + playerBox.Extents.z;
+
+        objMin.x = objBox.Center.x - objBox.Extents.x;
+        objMin.y = objBox.Center.y - objBox.Extents.y;
+        objMin.z = objBox.Center.z - objBox.Extents.z;
+        objMax.x = objBox.Center.x + objBox.Extents.x;
+        objMax.y = objBox.Center.y + objBox.Extents.y;
+        objMax.z = objBox.Center.z + objBox.Extents.z;
+
+        DirectX::XMFLOAT3 overlap;
+        overlap.x = std::min(playerMax.x, objMax.x) - std::max(playerMin.x, objMin.x);
+        overlap.z = std::min(playerMax.z, objMax.z) - std::max(playerMin.z, objMin.z);
+
+        if (overlap.x < overlap.z) {
+            if (playerPos.x < objBox.Center.x) playerPos.x = objMin.x - playerBox.Extents.x;
+            else                               playerPos.x = objMax.x + playerBox.Extents.x;
+        }
+        else {
+            if (playerPos.z < objBox.Center.z) playerPos.z = objMin.z - playerBox.Extents.z;
+            else                               playerPos.z = objMax.z + playerBox.Extents.z;
+        }
+        break;
     }
 
-    // 플레이어 위치 갱신 및 상태 초기화
+    case ColliderType::Sphere:
+    {
+        float dx = playerBox.Center.x - colinfo.sphere.Center.x;
+        float dz = playerBox.Center.z - colinfo.sphere.Center.z;
+        float distance = std::sqrt(dx * dx + dz * dz);
+
+        if (distance > 0.0001f)
+        {
+            // 플레이어 반경을 max가 아닌 min 또는 약간 줄여서 타이트하게 설정
+            float playerRadius = std::min(playerBox.Extents.x, playerBox.Extents.z) * 0.8f;
+            float safeDistance = playerRadius + colinfo.sphere.Radius;
+
+            if (distance < safeDistance)
+            {
+                float overlap = safeDistance - distance;
+                playerPos.x += (dx / distance) * overlap;
+                playerPos.z += (dz / distance) * overlap;
+            }
+        }
+        break;
+    }
+
+    case ColliderType::OBB:
+    {
+        // OBB 표면에서 가장 가까운 점(Closest Point)을 찾아 밀어내기
+        using namespace DirectX;
+
+        XMVECTOR vPlayerCenter = XMLoadFloat3(&playerBox.Center);
+        XMVECTOR vObbCenter = XMLoadFloat3(&colinfo.obb.Center);
+        XMVECTOR vObbOrient = XMLoadFloat4(&colinfo.obb.Orientation);
+
+        // 1. 플레이어 위치를 OBB의 로컬 공간(회전이 풀린 똑바른 상태)으로 변환
+        XMVECTOR vInvOrient = XMQuaternionInverse(vObbOrient);
+        XMVECTOR vLocalPlayer = XMVector3Rotate(XMVectorSubtract(vPlayerCenter, vObbCenter), vInvOrient);
+
+        XMFLOAT3 localPlayerPos;
+        XMStoreFloat3(&localPlayerPos, vLocalPlayer);
+
+        // 2. 로컬 공간에서 OBB의 경계(Extents) 안으로 위치를 제한(Clamp)하여 가장 가까운 표면 점을 찾음
+        XMFLOAT3 closestPoint;
+        closestPoint.x = std::clamp(localPlayerPos.x, -colinfo.obb.Extents.x, colinfo.obb.Extents.x);
+        closestPoint.y = 0.0f; // Y축은 무시
+        closestPoint.z = std::clamp(localPlayerPos.z, -colinfo.obb.Extents.z, colinfo.obb.Extents.z);
+
+        // 3. 찾은 표면 점을 다시 월드 공간으로 복구
+        XMVECTOR vLocalClosest = XMLoadFloat3(&closestPoint);
+        XMVECTOR vWorldClosest = XMVectorAdd(XMVector3Rotate(vLocalClosest, vObbOrient), vObbCenter);
+
+        // 4. 플레이어 중심과 가장 가까운 표면 점 사이의 거리 계산
+        XMVECTOR vPushDir = XMVectorSubtract(vPlayerCenter, vWorldClosest);
+        vPushDir = XMVectorSetY(vPushDir, 0.0f);
+        float distance = XMVectorGetX(XMVector3Length(vPushDir));
+
+        // 플레이어의 실제 충돌 반경 (시각적 크기보다 살짝 작게 주면 게임이 쾌적해집니다)
+        float playerRadius = std::min(playerBox.Extents.x, playerBox.Extents.z) * 0.8f;
+
+        // 플레이어 중심이 OBB 표면을 파고들었다면(distance < playerRadius) 밖으로 밀어냄
+        if (distance < playerRadius && distance > 0.0001f)
+        {
+            vPushDir = XMVector3Normalize(vPushDir);
+            float overlap = playerRadius - distance;
+
+            playerPos.x += XMVectorGetX(vPushDir) * overlap;
+            playerPos.z += XMVectorGetZ(vPushDir) * overlap;
+        }
+        // 플레이어 중심이 아예 OBB 내부에 완전히 들어가 버린 예외 상황 처리 (중심 방향으로 밀어내기)
+        else if (distance <= 0.0001f)
+        {
+            // OBB 중심에서 플레이어 방향으로 강제로 살짝 밀어냄
+            XMVECTOR vEscapeDir = XMVectorSubtract(vPlayerCenter, vObbCenter);
+            vEscapeDir = XMVectorSetY(vEscapeDir, 0.0f);
+            if (XMVectorGetX(XMVector3LengthSq(vEscapeDir)) > 0.0001f) {
+                vEscapeDir = XMVector3Normalize(vEscapeDir);
+                playerPos.x += XMVectorGetX(vEscapeDir) * playerRadius;
+                playerPos.z += XMVectorGetZ(vEscapeDir) * playerRadius;
+            }
+            else {
+                playerPos.x += playerRadius; // 완전 중심이면 임의의 방향(X축)으로 밀어냄
+            }
+        }
+        break;
+    }
+    }
+
     player->SetPosition(playerPos);
     player->SetVelocity({ 0.0f, 0.0f, 0.0f });
     player->CalculateBoundingBox();

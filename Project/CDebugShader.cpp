@@ -10,11 +10,11 @@ CDebugShader::~CDebugShader()
 
 D3D12_INPUT_LAYOUT_DESC CDebugShader::CreateInputLayout()
 {
-	// 텍스처(TEXCOORD)를 빼고 위치(POSITION)만 넘깁니다. 
-	UINT nInputElementDescs = 1;
+	UINT nInputElementDescs = 2;
 	D3D12_INPUT_ELEMENT_DESC* pd3dInputElementDescs = new D3D12_INPUT_ELEMENT_DESC[nInputElementDescs];
 
 	pd3dInputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	pd3dInputElementDescs[1] = { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 
 	D3D12_INPUT_LAYOUT_DESC d3dInputLayoutDesc;
 	d3dInputLayoutDesc.pInputElementDescs = pd3dInputElementDescs;
@@ -48,12 +48,8 @@ D3D12_RASTERIZER_DESC CDebugShader::CreateRasterizerState()
 	D3D12_RASTERIZER_DESC d3dRasterizerDesc;
 	::ZeroMemory(&d3dRasterizerDesc, sizeof(D3D12_RASTERIZER_DESC));
 
-	// [수정 1] 면을 채우지 않고 선(Wireframe)으로만 그립니다.
-	d3dRasterizerDesc.FillMode = D3D12_FILL_MODE_WIREFRAME;
-
-	// [수정 2] 박스의 뒷면 선도 보여야 하므로 컬링(Culling)을 끕니다.
-	d3dRasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
-
+	d3dRasterizerDesc.FillMode = D3D12_FILL_MODE_WIREFRAME; // 선(Wireframe)으로만 그림
+	d3dRasterizerDesc.CullMode = D3D12_CULL_MODE_NONE; // 박스의 뒷면 선도 보여야 하므로 컬링(Culling) 끔
 	d3dRasterizerDesc.FrontCounterClockwise = FALSE;
 	d3dRasterizerDesc.DepthBias = 0;
 	d3dRasterizerDesc.DepthBiasClamp = 0.0f;

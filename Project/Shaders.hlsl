@@ -813,7 +813,7 @@ float4 PSBeam(VS_BEAM_OUTPUT input) : SV_TARGET
 cbuffer cbDebugObject : register(b2)
 {
     matrix gmtxDebugWorld : packoffset(c0);
-    float4 gvDebugColor : packoffset(c4); // RGBA, Alpha로 투명도 조절
+    float4 gvDebugColor : packoffset(c4);
 };
 
 struct VS_PRIMITIVE_INPUT
@@ -840,5 +840,5 @@ VS_PRIMITIVE_OUTPUT VSPrimitive(VS_PRIMITIVE_INPUT input)
 
 float4 PSPrimitive(VS_PRIMITIVE_OUTPUT input) : SV_TARGET
 {
-    return gvDebugColor; // cbuffer에서 받은 색상 그대로 반환
+    return float4(1.0f, 1.0f, 0.0f, 1.0f);
 }
