@@ -736,7 +736,7 @@ void ProcessPacket(char* ptr)
             break;
         }
 
-        gGameFramework.OnBossSpawned(packet->position);
+        gGameFramework.OnBossSpawned(packet->bossID, packet->position, packet->hp, packet->maxHp);
         break;
     }
 
@@ -749,14 +749,18 @@ void ProcessPacket(char* ptr)
 
         scene->m_pBoss->SetPosition(packet->position.x, packet->position.y, packet->position.z);
 
-        // Walk / Idle 전환
         BossState cur = scene->m_pBoss->GetState();
-        if (packet->isMoving) {
-            if (cur == BossState::Idle || cur == BossState::Walk)
+
+        // 공격/사망 모션 재생 중에는 Move 패킷으로 끼어들지 않음
+        bool isBusy = (cur == BossState::Attack01 || cur == BossState::Attack02 ||
+            cur == BossState::Taunt || cur == BossState::Death);
+
+        // Death만 보호. Attack/Taunt는 ONCE라서 끝나면 멈춰있을 뿐이므로
+        // Move 패킷이 오면 그 시점에 풀어줘도 안전함 (서버가 어차피 패턴 종료 후에만 보냄)
+        if (cur != BossState::Death) {
+            if (packet->isMoving && cur != BossState::Walk)
                 scene->m_pBoss->TransitionTo(BossState::Walk);
-        }
-        else {
-            if (cur == BossState::Walk)
+            else if (!packet->isMoving && cur != BossState::Idle)
                 scene->m_pBoss->TransitionTo(BossState::Idle);
         }
         break;
@@ -795,21 +799,12 @@ void ProcessPacket(char* ptr)
         CScene* scene = gGameFramework.GetCurrentScene();
         if (!scene || !scene->m_pBoss) break;
 
+        // 애니메이션 전환 + 공격범위 이펙트(모양/색상/웜업 결정)는 모두 CBossMonster가 처리한다.
+        // (보스가 어떤 트랙으로 들어가는지에 따라 스스로 이펙트를 스폰함 - PlayAttackPattern 참고)
         switch (packet->patternType) {
-        case 0: scene->m_pBoss->TransitionTo(BossState::Attack01); break; // NORMAL
-        case 1: scene->m_pBoss->TransitionTo(BossState::Attack02); break; // SLAM
-        case 2: scene->m_pBoss->TransitionTo(BossState::Taunt);    break; // SWEEP
-        }
-
-        // 공격범위 이펙트
-        if (scene->m_pGroundAttackRangeEffect) {
-            XMFLOAT4 color =
-                packet->patternType == 1 ? XMFLOAT4(1.0f, 0.1f, 0.05f, 1.0f) :  // SLAM: 빨강
-                packet->patternType == 2 ? XMFLOAT4(1.0f, 0.5f, 0.0f, 1.0f) :  // SWEEP: 주황
-                XMFLOAT4(1.0f, 0.8f, 0.0f, 1.0f);   // NORMAL: 노랑
-            float warmup = packet->patternType == 0 ? 0.3f : 0.6f;
-
-            scene->m_pGroundAttackRangeEffect->Spawn(packet->attackCenter, packet->attackRange, warmup, color);
+        case 0: scene->m_pBoss->PlayAttackPattern(BossState::Attack01, packet->attackCenter, packet->attackRange); break; // NORMAL
+        case 1: scene->m_pBoss->PlayAttackPattern(BossState::Attack02, packet->attackCenter, packet->attackRange); break; // SLAM
+        case 2: scene->m_pBoss->PlayAttackPattern(BossState::Taunt, packet->attackCenter, packet->attackRange, packet->sweepAngle); break; // SWEEP
         }
         break;
     }
@@ -898,7 +893,7 @@ void LoadingDoneToServer()
         std::lock_guard<std::mutex> lock(g_pendingBossMutex);
         for (auto& b : g_pendingBossSpawns) {
             cout << "[BOSS] pending 처리 ID=" << b.bossID << "\n";
-            gGameFramework.OnBossSpawned(b.position);
+            gGameFramework.OnBossSpawned(b.bossID, b.position, b.hp, b.maxHp);
         }
         g_pendingBossSpawns.clear();
     }

@@ -7,6 +7,7 @@
 #include "Shader.h"
 #include "Scene.h"
 #include "Hpbar.h"
+#include "CRectMesh.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -1741,3 +1742,54 @@ void CEthanAnimationController::OnRootMotion(CGameObject* pRootGameObject)
 		}
 	}
 }
+
+CInteractPrompt::CInteractPrompt(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature,
+	LPCWSTR pszDDSFileName, XMFLOAT3 xmf3Position, float fWidth, float fHeight, float fInteractRange) : CGameObject(1)
+{
+	m_fInteractRange = fInteractRange;
+
+	// CRectMesh는 fDepth가 0이면 XY 평면(카메라를 향한 빌보드 셰이더에서 X/Y를 카메라의 right/up으로
+	// 재해석하므로 실제 월드 평면 방향은 셰이더가 결정한다) 사각형을 만든다.
+	CRectMesh* pPromptMesh = new CRectMesh(pd3dDevice, pd3dCommandList, fWidth, fHeight, 0.0f);
+	SetMesh(pPromptMesh);
+
+	CreateShaderVariables(pd3dDevice, pd3dCommandList);
+
+	CTexture* pPromptTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+	pPromptTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, (wchar_t*)pszDDSFileName, RESOURCE_TEXTURE2D, 0);
+
+	CInteractPromptShader* pPromptShader = new CInteractPromptShader();
+	pPromptShader->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
+	pPromptShader->CreateShaderVariables(pd3dDevice, pd3dCommandList);
+	pPromptShader->SetTexture(pPromptTexture);
+
+	CScene::CreateShaderResourceViews(pd3dDevice, pPromptTexture, 0, 3);
+
+	CMaterial* pPromptMaterial = new CMaterial(1);
+	pPromptMaterial->SetTexture(pPromptTexture);
+	pPromptMaterial->SetShader(pPromptShader);
+
+	SetMaterial(0, pPromptMaterial);
+
+	SetPosition(xmf3Position);
+
+	// 거리 조건을 만족하기 전까지는 보이지 않는다.
+	visible = false;
+}
+
+CInteractPrompt::~CInteractPrompt()
+{}
+
+void CInteractPrompt::Update(const XMFLOAT3& xmf3PlayerPosition)
+{
+	XMFLOAT3 xmf3MyPosition = GetPosition();
+
+	float fdx = xmf3PlayerPosition.x - xmf3MyPosition.x;
+	float fdy = xmf3PlayerPosition.y - xmf3MyPosition.y;
+	float fdz = xmf3PlayerPosition.z - xmf3MyPosition.z;
+
+	float fDistance = sqrtf(fdx * fdx + fdy * fdy + fdz * fdz);
+
+	visible = (fDistance < m_fInteractRange);
+}
+

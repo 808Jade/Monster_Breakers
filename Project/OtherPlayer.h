@@ -12,6 +12,8 @@ public:
 	virtual ~OtherPlayer();
     
     float	currentHP = 100.f;
+    float	maxHP = 100.f;
+
     int     level[3] = { 1,1,1 };
 	float damage = 1.f;
 

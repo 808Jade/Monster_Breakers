@@ -705,6 +705,26 @@ float4 PSHpbar(VS_HPBAR_OUT input) : SV_TARGET
 {
     return gMaterial.m_cDiffuse;
 }
+// VSHpbar와 동일한 빌보드 변환(객체 월드 위치를 중심으로 카메라를 향해 정렬)을 그대로 쓰고,
+// 픽셀 셰이더에서는 단색이 아니라 t6(albedo) 텍스처를 샘플링해서 그린다.
+// CRectMesh(POSITION+TEXCOORD)를 메시로 사용하면 입력 레이아웃이 VSHpbar와 그대로 맞는다.
+
+VS_HPBAR_OUT VSInteractPrompt(VS_HPBAR_IN input)
+{
+    return VSHpbar(input);
+}
+
+float4 PSInteractPrompt(VS_HPBAR_OUT input) : SV_TARGET
+{
+    float4 texColor = gtxtAlbedoTexture.Sample(gssWrap, input.uv);
+
+    // gMaterial.m_cDiffuse.a 를 전체 페이드(등장/소멸)용으로 사용. CPU에서 갱신.
+    texColor.a *= saturate(gMaterial.m_cDiffuse.a);
+
+    clip(texColor.a - 0.01f);
+
+    return texColor;
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ===== 보스 등의 바닥 공격범위 표시(텔레그래프) =====
 // VSTextured(이미 정의됨)를 그대로 사용하고, 픽셀 셰이더에서 원형 경고 패턴을 그린다.

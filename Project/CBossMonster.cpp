@@ -45,8 +45,8 @@ CBossMonster::CBossMonster(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 
     m_pHpbar = new Hpbar(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
 
-/*    SetMonsterID(id);
-    g_monsters[id] = this;*/
+    SetMonsterID(id);
+    // g_monsters[id] = this;
 
     CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }
@@ -67,6 +67,42 @@ int CBossMonster::TrackOf(BossState s) const
     case BossState::Taunt:    return TRACK_TAUNT;
     case BossState::Death:    return TRACK_DEATH;
     default:                  return TRACK_IDLE;
+    }
+}
+
+// newState(애니메이션 트랙)에 따라 공격범위 이펙트의 모양/색상/웜업을 결정해서 스폰한다.
+// - Attack01(NORMAL) : 원형, 노랑, 웜업 0.3초
+// - Attack02(SLAM)    : 원형, 빨강, 웜업 0.6초
+// - Taunt(SWEEP)      : 부채꼴(보스가 보는 방향 기준), 주황, 웜업 0.6초
+// - Idle/Walk/Death   : 이펙트 없음
+void CBossMonster::SpawnAttackEffectFor(BossState newState, const XMFLOAT3& xmf3Center, float fRadius, float fSweepAngleDeg)
+{
+    if (!m_pGroundAttackRangeEffect) return;
+
+    switch (newState)
+    {
+    case BossState::Attack01:
+    {
+        XMFLOAT4 color(1.0f, 0.8f, 0.0f, 1.0f); // 노랑
+        m_pGroundAttackRangeEffect->Spawn(xmf3Center, fRadius, 0.3f, color);
+        break;
+    }
+    case BossState::Attack02:
+    {
+        XMFLOAT4 color(1.0f, 0.1f, 0.05f, 1.0f); // 빨강
+        m_pGroundAttackRangeEffect->Spawn(xmf3Center, fRadius, 0.6f, color);
+        break;
+    }
+    case BossState::Taunt:
+    {
+        XMFLOAT4 color(1.0f, 0.5f, 0.0f, 1.0f); // 주황
+        float halfAngleDeg = fSweepAngleDeg * 0.5f;
+        m_pGroundAttackRangeEffect->Spawn(xmf3Center, fRadius, 0.6f, GetLook(), halfAngleDeg, color);
+        break;
+    }
+    default:
+        // Idle/Walk/Death 등은 공격범위 이펙트 없음
+        break;
     }
 }
 
@@ -93,6 +129,14 @@ void CBossMonster::TransitionTo(BossState newState)
     int newTrack = toTrack(m_eState);
     m_pSkinnedAnimationController->SetTrackPosition(newTrack, 0.0f);
     m_pSkinnedAnimationController->SetTrackEnable(newTrack, true);
+}
+
+void CBossMonster::PlayAttackPattern(BossState newState, const XMFLOAT3& xmf3Center, float fRadius, float fSweepAngleDeg)
+{
+    if (m_eState == BossState::Death) return; // 죽은 보스는 패턴 패킷이 와도 무시(이펙트도 스폰하지 않음)
+
+    TransitionTo(newState);
+    SpawnAttackEffectFor(newState, xmf3Center, fRadius, fSweepAngleDeg);
 }
 
 void CBossMonster::TakeDamage(float damage)

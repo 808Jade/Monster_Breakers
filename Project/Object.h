@@ -17,6 +17,7 @@
 
 class CShader;
 class CStandardShader;
+class CInteractPromptShader;
 struct QuadTreeNode;
 
 struct GameObjectInfo
@@ -546,6 +547,28 @@ public:
 	float GetLength() { return(m_nLength * m_xmf3Scale.z); }
 };
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+class CInteractPrompt : public CGameObject
+{
+public:
+	// pszDDSFileName 예: L"Texture/PressF.dds"
+	CInteractPrompt(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature,
+		LPCWSTR pszDDSFileName, XMFLOAT3 xmf3Position, float fWidth = 1.0f, float fHeight = 0.5f, float fInteractRange = 2.5f);
+	virtual ~CInteractPrompt();
+
+	// 매 프레임 플레이어 위치를 받아 거리 비교 후 visible을 갱신한다.
+	void Update(const XMFLOAT3& xmf3PlayerPosition);
+
+	float GetInteractRange() const { return m_fInteractRange; }
+	void SetInteractRange(float fRange) { m_fInteractRange = fRange; }
+
+	// 거리 조건을 만족해서 visible == true인 상태. 실제 "F 입력"을 처리할지 결정할 때 사용.
+	bool IsInRange() const { return visible; }
+
+private:
+	float m_fInteractRange = 2.5f;
+};
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 class CSkyBox : public CGameObject

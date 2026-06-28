@@ -391,6 +391,9 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 
 	m_pGroundAttackRangeEffect = new CGroundAttackRangeEffect();
 	m_pGroundAttackRangeEffect->Create(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, 4);
+	// 이펙트의 소유권(생성/Animate/Render/Release)은 Scene이 그대로 가지고,
+	// 보스는 포인터만 받아서 자신의 애니메이션 트랙(공격 패턴)에 따라 Spawn()만 호출한다.
+	m_pBoss->SetGroundAttackRangeEffect(m_pGroundAttackRangeEffect);
 
 	// otherplayer 설정
 	m_nOtherPlayers = 6;
@@ -424,6 +427,11 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 		}
 		m_ppOtherPlayers[i]->m_pSkinnedAnimationController->SetTrackEnable(0, true);
 	}
+
+	CInteractPrompt* pPressF = new CInteractPrompt(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature,
+		L"Image/PressF.dds", XMFLOAT3(-9.0f, 1.0f, 35.0f)); // 위치, 기본 2.5 범위
+	m_GameObjects.push_back(pPressF);
+
 	//
 	//	m_GameObjects.clear();
 	//	m_GameObjects.resize(8);
@@ -1364,6 +1372,15 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 	{
 	case WM_KEYDOWN:
 		switch (wParam) {
+		case 'F':
+			for (auto* obj : m_GameObjects)
+			{
+				if (auto* pPrompt = dynamic_cast<CInteractPrompt*>(obj))
+					if (pPrompt->IsInRange())
+						pPlayer->SetPosition(XMFLOAT3(219, 5, 18));
+			}
+			break;
+
 		case VK_TAB:
 			m_bEnableShadow = !m_bEnableShadow;
 				break;
@@ -1492,6 +1509,10 @@ void CScene::AnimateObjects(float fTimeElapsed)
 {
 	for (auto* obj : m_GameObjects) {
 		if (obj) obj->Animate(fTimeElapsed);
+
+		if (auto* pPrompt = dynamic_cast<CInteractPrompt*>(obj)) {
+			if (m_pPlayer) pPrompt->Update(m_pPlayer->GetPosition());
+		}
 	}
 	
 	for (int i = 0; i < SKILL_COUNT; ++i)

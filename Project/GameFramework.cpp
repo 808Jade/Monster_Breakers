@@ -413,7 +413,7 @@ void CGameFramework::BuildObjects()
 
 	m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
 
-	m_nScenes = 5; // 총 Scene 개수
+	m_nScenes = 4; // 총 Scene 개수
 	if (!m_ppScenes) {
 		m_ppScenes = new CScene * [m_nScenes] {};  // 딱 한 번만 할당, NULL로 초기화
 	}
@@ -454,27 +454,6 @@ void CGameFramework::BuildObjects()
 		m_ppScenes[2]->InitializeCollisionSystem();
 	}
 	else if (m_nCurrentScene == 3) {
-		// Boss Cscene
-
-/*		m_ppScenes[3] = new CScene();
-		m_ppScenes[3]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
-		if (GetSelectedPlayerModel() == EPlayerModelType::Wizard)
-			m_ppScenes[3]->m_pModel = m_ppScenes[3]->m_pWizardModel;
-		else if (GetSelectedPlayerModel() == EPlayerModelType::Knight)
-			m_ppScenes[3]->m_pModel = m_ppScenes[3]->m_pKnightModel;
-		else
-			m_ppScenes[3]->m_pModel = m_ppScenes[3]->m_pThiefModel;
-		m_ppScenes[3]->BuildSimpleUI(m_pd3dDevice, m_pd3dCommandList);*/
-
-		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[3]->GetGraphicsRootSignature(), NULL, m_ppScenes[3]->m_pModel);
-
-		m_ppScenes[3]->SetPlayer(pPlayer);
-		//m_pPlayer->SetPosition(XMFLOAT3(3, 0, 20));
-
-		m_ppScenes[3]->GenerateGameObjectsBoundingBox();
-		m_ppScenes[3]->InitializeCollisionSystem();
-	}
-	else if (m_nCurrentScene == 4) {
 		m_ppScenes[4] = new CEndScene();
 		m_ppScenes[4]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
 		CPlayer* pPlayer = new CPlayer();
@@ -982,13 +961,15 @@ void CGameFramework::UpdateMonsterPosition(int monsterID, const XMFLOAT3& pos, c
 	UpdateMonsterState(pMonster, state);
 }
 
-void CGameFramework::OnBossSpawned(const XMFLOAT3& pos)
+void CGameFramework::OnBossSpawned(long long bossID, const XMFLOAT3& pos, int hp, int maxHp)
 {
 	CScene* scene = m_ppScenes[m_nCurrentScene];
 	if (!scene || !scene->m_pBoss) return;
 
-	scene->m_pBoss->ResetHP();
+	scene->m_pBoss->SetMaxHP((float)maxHp);
+	scene->m_pBoss->SetHP((float)hp);         // ResetHP() 대신 서버가 준 실제 HP로 설정
 	scene->m_pBoss->SetPosition(pos.x, pos.y, pos.z);
 	scene->m_pBoss->TransitionTo(BossState::Idle);
 
+	cout << "[BOSS] Spawned ID=" << bossID << " HP=" << hp << "/" << maxHp << "\n";
 }
