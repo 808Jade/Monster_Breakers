@@ -1394,6 +1394,8 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 					if (pPrompt->IsInRange())
 						pPlayer->SetPosition(XMFLOAT3(219, 5, 18));
 			}
+			if (m_pBoss)
+				m_pBoss->ToggleHpbarVisible();
 			break;
 
 		case VK_TAB:
@@ -1548,7 +1550,7 @@ void CScene::AnimateObjects(float fTimeElapsed)
 				m_fSkillCooldown[i] = 0.0f;
 		}
 	}
-	if(m_pBoss) m_pBoss->Animate(fTimeElapsed);
+	if (m_pBoss) { m_pBoss->Animate(fTimeElapsed); m_pBoss->Update(fTimeElapsed); }
 	if (m_pGroundAttackRangeEffect) m_pGroundAttackRangeEffect->Animate(fTimeElapsed);
 	if (m_pFireballSystem) m_pFireballSystem->Animate(fTimeElapsed);
 	if (m_pGreenSpiritSystem) m_pGreenSpiritSystem->Animate(fTimeElapsed);
