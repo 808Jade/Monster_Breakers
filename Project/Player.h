@@ -72,6 +72,7 @@ public:
 	bool	m_isMonsterHit = false;
 	bool	alreadyHeld = false;
 	float	currentHP = 100.f;
+	float	maxHP = 100.f;
 	int		Pgold = 1000;
 	float	damage = 10.f;
 	bool	 m_bIsAtkBuffed = false;

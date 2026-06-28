@@ -328,6 +328,7 @@ public:
 		if (clientnum < 0 || clientnum >= m_nOtherPlayers) return;
 		if (!m_ppOtherPlayers[clientnum]) return; 
 		m_ppOtherPlayers[clientnum]->currentHP = hp;
+		m_ppOtherPlayers[clientnum]->maxHP += hp;
 	}
 };
 

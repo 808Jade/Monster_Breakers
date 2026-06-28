@@ -391,6 +391,9 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 
 	m_pGroundAttackRangeEffect = new CGroundAttackRangeEffect();
 	m_pGroundAttackRangeEffect->Create(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, 4);
+	// 이펙트의 소유권(생성/Animate/Render/Release)은 Scene이 그대로 가지고,
+	// 보스는 포인터만 받아서 자신의 애니메이션 트랙(공격 패턴)에 따라 Spawn()만 호출한다.
+	m_pBoss->SetGroundAttackRangeEffect(m_pGroundAttackRangeEffect);
 
 	// otherplayer 설정
 	m_nOtherPlayers = 6;

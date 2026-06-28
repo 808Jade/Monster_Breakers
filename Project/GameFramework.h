@@ -75,6 +75,7 @@ public:
 
 	void UpdatePlayerHP(float hp) {
 		m_pPlayer->currentHP = hp;
+		m_pPlayer->maxHP += hp;
 	}
 	void UpdatePlayerGold(int gold) {
 		m_pPlayer->Pgold = gold;
@@ -84,7 +85,7 @@ public:
 	}
 
 	void OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int state);
-	void OnBossSpawned(const XMFLOAT3& pos);
+	void OnBossSpawned(long long bossID, const XMFLOAT3& pos, int hp, int maxHp);
 	void UpdateMonsterState(CMonster* pMonster, int state);
 	void UpdateMonsterPosition(int monsterID, const XMFLOAT3& pos, const XMFLOAT3& rot, int state);
 
