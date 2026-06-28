@@ -12,6 +12,13 @@ namespace
     constexpr int TRACK_TAUNT = 4;
     constexpr int TRACK_DEATH = 5;
     constexpr int BOSS_ANIMATION_TRACKS = 6;
+
+    // 보스 hpbar 화면 위치/크기 (화면 상단 우측, 플레이어 hpbar 바로 위).
+    // 좌표계는 플레이어 hpbar와 동일: left는 시작 x, 거기서 MAX_WIDTH만큼 우측으로 뻗는다.
+    constexpr float BOSS_HPBAR_LEFT = -0.5f;
+    constexpr float BOSS_HPBAR_MAX_WIDTH = 1.0f;
+    constexpr float BOSS_HPBAR_TOP = 0.75f;
+    constexpr float BOSS_HPBAR_HEIGHT = 0.01f;
 }
 
 CBossMonster::CBossMonster(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature,
@@ -41,7 +48,20 @@ CBossMonster::CBossMonster(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
     for (int i = 1; i < BOSS_ANIMATION_TRACKS; ++i)
         m_pSkinnedAnimationController->SetTrackEnable(i, false);
 
-    m_pHpbar = new Hpbar(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
+    // 플레이어 hpbar(SetHPWidth)와 동일한 (left, width, top, height) 시그니처를 사용.
+    // 사진 기준 화면 상단 우측에 배치: 플레이어 hpbar(top=0.85f)보다 위쪽, 약간 더 큰 폭.
+    m_pBossHpbar = new CScreenShader(1);
+    m_pBossHpbar->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
+    CTexture* pTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+    pTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/hp.dds", RESOURCE_TEXTURE2D, 0);
+    CScene::CreateShaderResourceViews(pd3dDevice, pTexture, 0, 15);
+    CScreenRectMeshTextured* pMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, BOSS_HPBAR_LEFT, BOSS_HPBAR_MAX_WIDTH, BOSS_HPBAR_TOP, BOSS_HPBAR_HEIGHT);
+    m_pBossHpbar->SetMesh(0, pMesh);
+    m_pBossHpbar->SetTexture(pTexture);
+
+    // SetHPWidth에서 mesh를 다시 만들 때 필요
+    m_pd3dDevice = pd3dDevice;
+    m_pd3dCommandList = pd3dCommandList;
 
     SetMonsterID(id);
     // g_monsters[id] = this;
@@ -50,9 +70,7 @@ CBossMonster::CBossMonster(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 }
 
 CBossMonster::~CBossMonster()
-{
-    if (m_pHpbar) delete m_pHpbar;
-}
+{}
 
 int CBossMonster::TrackOf(BossState s) const
 {
@@ -155,17 +173,32 @@ void CBossMonster::Animate(float fTimeElapsed)
     CGameObject::Animate(fTimeElapsed);
 }
 
+void CBossMonster::Update(float fTimeElapsed)
+{
+    // 플레이어(CTerrainPlayer::Update)의 SetHPWidth 호출 방식과 동일하게,
+    // HP 비율이 바뀔 때만 mesh를 다시 만들어 교체한다.
+    float newWidth = m_fHpRatio * BOSS_HPBAR_MAX_WIDTH;
+
+    if (fabs(m_fPrevHpbarWidth - newWidth) > 0.001f)
+    {
+        m_fPrevHpbarWidth = newWidth;
+        SetHPWidth(newWidth);
+    }
+}
+
+void CBossMonster::SetHPWidth(float newWidth)
+{
+    if (!m_pBossHpbar || !m_pd3dDevice || !m_pd3dCommandList) return;
+
+    CScreenRectMeshTextured* pNewMesh = new CScreenRectMeshTextured(
+        m_pd3dDevice, m_pd3dCommandList, BOSS_HPBAR_LEFT, newWidth, BOSS_HPBAR_TOP, BOSS_HPBAR_HEIGHT);
+    m_pBossHpbar->SetMesh(0, pNewMesh);
+}
+
 void CBossMonster::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
 {
     CGameObject::Render(pd3dCommandList, pCamera);
 
-    if (m_pHpbar && !IsDead())
-    {
-        XMFLOAT3 pos = GetPosition();
-
-        m_pHpbar->SetPosition(pos.x, pos.y + 5.0f, pos.z);
-        m_pHpbar->LookAt(pCamera->GetPosition(), XMFLOAT3(0.0f, 1.0f, 0.0f));
-        m_pHpbar->SetHpRatio(m_fHpRatio);
-        m_pHpbar->Render(pd3dCommandList, pCamera);
-    }
+    if (m_pBossHpbar && m_bHpbarVisible && m_eState != BossState::Death)
+        m_pBossHpbar->Render(pd3dCommandList, pCamera);
 }
