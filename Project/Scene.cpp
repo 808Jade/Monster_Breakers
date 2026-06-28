@@ -134,8 +134,8 @@ void CScene::BuildDefaultLightsAndMaterials(bool toggle)
 
 void CScene::InitializeCollisionSystem()
 {
-	BoundingBox worldBounds(XMFLOAT3(-20.0f, 0.f, 40.0f), XMFLOAT3(150.0f, 100.0f, 170.0f));
-	m_CollisionManager.Build(worldBounds, 35, 4);
+	BoundingBox worldBounds(XMFLOAT3(140.0f, 0.f, 30.0f), XMFLOAT3(200.0f, 100.0f, 150.0f));
+	m_CollisionManager.Build(worldBounds, 100, 4);
 
 	for (auto* obj : m_GameObjects) {
 		m_CollisionManager.InsertObject(obj);
@@ -175,7 +175,24 @@ void CScene::InitializeCollisionSystem()
 			std::string::npos != strFrameName.find("stone_0") ||
 			std::string::npos != strFrameName.find("mountains") ||
 			std::string::npos != strFrameName.find("dirt") ||
-			std::string::npos != strFrameName.find("log")
+			std::string::npos != strFrameName.find("log") ||
+			std::string::npos != strFrameName.find("swordfish") ||
+			std::string::npos != strFrameName.find("fire") ||
+			std::string::npos != strFrameName.find("armor") ||
+			std::string::npos != strFrameName.find("arrow") ||
+			std::string::npos != strFrameName.find("axe") ||
+			std::string::npos != strFrameName.find("blacksmith_hammer") ||
+			std::string::npos != strFrameName.find("crossbow") ||
+			std::string::npos != strFrameName.find("dagger") ||
+			std::string::npos != strFrameName.find("long_bow") ||
+			std::string::npos != strFrameName.find("short_bow") ||
+			std::string::npos != strFrameName.find("mace") ||
+			std::string::npos != strFrameName.find("one_handed_sword") ||
+			std::string::npos != strFrameName.find("two_handed_sword") ||
+			std::string::npos != strFrameName.find("shield_02") ||
+			std::string::npos != strFrameName.find("one_handed_hammer") ||
+			std::string::npos != strFrameName.find("two_handed_hammer") ||
+			std::string::npos != strFrameName.find("rune_stone_small")
 			)
 		{
 			continue;
