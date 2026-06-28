@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Object.h"
 #include "Hpbar.h"
+#include "Shader.h"
 
 class CPlayer;
 class CGroundAttackRangeEffect;
@@ -58,7 +59,7 @@ public:
     // 바닥 공격범위(텔레그래프) 이펙트 풀. 소유권은 Scene에 있고, 보스는 포인터만 받아서 Spawn()만 호출한다.
     void SetGroundAttackRangeEffect(CGroundAttackRangeEffect* pEffect) { m_pGroundAttackRangeEffect = pEffect; }
 
-    Hpbar* m_pHpbar = nullptr;
+    CTextureToScreenShader* m_pBossHpbar = NULL;
 
     void SetMaxHP(float hp)
     {
@@ -71,12 +72,19 @@ public:
         m_fHpRatio = m_fMonsterHP / m_fMaxHP;
     }
 
+    virtual void Update(float fTimeElapsed);
+
+    // 플레이어 HP바와 동일한 방식으로, 비율(newWidth)에 맞춰 hpbar 메시를 새로 만들어 교체한다.
+    void SetHPWidth(float newWidth);
+    bool IsHpbarVisible() const { return m_bHpbarVisible; }
+    void SetHpbarVisible(bool bVisible) { m_bHpbarVisible = bVisible; }
+    void ToggleHpbarVisible() { m_bHpbarVisible = !m_bHpbarVisible; }
 private:
     int TrackOf(BossState s) const;
 
     // newState(애니메이션 트랙)에 따라 공격범위 이펙트를 스폰한다.
     // Idle/Walk/Death 등 비공격 상태에서는 아무 일도 하지 않는다.
-    void SpawnAttackEffectFor(BossState newState, const XMFLOAT3 & xmf3Center, float fRadius, float fSweepAngleDeg);
+    void SpawnAttackEffectFor(BossState newState, const XMFLOAT3& xmf3Center, float fRadius, float fSweepAngleDeg);
 
     CGroundAttackRangeEffect* m_pGroundAttackRangeEffect = nullptr;
 
@@ -88,4 +96,13 @@ private:
     float        m_fHpRatio = 1.0f;
 
     BossState    m_eState = BossState::Idle;
+
+    // hpbar 메시 재생성용으로 보관해두는 device/cmdList (플레이어 SetHPWidth와 동일한 방식)
+    ID3D12Device* m_pd3dDevice = nullptr;
+    ID3D12GraphicsCommandList* m_pd3dCommandList = nullptr;
+
+    // 매 프레임 불필요한 mesh 재생성을 막기 위한 이전 폭 캐시
+    float m_fPrevHpbarWidth = -1.0f;
+
+    bool m_bHpbarVisible = true;
 };
