@@ -340,10 +340,10 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 
 	m_pMap = new Map(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 
-	// 터레인 보정 (1/4)
-	float fScaleX = 321.8676f / 2048.0f;
-	float fScaleZ = 311.1753f / 2048.0f;
-	float fScaleY = 16.70971f;
+	// 터레인 보정 (1/4) Mesh Resolution
+	float fScaleX = 533.2781f / 2048.0f;
+	float fScaleZ = 534.9254f / 2048.0f;
+	float fScaleY = 29.68098f;
 	m_pTerrain = new CHeightMapTerrain(
 		pd3dDevice,                  
 		pd3dCommandList,            
