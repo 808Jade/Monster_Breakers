@@ -171,9 +171,11 @@ void CScene::InitializeCollisionSystem()
 			std::string::npos != strFrameName.find("onion") ||
 			std::string::npos != strFrameName.find("potato") ||
 			std::string::npos != strFrameName.find("plane") ||
-			std::string::npos != strFrameName.find("bridge")
-			//std::string::npos != strFrameName.find("tree") ||
-			//std::string::npos != strFrameName.find("rock")
+			std::string::npos != strFrameName.find("bridge") ||
+			std::string::npos != strFrameName.find("stone_0") ||
+			std::string::npos != strFrameName.find("mountains") ||
+			std::string::npos != strFrameName.find("dirt") ||
+			std::string::npos != strFrameName.find("log")
 			)
 		{
 			continue;

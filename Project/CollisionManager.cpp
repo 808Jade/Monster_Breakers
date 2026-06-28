@@ -481,20 +481,17 @@ void CCollisionManager::HandleCollision(CPlayer* player, const ColliderInfo& col
         float dz = playerBox.Center.z - colinfo.sphere.Center.z;
         float distance = std::sqrt(dx * dx + dz * dz);
 
-        if (distance > 0.0001f) // 중심이 완벽히 겹쳤을 때의 0 나누기 방지
+        if (distance > 0.0001f)
         {
-            // 플레이어를 대략적인 원통(Cylinder)으로 간주하여 충돌 반경 계산
-            float playerRadius = std::max(playerBox.Extents.x, playerBox.Extents.z);
+            // 플레이어 반경을 max가 아닌 min 또는 약간 줄여서 타이트하게 설정
+            float playerRadius = std::min(playerBox.Extents.x, playerBox.Extents.z) * 0.8f;
             float safeDistance = playerRadius + colinfo.sphere.Radius;
 
             if (distance < safeDistance)
             {
                 float overlap = safeDistance - distance;
-                float nx = dx / distance;
-                float nz = dz / distance;
-
-                playerPos.x += nx * overlap;
-                playerPos.z += nz * overlap;
+                playerPos.x += (dx / distance) * overlap;
+                playerPos.z += (dz / distance) * overlap;
             }
         }
         break;
@@ -502,34 +499,60 @@ void CCollisionManager::HandleCollision(CPlayer* player, const ColliderInfo& col
 
     case ColliderType::OBB:
     {
-        // 장애물 중심 -> 플레이어 중심 방향으로 부드럽게 밀어내기
+        // OBB 표면에서 가장 가까운 점(Closest Point)을 찾아 밀어내기
         using namespace DirectX;
 
         XMVECTOR vPlayerCenter = XMLoadFloat3(&playerBox.Center);
         XMVECTOR vObbCenter = XMLoadFloat3(&colinfo.obb.Center);
+        XMVECTOR vObbOrient = XMLoadFloat4(&colinfo.obb.Orientation);
 
-        // Y축(높이)은 무시하고 X, Z 평면에서의 방향 벡터만 계산
-        XMVECTOR vDir = XMVectorSubtract(vPlayerCenter, vObbCenter);
-        vDir = XMVectorSetY(vDir, 0.0f);
+        // 1. 플레이어 위치를 OBB의 로컬 공간(회전이 풀린 똑바른 상태)으로 변환
+        XMVECTOR vInvOrient = XMQuaternionInverse(vObbOrient);
+        XMVECTOR vLocalPlayer = XMVector3Rotate(XMVectorSubtract(vPlayerCenter, vObbCenter), vInvOrient);
 
-        float distance = XMVectorGetX(XMVector3Length(vDir));
+        XMFLOAT3 localPlayerPos;
+        XMStoreFloat3(&localPlayerPos, vLocalPlayer);
 
-        if (distance > 0.0001f)
+        // 2. 로컬 공간에서 OBB의 경계(Extents) 안으로 위치를 제한(Clamp)하여 가장 가까운 표면 점을 찾음
+        XMFLOAT3 closestPoint;
+        closestPoint.x = std::clamp(localPlayerPos.x, -colinfo.obb.Extents.x, colinfo.obb.Extents.x);
+        closestPoint.y = 0.0f; // Y축은 무시
+        closestPoint.z = std::clamp(localPlayerPos.z, -colinfo.obb.Extents.z, colinfo.obb.Extents.z);
+
+        // 3. 찾은 표면 점을 다시 월드 공간으로 복구
+        XMVECTOR vLocalClosest = XMLoadFloat3(&closestPoint);
+        XMVECTOR vWorldClosest = XMVectorAdd(XMVector3Rotate(vLocalClosest, vObbOrient), vObbCenter);
+
+        // 4. 플레이어 중심과 가장 가까운 표면 점 사이의 거리 계산
+        XMVECTOR vPushDir = XMVectorSubtract(vPlayerCenter, vWorldClosest);
+        vPushDir = XMVectorSetY(vPushDir, 0.0f);
+        float distance = XMVectorGetX(XMVector3Length(vPushDir));
+
+        // 플레이어의 실제 충돌 반경 (시각적 크기보다 살짝 작게 주면 게임이 쾌적해집니다)
+        float playerRadius = std::min(playerBox.Extents.x, playerBox.Extents.z) * 0.8f;
+
+        // 플레이어 중심이 OBB 표면을 파고들었다면(distance < playerRadius) 밖으로 밀어냄
+        if (distance < playerRadius && distance > 0.0001f)
         {
-            vDir = XMVector3Normalize(vDir);
+            vPushDir = XMVector3Normalize(vPushDir);
+            float overlap = playerRadius - distance;
 
-            float playerRadius = std::max(playerBox.Extents.x, playerBox.Extents.z);
-            float obbRadius = std::sqrt(colinfo.obb.Extents.x * colinfo.obb.Extents.x +
-                colinfo.obb.Extents.z * colinfo.obb.Extents.z);
-
-            float safeDistance = playerRadius + obbRadius;
-
-            if (distance < safeDistance)
-            {
-                float overlap = safeDistance - distance;
-
-                playerPos.x += XMVectorGetX(vDir) * overlap;
-                playerPos.z += XMVectorGetZ(vDir) * overlap;
+            playerPos.x += XMVectorGetX(vPushDir) * overlap;
+            playerPos.z += XMVectorGetZ(vPushDir) * overlap;
+        }
+        // 플레이어 중심이 아예 OBB 내부에 완전히 들어가 버린 예외 상황 처리 (중심 방향으로 밀어내기)
+        else if (distance <= 0.0001f)
+        {
+            // OBB 중심에서 플레이어 방향으로 강제로 살짝 밀어냄
+            XMVECTOR vEscapeDir = XMVectorSubtract(vPlayerCenter, vObbCenter);
+            vEscapeDir = XMVectorSetY(vEscapeDir, 0.0f);
+            if (XMVectorGetX(XMVector3LengthSq(vEscapeDir)) > 0.0001f) {
+                vEscapeDir = XMVector3Normalize(vEscapeDir);
+                playerPos.x += XMVectorGetX(vEscapeDir) * playerRadius;
+                playerPos.z += XMVectorGetZ(vEscapeDir) * playerRadius;
+            }
+            else {
+                playerPos.x += playerRadius; // 완전 중심이면 임의의 방향(X축)으로 밀어냄
             }
         }
         break;

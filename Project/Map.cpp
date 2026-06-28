@@ -348,7 +348,7 @@ void Map::BuildWorldBoundingBoxes()
 			"Meat_market_with_objects", "MeatMarket", "rune_stone", "staked_fence",
 			"stone_fence_01", "stone_pillar", "street_latern_01", "street_latern_02",
 			"Table_with_weapon", "Vegetable_market_with_objects", "Weapon_Market_with_objects",
-			"weapon_rack", "wooden_basin", "wood_fence_gate_01", "wood_fence_gate_02"
+			"weapon_rack", "wooden_basin", "wood_fence_gate_01", "wood_fence_gate_02", "fence", "cart"
 		};
 		bool isOBB = false;
 		for (const auto& name : targetNamesObb) {
@@ -384,7 +384,7 @@ void Map::BuildWorldBoundingBoxes()
 			{
 				BoundingOrientedBox obb;
 				BoundingOrientedBox::CreateFromBoundingBox(obb, localBox); // 로컬 AABB에서 OBB 생성
-				obb.Transform(obb, worldMat); // 월드 행렬 곱해서 회전값 반영
+				obb.Transform(obb, worldMat);
 
 				collider = ColliderInfo(obb, nullptr, idx, instID);
 			}
