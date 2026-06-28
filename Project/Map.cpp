@@ -343,7 +343,7 @@ void Map::BuildWorldBoundingBoxes()
 			"rock", "Bakery_market_with_food", "BakeryMarket", "BakeryMarket_no_dop",
 			"barrel", "barrel_fish", "bench", "big_fire", "big_log", "big_log_half_02",
 			"boat", "cauldron", "cauldron with food", "chair", "church", "fence_01",
-			"fish_market", "Fish_market_with_sections", "house_01", "lamp_post",
+			"fish_market", "Fish_market_with_sections", "house", "lamp_post",
 			"leather_dressing_frame", "loaf_basket", "log", "log_half_01", "maneken",
 			"Meat_market_with_objects", "MeatMarket", "rune_stone", "staked_fence",
 			"stone_fence_01", "stone_pillar", "street_latern_01", "street_latern_02",
