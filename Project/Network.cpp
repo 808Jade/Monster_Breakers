@@ -755,7 +755,9 @@ void ProcessPacket(char* ptr)
         bool isBusy = (cur == BossState::Attack01 || cur == BossState::Attack02 ||
             cur == BossState::Taunt || cur == BossState::Death);
 
-        if (!isBusy) {
+        // Death만 보호. Attack/Taunt는 ONCE라서 끝나면 멈춰있을 뿐이므로
+        // Move 패킷이 오면 그 시점에 풀어줘도 안전함 (서버가 어차피 패턴 종료 후에만 보냄)
+        if (cur != BossState::Death) {
             if (packet->isMoving && cur != BossState::Walk)
                 scene->m_pBoss->TransitionTo(BossState::Walk);
             else if (!packet->isMoving && cur != BossState::Idle)
