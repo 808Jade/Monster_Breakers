@@ -192,7 +192,8 @@ void CScene::InitializeCollisionSystem()
 			std::string::npos != strFrameName.find("shield_02") ||
 			std::string::npos != strFrameName.find("one_handed_hammer") ||
 			std::string::npos != strFrameName.find("two_handed_hammer") ||
-			std::string::npos != strFrameName.find("rune_stone_small")
+			std::string::npos != strFrameName.find("rune_stone_small") ||
+			std::string::npos != strFrameName.find("helmet")
 			)
 		{
 			continue;
