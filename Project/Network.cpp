@@ -748,6 +748,7 @@ void ProcessPacket(char* ptr)
         if (!scene || !scene->m_pBoss) break;
 
         scene->m_pBoss->SetPosition(packet->position.x, packet->position.y, packet->position.z);
+        scene->m_pBoss->SetLookDirection(packet->look);
 
         BossState cur = scene->m_pBoss->GetState();
 

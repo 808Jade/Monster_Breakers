@@ -43,6 +43,14 @@ public:
     float GetHPRatio() const { return m_fHpRatio; }
     bool  IsDead()     const { return m_fMonsterHP <= 0.0f; }
 
+    void SetLookDirection(const XMFLOAT3& xmf3Look)
+    {
+        XMFLOAT3 pos = GetPosition();
+        XMFLOAT3 target = XMFLOAT3(pos.x + xmf3Look.x, pos.y + xmf3Look.y, pos.z + xmf3Look.z);
+        XMFLOAT3 up = XMFLOAT3(0.0f, 1.0f, 0.0f);
+        LookAt(target, up);
+    }
+
     void SetPlayer(CPlayer* p) { m_pPlayer = p; }
     void SetMonsterID(int id) { m_nMonsterID = id; }
     int  GetMonsterID() const { return m_nMonsterID; }
