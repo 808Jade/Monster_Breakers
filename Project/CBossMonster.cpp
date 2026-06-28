@@ -45,8 +45,8 @@ CBossMonster::CBossMonster(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 
     m_pHpbar = new Hpbar(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
 
-/*    SetMonsterID(id);
-    g_monsters[id] = this;*/
+    SetMonsterID(id);
+    // g_monsters[id] = this;
 
     CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }

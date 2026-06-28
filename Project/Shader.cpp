@@ -893,3 +893,85 @@ D3D12_SHADER_BYTECODE CGroundRangeShader::CreatePixelShader()
 {
 	return CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSGroundRange", "ps_5_1", &m_pd3dPixelShaderBlob);
 }
+
+CInteractPromptShader::~CInteractPromptShader()
+{
+	if (m_pTexture) m_pTexture->Release();
+}
+
+D3D12_INPUT_LAYOUT_DESC CInteractPromptShader::CreateInputLayout()
+{
+	// Same as CHpbarShader: POSITION(0), TEXCOORD(12) - matches CRectMesh vertex format.
+	UINT n = 2;
+	D3D12_INPUT_ELEMENT_DESC* p = new D3D12_INPUT_ELEMENT_DESC[n];
+
+	p[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	p[1] = { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+
+	D3D12_INPUT_LAYOUT_DESC d;
+	d.pInputElementDescs = p;
+	d.NumElements = n;
+	return d;
+}
+
+D3D12_DEPTH_STENCIL_DESC CInteractPromptShader::CreateDepthStencilState()
+{
+	// Depth test on (so it can be occluded by walls etc.), but never writes depth, like CHpbarShader.
+	D3D12_DEPTH_STENCIL_DESC d;
+	::ZeroMemory(&d, sizeof(d));
+	d.DepthEnable = TRUE;
+	d.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+	d.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	d.StencilEnable = FALSE;
+	return d;
+}
+
+D3D12_BLEND_DESC CInteractPromptShader::CreateBlendState()
+{
+	// Standard alpha blending so the DDS's transparent background shows through.
+	D3D12_BLEND_DESC d;
+	::ZeroMemory(&d, sizeof(d));
+	d.RenderTarget[0].BlendEnable = TRUE;
+	d.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+	d.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+	d.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+	d.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+	d.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+	d.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+	d.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOOP;
+	d.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+	return d;
+}
+
+D3D12_RASTERIZER_DESC CInteractPromptShader::CreateRasterizerState()
+{
+	auto rs = CShader::CreateRasterizerState();
+	rs.CullMode = D3D12_CULL_MODE_NONE;   // billboard quad should be visible from both sides
+	return rs;
+}
+
+D3D12_SHADER_BYTECODE CInteractPromptShader::CreateVertexShader()
+{
+	return CShader::CompileShaderFromFile(L"Shaders.hlsl", "VSInteractPrompt", "vs_5_1", &m_pd3dVertexShaderBlob);
+}
+
+D3D12_SHADER_BYTECODE CInteractPromptShader::CreatePixelShader()
+{
+	return CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSInteractPrompt", "ps_5_1", &m_pd3dPixelShaderBlob);
+}
+
+void CInteractPromptShader::SetTexture(CTexture* pTexture)
+{
+	if (m_pTexture) m_pTexture->Release();
+	m_pTexture = pTexture;
+	if (m_pTexture) m_pTexture->AddRef();
+}
+
+void CInteractPromptShader::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
+{
+	CShader::Render(pd3dCommandList, pCamera);
+
+	// TODO: confirm the root parameter index registered via CScene::CreateShaderResourceViews(...)
+	// for this texture matches slot 0 of m_pTexture's root-parameter table (see CTexture::UpdateShaderVariable).
+	if (m_pTexture) m_pTexture->UpdateShaderVariable(pd3dCommandList, 0, 0);
+}
