@@ -506,7 +506,7 @@ void CTerrainPlayer::OnPlayerUpdateCallback(float fTimeElapsed)
 	float terrainX = -156.71f;
 	float terrainY = -14.43f;
 	float terrainZ = -255.0f;
-	float playerFootOffset = -0.f;
+	float playerFootOffset = -0.0f;
 
 	float localX = xmf3PlayerPosition.x - terrainX;
 	float localZ = xmf3PlayerPosition.z - terrainZ;
@@ -539,7 +539,7 @@ void CTerrainPlayer::OnCameraUpdateCallback(float fTimeElapsed)
 	float terrainX = -156.71f;
 	float terrainY = -14.43f;
 	float terrainZ = -255.0f;
-	float playerFootOffset = -0.f;
+	float playerFootOffset = -0.0f;
 
 	float localX = xmf3CameraPosition.x - terrainX;
 	float localZ = xmf3CameraPosition.z - terrainZ;
