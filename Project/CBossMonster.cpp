@@ -41,8 +41,6 @@ CBossMonster::CBossMonster(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
     for (int i = 1; i < BOSS_ANIMATION_TRACKS; ++i)
         m_pSkinnedAnimationController->SetTrackEnable(i, false);
 
-    SetScale(1.0f, 1.0f, 1.0f);
-
     m_pHpbar = new Hpbar(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
 
     SetMonsterID(id);
@@ -154,7 +152,7 @@ void CBossMonster::TakeDamage(float damage)
 
 void CBossMonster::Animate(float fTimeElapsed)
 {
-    CGameObject::Animate(fTimeElapsed); // 내부에서 애니메이션 트랙 진행(AdvanceTime)
+    CGameObject::Animate(fTimeElapsed);
 }
 
 void CBossMonster::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
