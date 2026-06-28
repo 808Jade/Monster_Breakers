@@ -386,8 +386,9 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 
 	m_pBoss = new CBossMonster(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature,
 		"Model/Monster/DemonKingPA.bin", nullptr, 50000.f, 99999);
-	m_pBoss->SetFrameName("Boss");
+	//m_pBoss->SetFrameName("Boss");
 	m_pBoss->SetPosition(XMFLOAT3(-9999.0f, -9999.0f, -9999.0f));
+	m_pBoss->SetScale(XMFLOAT3(2, 2, 2));
 
 	m_pGroundAttackRangeEffect = new CGroundAttackRangeEffect();
 	m_pGroundAttackRangeEffect->Create(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, 4);
@@ -1590,6 +1591,7 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 	//if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
 
 	m_CollisionManager.Update(m_pPlayer);
+
 
 	if (m_pBoss) m_pBoss->Render(pd3dCommandList, pCamera);
 	if (m_pGroundAttackRangeEffect) m_pGroundAttackRangeEffect->Render(pd3dCommandList, pCamera);
