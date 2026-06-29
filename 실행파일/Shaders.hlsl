@@ -705,6 +705,74 @@ float4 PSHpbar(VS_HPBAR_OUT input) : SV_TARGET
 {
     return gMaterial.m_cDiffuse;
 }
+// VSHpbar와 동일한 빌보드 변환(객체 월드 위치를 중심으로 카메라를 향해 정렬)을 그대로 쓰고,
+// 픽셀 셰이더에서는 단색이 아니라 t6(albedo) 텍스처를 샘플링해서 그린다.
+// CRectMesh(POSITION+TEXCOORD)를 메시로 사용하면 입력 레이아웃이 VSHpbar와 그대로 맞는다.
+
+VS_HPBAR_OUT VSInteractPrompt(VS_HPBAR_IN input)
+{
+    return VSHpbar(input);
+}
+
+float4 PSInteractPrompt(VS_HPBAR_OUT input) : SV_TARGET
+{
+    float4 texColor = gtxtAlbedoTexture.Sample(gssWrap, input.uv);
+
+    // gMaterial.m_cDiffuse.a 를 전체 페이드(등장/소멸)용으로 사용. CPU에서 갱신.
+    texColor.a *= saturate(gMaterial.m_cDiffuse.a);
+
+    clip(texColor.a - 0.01f);
+
+    return texColor;
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ===== 보스 등의 바닥 공격범위 표시(텔레그래프) =====
+// VSTextured(이미 정의됨)를 그대로 사용하고, 픽셀 셰이더에서 원형 경고 패턴을 그린다.
+// gMaterial.m_cDiffuse.rgb  : 경고 색상
+// gMaterial.m_cDiffuse.a    : 전체 페이드(등장/소멸, 0~1) - CPU에서 매 프레임 갱신
+// gMaterial.m_cSpecular.a   : 워밍업 진행도(0~1, 중심에서 차오름) - CPU에서 매 프레임 갱신
+// gMaterial.m_cEmissive.x   : 부채꼴 모드 여부(0=원형, 1=부채꼴)
+// gMaterial.m_cEmissive.y   : 부채꼴 정면 각도(라디안, 메쉬 로컬 평면 기준)
+// gMaterial.m_cEmissive.z   : 부채꼴 half-angle(라디안) - 정면 기준 좌우로 이 각도까지만 표시
+
+float4 PSGroundRange(VS_TEXTURED_OUTPUT input) : SV_TARGET
+{
+    float2 c = (input.uv - 0.5f) * 2.0f; // -1..1, 메쉬가 SetScale(radius,1,radius)로 맞춰진다고 가정
+    float dist = length(c);
+
+    float progress = saturate(gMaterial.m_cSpecular.a);
+    float fade = saturate(gMaterial.m_cDiffuse.a);
+
+    // 중심에서 progress 비율까지 옅게 채워짐(타격 시점에 가까워질수록 꽉 찬다)
+    float fill = 1.0f - smoothstep(progress - 0.04f, progress, dist);
+    // 전체 반경 둘레에 항상 표시되는 밝은 테두리 링
+    float ring = smoothstep(0.82f, 0.9f, dist) - smoothstep(0.94f, 1.0f, dist);
+
+    float alpha = saturate(fill * 0.45f + ring) * fade;
+    bool bSector = gMaterial.m_cEmissive.x > 0.5f;
+    if (bSector)
+    {
+        // c가 0벡터에 가까우면(중심) 각도가 불안정하므로 그대로 통과시킨다.
+        if (dist > 0.001f)
+        {
+            float pixelAngle = atan2(c.x, c.y); // CPU의 WorldDirectionToLocalAngle()과 동일한 축 매핑(atan2(dx, dz))
+            float facingAngle = gMaterial.m_cEmissive.y;
+            float halfAngle = gMaterial.m_cEmissive.z;
+
+            // 두 각도 차이를 -PI..PI로 정규화
+            float diff = pixelAngle - facingAngle;
+            diff = diff - floor((diff + 3.14159265f) / (2.0f * 3.14159265f)) * (2.0f * 3.14159265f);
+
+            // 부채꼴 가장자리를 살짝 부드럽게(에일리어싱 방지)
+            float edgeSoftness = 0.04f;
+            float sectorMask = 1.0f - smoothstep(halfAngle - edgeSoftness, halfAngle + edgeSoftness, abs(diff));
+            alpha *= sectorMask;
+        }
+    }
+    clip(alpha - 0.01f);
+
+    return float4(gMaterial.m_cDiffuse.rgb, alpha);
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct VS_BEAM_INPUT
 {
@@ -739,4 +807,38 @@ float4 PSBeam(VS_BEAM_OUTPUT input) : SV_TARGET
     float3 color = float3(0.35f, 0.75f, 1.0f);
 
     return float4(color * glow * 2.5f, glow);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+cbuffer cbDebugObject : register(b2)
+{
+    matrix gmtxDebugWorld : packoffset(c0);
+    float4 gvDebugColor : packoffset(c4);
+};
+
+struct VS_PRIMITIVE_INPUT
+{
+    float3 position : POSITION;
+};
+
+struct VS_PRIMITIVE_OUTPUT
+{
+    float4 position : SV_POSITION;
+};
+
+VS_PRIMITIVE_OUTPUT VSPrimitive(VS_PRIMITIVE_INPUT input)
+{
+    VS_PRIMITIVE_OUTPUT output;
+
+    float4 posW = mul(float4(input.position, 1.0f), gmtxDebugWorld);
+    float4 posV = mul(posW, gmtxView); // 카메라 cbuffer
+    float4 posH = mul(posV, gmtxProjection); // 카메라 cbuffer
+
+    output.position = posH;
+    return output;
+}
+
+float4 PSPrimitive(VS_PRIMITIVE_OUTPUT input) : SV_TARGET
+{
+    return float4(1.0f, 1.0f, 0.0f, 1.0f);
 }
