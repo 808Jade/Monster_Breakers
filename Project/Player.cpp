@@ -680,7 +680,7 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 
 	//currentHP = g_myid.hp;
 
-	float hpRatio = currentHP / maxHP;
+	float hpRatio = currentHP / 100.f;
 	float newWidth = hpRatio * 0.5f;
 
 	static float prevWidth = -1.0f;
