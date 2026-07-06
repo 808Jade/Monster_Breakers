@@ -72,6 +72,12 @@ constexpr char SC_P_BOSS_PATTERN = 72;  // 패턴 + 공격범위 정보
 constexpr char SC_P_BOSS_DEATH = 73;
 constexpr char SC_P_BOSS_MOVE = 74;
 
+//npc
+constexpr char CS_P_NPC_INTERACT = 75;
+constexpr char SC_P_NPC_MISSION = 76;
+constexpr char SC_P_MISSION_COMPLETE = 77;
+
+
 // =================== 주의!! ========================
 // 
 // 1. 애니메이션 동기화는 클라에서 애니메이션 완료하면 하기
@@ -443,6 +449,33 @@ struct sc_packet_particle_impact {
 	char				type;
 	long long			player_id;
 	XMFLOAT3			impact_pos;
+};
+
+//npc
+struct cs_packet_npc_interact
+{
+	unsigned char		size;
+	char				type;
+	long long			npcID;
+};
+
+struct sc_packet_npc_mission
+{
+	unsigned char		size;
+	char				type;
+	int					missionID;
+	char				description[128];   // 클라 화면에 띄울 미션 설명
+	int					targetCount;
+	int					rewardGold;
+};
+
+struct sc_packet_mission_complete
+{
+	unsigned char		size;
+	char				type;
+	int					missionID;
+	int					rewardGold;
+	int					totalGold;
 };
 
 #pragma pack (pop)
