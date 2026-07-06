@@ -196,9 +196,19 @@ void send_weapon_pos_packet(const XMFLOAT3& weaponPosition, const XMFLOAT3& weap
 }
 
 // =================================================================
-//                          아이템 관리
+//                          NPC 관리
 // =================================================================
 
+void send_npc_interact_packet(long long npcID)
+{
+    cs_packet_npc_interact pkt{};
+    pkt.size = sizeof(pkt);
+    pkt.type = CS_P_NPC_INTERACT;
+    pkt.npcID = npcID;
+    send_packet(&pkt);
+
+    cout << "[NPC] 상호작용 패킷 전송 | npcID=" << npcID << "\n";
+}
 
 // =================================================================
 //                          파티클 관리
@@ -810,6 +820,30 @@ void ProcessPacket(char* ptr)
         break;
     }
 
+    case SC_P_NPC_MISSION:
+    {
+        sc_packet_npc_mission* packet = reinterpret_cast<sc_packet_npc_mission*>(ptr);
+
+        cout << "[NPC] 미션 수신 | missionID=" << packet->missionID << " desc=" << packet->description  << " target=" << packet->targetCount    << " reward=" << packet->rewardGold << "G\n";
+
+        // UI 나오면 될듯 이곳에서 미션 정보 받고(플레이어도 미션 내용을 알아야하니)
+  
+
+        break;
+    }
+
+    case SC_P_MISSION_COMPLETE:
+    {
+        sc_packet_mission_complete* packet = reinterpret_cast<sc_packet_mission_complete*>(ptr);
+
+        //cout << "[NPC] 미션 완료 | missionID=" << packet->missionID  << " reward=" << packet->rewardGold  << " totalGold=" << packet->totalGold << "\n";
+
+        gGameFramework.UpdatePlayerGold(packet->totalGold);
+
+
+        break;
+    }
+
     default:
 
         std::cout << "Unknown Packet Type [" << ptr[1] << "]" << std::endl;
@@ -855,7 +889,6 @@ void send_position_to_server(const XMFLOAT3& position, const XMFLOAT3& look, con
     send_packet(&p);
 
 }
-
 
 void CleanupNetwork() {
     g_running = false;

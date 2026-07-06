@@ -104,4 +104,5 @@ void send_buff_hp_packet();
 void send_weapon_pos_packet(const XMFLOAT3& weaponPosition, const XMFLOAT3& weaponRotation);
 void send_skill_packet(const XMFLOAT3& position, const XMFLOAT3& look);
 void send_skill_upgrade(SkillSlot slot);
+void send_npc_interact_packet(long long npcID); // <- NPC와 상호작용키를 누르는곳에 넣어야함.
 
