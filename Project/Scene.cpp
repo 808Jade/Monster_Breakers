@@ -370,6 +370,7 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 	);
 
 	m_CollisionManager.InitializeDebugObjects(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	m_CollisionManager.InitializeDamageNumberSystem(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 
 	m_pFireballSystem = new CFireballSystem(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 	m_pGreenSpiritSystem = new CGreenSpiritSystem(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
@@ -1529,6 +1530,8 @@ bool CScene::ProcessInput(UCHAR *pKeysBuffer)
 
 void CScene::AnimateObjects(float fTimeElapsed)
 {
+	m_CollisionManager.UpdateDamageNumbers(fTimeElapsed);
+
 	for (auto* obj : m_GameObjects) {
 		if (obj) obj->Animate(fTimeElapsed);
 
@@ -1614,7 +1617,7 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 	m_CollisionManager.Update(m_pPlayer);
 	if (m_bDebugMode)
 		m_CollisionManager.RenderDebug(pd3dCommandList, pCamera);
-
+	m_CollisionManager.RenderDamageNumbers(pd3dCommandList, pCamera);
 
 	if (m_pBoss) m_pBoss->Render(pd3dCommandList, pCamera);
 	if (m_pGroundAttackRangeEffect) m_pGroundAttackRangeEffect->Render(pd3dCommandList, pCamera);

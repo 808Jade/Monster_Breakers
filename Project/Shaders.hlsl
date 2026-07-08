@@ -725,6 +725,18 @@ float4 PSInteractPrompt(VS_HPBAR_OUT input) : SV_TARGET
 
     return texColor;
 }
+
+float4 PSDamageNumber(VS_HPBAR_OUT input) : SV_TARGET
+{
+    float4 texColor = gtxtAlbedoTexture.Sample(gssWrap, input.uv);
+
+    texColor.rgb *= gMaterial.m_cDiffuse.rgb;
+    texColor.a *= saturate(gMaterial.m_cDiffuse.a);
+
+    clip(texColor.a - 0.01f);
+
+    return texColor;
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ===== 보스 등의 바닥 공격범위 표시(텔레그래프) =====
 // VSTextured(이미 정의됨)를 그대로 사용하고, 픽셀 셰이더에서 원형 경고 패턴을 그린다.

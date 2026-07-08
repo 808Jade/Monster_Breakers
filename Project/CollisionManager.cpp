@@ -3,6 +3,9 @@
 #include "Object.h"
 #include "Player.h"
 
+// 몬스터 머리 위쯤에 숫자가 뜨도록 주는 수직 오프셋(월드 유닛). 몬스터 모델 크기에 맞게 조정.
+static const float DAMAGE_NUMBER_Y_OFFSET = 2.0f;
+
 CCollisionManager::CCollisionManager()
 {
     m_pQuadTree = new CQuadTree();
@@ -11,6 +14,22 @@ CCollisionManager::CCollisionManager()
 CCollisionManager::~CCollisionManager()
 {
     delete m_pQuadTree;
+    if (m_pDamageNumberSystem) delete m_pDamageNumberSystem;
+}
+
+void CCollisionManager::InitializeDamageNumberSystem(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature)
+{
+    m_pDamageNumberSystem = new CDamageNumberSystem(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
+}
+
+void CCollisionManager::RenderDamageNumbers(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
+{
+    if (m_pDamageNumberSystem) m_pDamageNumberSystem->Render(pd3dCommandList, pCamera);
+}
+
+void CCollisionManager::UpdateDamageNumbers(float fTimeElapsed)
+{
+    if (m_pDamageNumberSystem) m_pDamageNumberSystem->Update(fTimeElapsed);
 }
 
 void CCollisionManager::Build(const BoundingBox& worldBounds, int maxObjectsPerNode, int maxDepth)
@@ -87,6 +106,12 @@ void CCollisionManager::Update(CPlayer* player)
                     int dmg = player->damage + player->level[0] * 10;
                     cout << "Fireball hit: " << monster->GetFrameName() << " dmg=" << dmg << endl;
                     monster->TakeDamage(dmg);
+                    if (m_pDamageNumberSystem)
+                    {
+                        XMFLOAT3 xmf3HitPos = monster->GetPosition();
+                        xmf3HitPos.y += DAMAGE_NUMBER_Y_OFFSET;
+                        m_pDamageNumberSystem->Spawn(xmf3HitPos, dmg);
+                    }
                     m_pFireballSystem->DeactivateAt(idx);  // 파이어볼 소멸
                     break;
                 }
@@ -110,6 +135,12 @@ void CCollisionManager::Update(CPlayer* player)
                 int dmg = player->damage + player->level[0] * 10;
                 cout << "Throw hit: " << monster->GetFrameName() << " dmg=" << dmg << endl;
                 monster->TakeDamage(dmg);
+                if (m_pDamageNumberSystem)
+                {
+                    XMFLOAT3 xmf3HitPos = monster->GetPosition();
+                    xmf3HitPos.y += DAMAGE_NUMBER_Y_OFFSET;
+                    m_pDamageNumberSystem->Spawn(xmf3HitPos, dmg);
+                }
                 m_pWeaponThrowSystem->Deactivate();  // 무기 소멸 + 손 무기 복원
                 break;
             }
@@ -147,6 +178,13 @@ void CCollisionManager::Update(CPlayer* player)
             {
                 cout << "Weapon hit: " << monster->GetFrameName() << " dmg=" << weaponDmg << endl;
                 monster->TakeDamage(weaponDmg);
+                if (m_pDamageNumberSystem)
+                {
+                    XMFLOAT3 xmf3HitPos = monster->GetPosition();
+                    xmf3HitPos.y += DAMAGE_NUMBER_Y_OFFSET;
+                    bool bCritical = !isAttacking; // 기본 공격이 아닌 Q 스킬 타격은 크리티컬 색상으로 강조
+                    m_pDamageNumberSystem->Spawn(xmf3HitPos, weaponDmg, bCritical);
+                }
                 m_bHitProcessed = true;
             }
         }
@@ -186,7 +224,7 @@ void CCollisionManager::Update(CPlayer* player)
     }
 
     // ColliderInfo 대상 충돌 검사 및 처리
-    for (const ColliderInfo& col : m_colliderinfos) 
+    for (const ColliderInfo& col : m_colliderinfos)
     {
         if (CheckIntersection(player->GetBoundingBox(), col))
         {
@@ -296,11 +334,11 @@ void CCollisionManager::RenderDebug(ID3D12GraphicsCommandList* pd3dCommandList, 
         }
     }
 
-    
+
 }
 
 
-void CCollisionManager::CollectNearbyObjects(QuadTreeNode* node, const BoundingBox& playerbb, std::vector<CGameObject*>& outDynamics, std::vector<ColliderInfo>& outStatics) 
+void CCollisionManager::CollectNearbyObjects(QuadTreeNode* node, const BoundingBox& playerbb, std::vector<CGameObject*>& outDynamics, std::vector<ColliderInfo>& outStatics)
 {
     if (!node) return;
     if (!node->bounds.Intersects(playerbb)) return;
@@ -335,15 +373,15 @@ void CCollisionManager::HandleCollision(CPlayer* player, CGameObject* obj)
     bool isMonster = (dynamic_cast<CMonster*>(obj) != nullptr);
     bool isAttacking = (dynamic_cast<CTerrainPlayer*>(player)->m_currentAnim == AnimationState::ATTACK);
 
-  //  bool isSwordHit = player->GetSwordAttackBoundingBox().Intersects(obj->GetBoundingBox());
-//
-  //  if (isMonster && isAttacking && isSwordHit)
-  //  {
-//
-  //      //std::cout << "Sword hit ! - " << ObjectFrameName << std::endl;
-		//dynamic_cast<CMonster*>(obj)->TakeDamage(player->damage);
-  //      return;
-  //  }
+    //  bool isSwordHit = player->GetSwordAttackBoundingBox().Intersects(obj->GetBoundingBox());
+  //
+    //  if (isMonster && isAttacking && isSwordHit)
+    //  {
+  //
+    //      //std::cout << "Sword hit ! - " << ObjectFrameName << std::endl;
+          //dynamic_cast<CMonster*>(obj)->TakeDamage(player->damage);
+    //      return;
+    //  }
 
     BoundingBox swordBox = player->GetWeaponAttackBoundingBox();
     bool isValidBox = (swordBox.Extents.x > 0.0f || swordBox.Extents.y > 0.0f || swordBox.Extents.z > 0.0f);

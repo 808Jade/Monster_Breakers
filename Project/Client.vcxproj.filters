@@ -157,6 +157,9 @@
     <ClCompile Include="CAttackRangeEffect.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="DamageNumber.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h">
@@ -271,6 +274,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="CAttackRangeEffect.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="DamageNumber.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

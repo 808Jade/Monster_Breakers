@@ -158,6 +158,7 @@
     <ClCompile Include="CParticle.cpp" />
     <ClCompile Include="CText.cpp" />
     <ClCompile Include="CWeaponThrowSystem.cpp" />
+    <ClCompile Include="DamageNumber.cpp" />
     <ClCompile Include="DDSTextureLoader12.cpp" />
     <ClCompile Include="GameFramework.cpp" />
     <ClCompile Include="Client.cpp" />
@@ -198,6 +199,7 @@
     <ClInclude Include="CText.h" />
     <ClInclude Include="CWeaponThrowSystem.h" />
     <ClInclude Include="d3dx12.h" />
+    <ClInclude Include="DamageNumber.h" />
     <ClInclude Include="DDSTextureLoader12.h" />
     <ClInclude Include="GameFramework.h" />
     <ClInclude Include="Client.h" />
