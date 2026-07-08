@@ -59,13 +59,23 @@ void CGroundAttackRangeEffect::ReleaseUploadBuffers()
 // 매번 ToParent 행렬을 새로 구성한다(SetScale/Rotate는 누적형이라 재사용 풀에는 부적합).
 void CGroundAttackRangeEffect::PlaceFlatOnGround(CGameObject* pObject, const XMFLOAT3& xmf3Center, float fRadius)
 {
-    XMMATRIX mtxScale = XMMatrixScaling(fRadius, 1.0f, fRadius);
-    XMMATRIX mtxFlat = XMMatrixRotationX(XMConvertToRadians(90.0f)); // 카메라용 수직 평면 -> 바닥에 눕히기
-    XMMATRIX mtxTranslate = XMMatrixTranslation(xmf3Center.x, xmf3Center.y + 0.05f, xmf3Center.z); // z-fighting 방지용 살짝 띄움
+    float fScale = fRadius * 1.5f; // 크기 키우기
 
-    XMMATRIX mtxLocal = mtxScale * mtxFlat * mtxTranslate;
-    XMStoreFloat4x4(&pObject->m_xmf4x4ToParent, mtxLocal);
+    // 회전행렬 곱셈 순서에 기대지 않고, 기저벡터를 행렬에 직접 박아서
+    // "로컬 법선(Z) = 월드 Up(0,1,0)"을 강제한다 -> 무조건 완전 평평.
+    //   로컬 +X -> 월드 +X (가로)
+    //   로컬 +Y -> 월드 +Z (세로, 기존 atan2(dx,dz) 매핑과 동일하게 유지)
+    //   로컬 +Z(법선) -> 월드 +Y (항상 하늘 방향)
+    XMFLOAT4X4 mtx;
+    mtx._11 = fScale; mtx._12 = 0.0f;  mtx._13 = 0.0f;  mtx._14 = 0.0f;
+    mtx._21 = 0.0f;   mtx._22 = 0.0f;  mtx._23 = fScale; mtx._24 = 0.0f;
+    mtx._31 = 0.0f;   mtx._32 = 1.0f;  mtx._33 = 0.0f;  mtx._34 = 0.0f;
+    mtx._41 = xmf3Center.x;
+    mtx._42 = xmf3Center.y + 0.05f; // z-fighting 방지
+    mtx._43 = xmf3Center.z;
+    mtx._44 = 1.0f;
 
+    pObject->m_xmf4x4ToParent = mtx;
     pObject->UpdateTransform(NULL);
 }
 
