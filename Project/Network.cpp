@@ -395,7 +395,7 @@ void ProcessPacket(char* ptr)
 
         //여기에 리스폰 관련해서 랜더링 해야할듯?? (이부분)
         gGameFramework.UpdateMyPlayerPosition(packet->position);
-
+		// 보스 m_bHpbarVisible = false; // 보스 체력바 숨김
         cout << "myid: " << packet->id << endl;
         
         break;

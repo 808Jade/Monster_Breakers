@@ -392,8 +392,8 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 	m_pSkinnedAnimationController->SetTrackType(4, ANIMATION_TYPE_ONCE);
 	m_pSkinnedAnimationController->SetTrackType(5, ANIMATION_TYPE_ONCE);
 	m_pSkinnedAnimationController->SetTrackType(6, ANIMATION_TYPE_ONCE);
-	m_pSkinnedAnimationController->SetTrackSpeed(3, 4);
-	m_pSkinnedAnimationController->SetTrackSpeed(4, 2);
+	m_pSkinnedAnimationController->SetTrackSpeed(3, 5.0);
+	m_pSkinnedAnimationController->SetTrackSpeed(4, 2.0);
 	m_pSkinnedAnimationController->SetTrackSpeed(5, 1.5);
 	m_pSkinnedAnimationController->SetTrackSpeed(6, 1.5);
 
@@ -632,28 +632,28 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 		switch (m_currentAnim)
 		{
 		case AnimationState::ATTACK:
-			PlayAnimationTrack(3, 1.0f);
+			PlayAnimationTrack(3, 2.0f);
 			if (IsAnimationFinished(3)) {
 				//m_pSkinnedAnimationController->SetTrackPosition(3, 0.0f);
 				m_currentAnim = AnimationState::IDLE;
 			}
 			break;
 		case AnimationState::SKILL1:
-			PlayAnimationTrack(4, 1.0f);
+			PlayAnimationTrack(4, 1.5f);
 			if (IsAnimationFinished(4)) {
 				//m_pSkinnedAnimationController->SetTrackPosition(4, 0.0f);
 				m_currentAnim = AnimationState::IDLE;
 			}
 			break;
 		case AnimationState::SKILL2:
-			PlayAnimationTrack(5, 1.0f);
+			PlayAnimationTrack(5,1.5f);
 			if (IsAnimationFinished(5))	{
 				//m_pSkinnedAnimationController->SetTrackPosition(5, 0.0f);
 				m_currentAnim = AnimationState::IDLE;
 			}
 			break;
 		case AnimationState::SKILL3:
-			PlayAnimationTrack(6, 1.0f);
+			PlayAnimationTrack(6, 1.5f);
 			if (IsAnimationFinished(6)) {
 				//m_pSkinnedAnimationController->SetTrackPosition(6, 0.0f);
 				m_currentAnim = AnimationState::IDLE;
