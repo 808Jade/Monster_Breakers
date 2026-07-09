@@ -50,7 +50,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	if (!InitInstance(hInstance, nCmdShow)) return(FALSE);
 
 	// ----------------- 네트워크 초기화 및 서버 연결 -----------------
-	
+
 	//wcout.imbue(locale("korean"));
 	//std::cout << "유저 ID를 입력하세요 : ";
 	//std::cin >> user_name;
@@ -139,6 +139,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_LBUTTONUP:
 	case WM_RBUTTONDOWN:
 	case WM_RBUTTONUP:
+	case WM_MBUTTONDOWN:
+	case WM_MBUTTONUP:
 	case WM_MOUSEMOVE:
 	case WM_KEYDOWN:
 	case WM_KEYUP:
@@ -190,8 +192,3 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	return((INT_PTR)FALSE);
 }
-
-
-
-
-
