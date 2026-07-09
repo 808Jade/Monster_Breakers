@@ -234,6 +234,18 @@ BoundingBox CPlayer::GetWeaponAttackBoundingBox()
 
 void CPlayer::Update(float fTimeElapsed)
 {
+	// --- 피격 감지 (HP가 줄었으면 몬스터/다른 대상에게 공격받은 것) ---
+	if (currentHP < m_fPrevHP) {
+		TriggerHitFlash();
+	}
+	m_fPrevHP = currentHP;
+
+	if (m_fHitFlashTimer > 0.0f)
+	{
+		m_fHitFlashTimer -= fTimeElapsed;
+		if (m_fHitFlashTimer < 0.0f) m_fHitFlashTimer = 0.0f;
+	}
+
 	m_xmf3Velocity = Vector3::Add(m_xmf3Velocity, m_xmf3Gravity);
 
 	float fLength = sqrtf(m_xmf3Velocity.x * m_xmf3Velocity.x + m_xmf3Velocity.z * m_xmf3Velocity.z);
@@ -324,6 +336,15 @@ void CPlayer::OnPrepareRender()
 
 void CPlayer::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
 {
+	// 깜빡임: 0.4초 동안 sin파로 on/off를 반복 → "깜빡깜빡" 느낌
+	float intensity = 0.0f;
+	if (m_fHitFlashTimer > 0.0f)
+	{
+		float blink = 0.5f + 0.5f * sinf(m_fHitFlashTimer * HIT_FLASH_BLINK_SPEED);
+		intensity = blink; // 0~1
+	}
+	SetHitFlashRecursive(intensity);
+
 	DWORD nCameraMode = (pCamera) ? pCamera->GetMode() : 0x00;
 	if (nCameraMode == THIRD_PERSON_CAMERA) CGameObject::Render(pd3dCommandList, pCamera);
 }

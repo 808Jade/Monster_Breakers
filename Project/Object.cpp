@@ -730,6 +730,16 @@ void CGameObject::SetChild(CGameObject *pChild, bool bReferenceUpdate)
 	}
 }
 
+void CGameObject::SetHitFlashRecursive(float intensity)
+{
+	if (m_ppMaterials)
+		for (int i = 0; i < m_nMaterials; i++)
+			if (m_ppMaterials[i]) m_ppMaterials[i]->SetHitFlash(intensity);
+
+	if (m_pChild)   m_pChild->SetHitFlashRecursive(intensity);
+	if (m_pSibling) m_pSibling->SetHitFlashRecursive(intensity);
+}
+
 void CGameObject::SetMesh(CMesh *pMesh)
 {
 	if (m_pMesh) m_pMesh->Release();
@@ -1147,6 +1157,7 @@ void CGameObject::LoadMaterialsFromFile(ID3D12Device *pd3dDevice, ID3D12Graphics
 		else if (!strcmp(pstrToken, "<EmissiveColor>:"))
 		{
 			nReads = (UINT)::fread(&(pMaterial->m_xmf4EmissiveColor), sizeof(float), 4, pInFile);
+			pMaterial->m_xmf4EmissiveColor.w = 0.0f;
 		}
 		else if (!strcmp(pstrToken, "<SpecularColor>:"))
 		{
