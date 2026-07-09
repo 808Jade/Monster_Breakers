@@ -70,25 +70,25 @@ void OtherPlayer::Animate(int animation, float fTimeElapsed)
 		switch (animation)
 		{
 		case 3:
-			PlayAnimationTrack(3, 1.0f);
+			PlayAnimationTrack(3, 2.0f);
 			if (IsAnimationFinished(3)) {
 				animation = 0;
 			}
 			break;
 		case 4:
-			PlayAnimationTrack(4, 1.0f);
+			PlayAnimationTrack(4, 1.5f);
 			if (IsAnimationFinished(4)) {
 				animation = 0;
 			}
 			break;
 		case 5:
-			PlayAnimationTrack(5, 1.0f);
+			PlayAnimationTrack(5, 1.5f);
 			if (IsAnimationFinished(5)) {
 				animation = 0;
 			}			
 			break;
 		case 6:
-			PlayAnimationTrack(6, 1.0f);
+			PlayAnimationTrack(6, 1.5f);
 			if (IsAnimationFinished(6)) {
 				animation = 0;
 			}

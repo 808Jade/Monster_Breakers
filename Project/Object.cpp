@@ -1793,3 +1793,20 @@ void CInteractPrompt::Update(const XMFLOAT3& xmf3PlayerPosition)
 	visible = (fDistance < m_fInteractRange);
 }
 
+CNPC::CNPC(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature) : CGameObject(1)
+{
+	CLoadedModelInfo* pModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, "Model/NPC.bin", NULL);
+
+	SetChild(pModel->m_pModelRootObject, true);
+
+	m_pSkinnedAnimationController = new CAnimationController(pd3dDevice, pd3dCommandList, 1, pModel);
+	m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); // 기본
+	m_pSkinnedAnimationController->SetTrackEnable(0, true);
+
+	SetPosition(0, 0, 0);
+
+	CreateShaderVariables(pd3dDevice, pd3dCommandList);
+}
+
+CNPC::~CNPC()
+{}

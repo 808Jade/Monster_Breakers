@@ -450,6 +450,10 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 		L"Image/PressF.dds", XMFLOAT3(-9.0f, 1.0f, 35.0f)); // 위치, 기본 2.5 범위
 	m_GameObjects.push_back(pPressF);
 
+	// npc 생성
+	CNPC* pNPC = new CNPC(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	m_GameObjects.push_back(pNPC);
+
 	//
 	//	m_GameObjects.clear();
 	//	m_GameObjects.resize(8);
