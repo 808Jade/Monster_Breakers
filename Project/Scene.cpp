@@ -1292,7 +1292,22 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 		for (int i = 0; i < 3; ++i)
 			if (PtInRect(&rt[i], pt)) { idx = i; break; }
 
-		if (idx == -1) { p->m_currentAnim = AnimationState::ATTACK; break; }
+		if (idx == -1) 
+		{ 
+			p->m_currentAnim = AnimationState::ATTACK;
+			if (m_pModel == m_pKnightModel)
+			{
+				int randomIndex = (rand() % 2) + 1;
+				std::string soundName = "knight_attack_" + std::to_string(randomIndex);
+				CSoundManager::GetInstance()->PlaySFX(soundName);
+			}
+			else if (m_pModel == m_pWizardModel)
+			{
+
+			}
+			else if (m_pModel == m_pThiefModel)
+			break; 
+		}
 
 		int lv = p->level[idx];
 		int cost = 100 + lv * 50;
@@ -1327,7 +1342,6 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 			p->m_currentAnim = AnimationState::SKILL1;
 			if (m_pModel == m_pWizardModel)
 			{
-
 				CGameObject* pHand = p->FindFrame("RightHand");
 
 				if (!pHand) break;
@@ -1368,6 +1382,9 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 			}
 			else if (m_pModel == m_pKnightModel)
 			{
+				int randomIndex = (rand() % 2) + 1;
+				std::string soundName = "knight_rk_" + std::to_string(randomIndex);
+				CSoundManager::GetInstance()->PlaySFX(soundName);
 				std::cout << "[SKILL] 기사 방패막기 시작\n";
 				send_shield_block_packet(true);
 			}
