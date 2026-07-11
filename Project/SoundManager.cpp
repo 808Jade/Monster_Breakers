@@ -96,7 +96,6 @@ void CSoundManager::LoadSound(const std::string& name, const std::string& path, 
     if (result == FMOD_OK)
     {
         m_mapSounds[name] = pSound;
-        std::cout << "[FMOD] soundmapping : " << name << " Complete !!" << std::endl;
     }
     else
     {

@@ -27,10 +27,9 @@ public:
 
     // 매니저 생명주기
     bool Init();
-    void Update(); // 게임 루프에서 매 프레임 호출
+    void Update();
     void Release();
 
-    // 사운드 로드 및 재생
     // isBgm이 true이면 스트리밍 방식(createStream), false면 메모리 상주 방식(createSound)으로 로드
     void LoadSound(const std::string& name, const std::string& path, bool isBgm);
 

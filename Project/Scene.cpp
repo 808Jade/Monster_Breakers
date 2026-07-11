@@ -5,6 +5,7 @@
 #include "Scene.h"
 #include "Network.h"
 #include "GameFramework.h"
+#include "SoundManager.h"
 
 #include <random>
 #include <array>
@@ -755,6 +756,8 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 //	pShopSpace4Shader->SetVisible(false);
 //	m_Shaders[9] = pShopSpace4Shader;
 #pragma endregion
+
+	CSoundManager::GetInstance()->PlayBGM("bgm_village");
 
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 	CreateShadowResources(pd3dDevice, pd3dCommandList);
@@ -1810,6 +1813,7 @@ void CStartScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLi
 	m_pFontIP = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"Enter IP : ", 0.45f, -0.75f);
 	m_GameObjects[1] = m_pFontIP;
 
+	CSoundManager::GetInstance()->PlayBGM("bgm_login");
 
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }

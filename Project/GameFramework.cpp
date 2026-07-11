@@ -421,6 +421,8 @@ void CGameFramework::BuildObjects()
 		m_ppScenes = new CScene * [m_nScenes] {};  // 딱 한 번만 할당, NULL로 초기화
 	}
 
+	LoadSoundResources();
+
 	bool b = false;
 	if (m_nCurrentScene == 0) {
 		m_ppScenes[0] = new CStartScene();
@@ -463,7 +465,6 @@ void CGameFramework::BuildObjects()
 		m_ppScenes[4]->SetPlayer(pPlayer);
 	}
 
-	LoadSoundResources();
 
 //#ifdef _WITH_TERRAIN_PLAYER
 //	CTerrainPlayer *pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_pScene->GetGraphicsRootSignature(), m_pScene->m_pTerrain);
@@ -508,10 +509,10 @@ void CGameFramework::LoadSoundResources()
 	CSoundManager::GetInstance()->LoadSound("footstep_sand_1", "Sound/footstep_sand_1.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("footstep_sand_2", "Sound/footstep_sand_2.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("footstep_sand_3", "Sound/footstep_sand_3.mp3", false);
-	CSoundManager::GetInstance()->LoadSound("Footstep01", "Sound/Footstep01.mp3", false);
-	CSoundManager::GetInstance()->LoadSound("Footstep02", "Sound/Footstep02.mp3", false);
-	CSoundManager::GetInstance()->LoadSound("Footstep03", "Sound/Footstep03.mp3", false);
-	CSoundManager::GetInstance()->LoadSound("Footstep04", "Sound/Footstep04.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("Footstep01", "Sound/Footstep01.wav", false);
+	CSoundManager::GetInstance()->LoadSound("Footstep02", "Sound/Footstep02.wav", false);
+	CSoundManager::GetInstance()->LoadSound("Footstep03", "Sound/Footstep03.wav", false);
+	CSoundManager::GetInstance()->LoadSound("Footstep04", "Sound/Footstep04.wav", false);
 	CSoundManager::GetInstance()->LoadSound("walk_on_grass_1", "Sound/walk_on_grass_1.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("walk_on_grass_2", "Sound/walk_on_grass_2.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("walk_on_grass_3", "Sound/walk_on_grass_3.mp3", false);
@@ -549,7 +550,7 @@ void CGameFramework::LoadSoundResources()
 	// =================================================================
 	// BGM
 	// =================================================================
-	CSoundManager::GetInstance()->LoadSound("bgm_bossstage", "Sound/bgm_bossstage.mp3", true);
+	CSoundManager::GetInstance()->LoadSound("bgm_bossstage", "Sound/bgm_bossstage.wav", true);
 	CSoundManager::GetInstance()->LoadSound("bgm_login", "Sound/bgm_login.mp3", true);
 	CSoundManager::GetInstance()->LoadSound("bgm_village", "Sound/bgm_village.mp3", true);
 	CSoundManager::GetInstance()->LoadSound("bgm_ending", "Sound/bgm_ending.mp3", true);
@@ -756,6 +757,8 @@ void CGameFramework::FrameAdvance()
 	m_pd3dCommandList->ClearDepthStencilView(d3dDsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
 #endif
 	if (m_pPlayer && !isStartScene) m_pPlayer->Render(m_pd3dCommandList, m_pCamera);
+
+	CSoundManager::GetInstance()->Update();
 
 	d3dResourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	d3dResourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
