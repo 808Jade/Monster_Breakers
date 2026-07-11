@@ -71,6 +71,10 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>C:\Program Files (x86)\FMOD SoundSystem\FMOD Studio API Windows\api\core\inc;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files (x86)\FMOD SoundSystem\FMOD Studio API Windows\api\core\lib\x86;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -130,7 +134,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);Winmm.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);Winmm.lib;C:\Program Files (x86)\FMOD SoundSystem\FMOD Studio API Windows\api\core\lib\x64\fmod_vc.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -156,6 +160,7 @@
     <ClCompile Include="CMonster.cpp" />
     <ClCompile Include="CollisionManager.cpp" />
     <ClCompile Include="CParticle.cpp" />
+    <ClCompile Include="SoundManager.cpp" />
     <ClCompile Include="CText.cpp" />
     <ClCompile Include="CWeaponThrowSystem.cpp" />
     <ClCompile Include="DamageNumber.cpp" />
@@ -196,6 +201,7 @@
     <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="CParticle.h" />
+    <ClInclude Include="SoundManager.h" />
     <ClInclude Include="CText.h" />
     <ClInclude Include="CWeaponThrowSystem.h" />
     <ClInclude Include="d3dx12.h" />
