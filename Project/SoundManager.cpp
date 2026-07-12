@@ -1,5 +1,5 @@
+#include "stdafx.h"
 #include "SoundManager.h"
-#include <iostream>
 
 // 1. 싱글톤 인스턴스 초기화
 CSoundManager* CSoundManager::s_pInstance = nullptr;
@@ -157,4 +157,17 @@ void CSoundManager::SetBgmVolume(float volume)
 
         m_pBgmChannel->setVolume(volume);
     }
+}
+
+void CSoundManager::SetListener(const XMFLOAT3& pos, const XMFLOAT3& look, const XMFLOAT3& up)
+{
+    FMOD_VECTOR fPos = { pos.x, pos.y, pos.z };
+    FMOD_VECTOR fLook = { look.x, look.y, look.z }; // 바라보는 방향 (앞)
+    FMOD_VECTOR fUp = { up.x, up.y, up.z };       // 정수리 방향 (위)
+    FMOD_VECTOR fVel = { 0, 0, 0 };                // 리스너의 속도 (일단 0)
+
+    // 0번 리스너의 위치와 방향을 갱신
+    m_pSystem->set3DListenerAttributes(0, &fPos, &fVel, &fLook, &fUp);
+
+    m_pSystem->update();
 }

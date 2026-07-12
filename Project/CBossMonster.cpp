@@ -2,6 +2,7 @@
 #include "CBossMonster.h"
 #include "Player.h"
 #include "Network.h"   // g_monsters / send_hit_damage
+#include "SoundManager.h"
 
 namespace
 {
@@ -151,6 +152,19 @@ void CBossMonster::PlayAttackPattern(BossState newState, const XMFLOAT3& xmf3Cen
 {
     if (m_eState == BossState::Death) return; // 죽은 보스는 패턴 패킷이 와도 무시(이펙트도 스폰하지 않음)
 
+    switch (newState)
+    {
+    case BossState::Attack01:
+        CSoundManager::GetInstance()->PlaySFX("boss_attack_1");
+        break;
+    case BossState::Attack02:
+        CSoundManager::GetInstance()->PlaySFX("boss_attack_2");
+        break;
+    case BossState::Taunt:
+        // CSoundManager::GetInstance()->PlaySFX("boss_taunt");
+        break;
+    }
+
     TransitionTo(newState);
     SpawnAttackEffectFor(newState, xmf3Center, fRadius, fSweepAngleDeg);
 }
@@ -165,7 +179,14 @@ void CBossMonster::TakeDamage(float damage)
     send_hit_damage(m_nMonsterID, (int)damage);
 
     if (m_fMonsterHP <= 0.0f)
+    {
+        CSoundManager::GetInstance()->PlaySFX("boss_die_1");
         TransitionTo(BossState::Death);
+    }
+    else
+    {
+        //CSoundManager::GetInstance()->PlaySFX("boss_hurt");
+    }
 }
 
 void CBossMonster::Animate(float fTimeElapsed)
@@ -183,6 +204,21 @@ void CBossMonster::Update(float fTimeElapsed)
     {
         m_fPrevHpbarWidth = newWidth;
         SetHPWidth(newWidth);
+    }
+
+    if (m_eState == BossState::Walk)
+    {
+        m_fWalkSoundTimer += fTimeElapsed;
+
+        if (m_fWalkSoundTimer >= 0.8f)
+        {
+            // CSoundManager::GetInstance()->PlaySFX("boss_footstep");
+            m_fWalkSoundTimer = 0.0f;
+        }
+    }
+    else
+    {
+        m_fWalkSoundTimer = 0.0f;
     }
 }
 

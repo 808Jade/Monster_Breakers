@@ -105,4 +105,6 @@ private:
     float m_fPrevHpbarWidth = -1.0f;
 
     bool m_bHpbarVisible = false;
+
+    float m_fWalkSoundTimer = 0.0f; // 걷는 소리 타이머
 };
