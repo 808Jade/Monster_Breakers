@@ -2,6 +2,7 @@
 #include "CMonster.h"
 #include "Player.h"
 #include "Network.h"   // g_monsters
+#include "SoundManager.h"
 
 CMonster::CMonster(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature,
     const char* pstrModelPath, int nAnimationTracks, CLoadedModelInfo* pModel, float fMaxHP, int id)
@@ -54,7 +55,18 @@ void CMonster::TakeDamage(float damage)
 
 	send_hit_damage(m_nMonsterID, (int)damage);
     
-    TransitionTo(m_fMonsterHP <= 0.0f ? MonsterState::Death : MonsterState::GetHit);
+    if (m_fMonsterHP <= 0.0f)
+    {
+        // CSoundManager::GetInstance()->PlaySFX("monster_death");
+        TransitionTo(MonsterState::Death);
+    }
+    else
+    {
+        int randomIndex = (rand() % 2) + 1;
+        string sfxName = "monster_hurt_" + to_string(randomIndex);
+        CSoundManager::GetInstance()->PlaySFX(sfxName);
+        TransitionTo(MonsterState::GetHit);
+    }
 }
 
 void CMonster::TransitionTo(MonsterState newState)
