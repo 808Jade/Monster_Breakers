@@ -1453,6 +1453,8 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 						otherPlayer->damage += (pPlayer->level[2]); // 다른 플레이어 공격력 증가
 						m_pBeamSystem->Emit(otherPlayer->GetPosition(), pPlayer->GetPosition());
 					}
+
+					CSoundManager::GetInstance()->PlaySFX("wizard_q");
 				}
 				// 이부분 기사 q 스킬
 				else if (m_pModel == m_pKnightModel)
@@ -1462,6 +1464,8 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 
 					if (m_pGroundCrackEffect)
 						m_pGroundCrackEffect->Trigger(pos, look);
+
+					CSoundManager::GetInstance()->PlaySFX("knight_q");
 
 					send_strike_packet(pos, look);
 				}
@@ -1480,11 +1484,14 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 						footPos.y -= 0.5f;
 						m_pGreenSpiritSystem->Emit(footPos);
 
+						CSoundManager::GetInstance()->PlaySFX("wizard_e");
+
 						//SERVER!!
 						send_buff_hp_packet();
 					}
 				}
 				else if (m_pModel == m_pKnightModel) {
+					CSoundManager::GetInstance()->PlaySFX("knight_e");
 
 					send_taunt_packet(pPlayer->level[2] * 5); //도발범위는 플레이어 레벨에 따라 증가
 					// 기사 도발	
@@ -1543,6 +1550,7 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 						float yaw = atan2f(faceDir.x, faceDir.z);  // XZ 평면 각도
 						pPlayer->Rotate(0.0f, XMConvertToDegrees(yaw), 0.0f);
 					}
+					CSoundManager::GetInstance()->PlaySFX("rogue_q");
 				}
 				TriggerSkillCooldown(2);
 			}
