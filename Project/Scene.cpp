@@ -1303,9 +1303,12 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 			}
 			else if (m_pModel == m_pWizardModel)
 			{
-
+				CSoundManager::GetInstance()->PlaySFX("wizard_attack");
 			}
 			else if (m_pModel == m_pThiefModel)
+			{
+				CSoundManager::GetInstance()->PlaySFX("rogue_attack");
+			}
 			break; 
 		}
 
@@ -1357,6 +1360,8 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 					<< firePos.x << ", " << firePos.y << ", " << firePos.z
 					<< ") look=(" << fireLook.x << ", " << fireLook.y << ", " << fireLook.z << ")\n";
 
+				CSoundManager::GetInstance()->PlaySFX("wizard_rk");
+
 				//m_pFireballSystem->Emit(pHand->GetPosition(), p->GetLook(), 20.0f); 
 
 				// server!!
@@ -1378,6 +1383,8 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 					<< throwPos.x << ", " << throwPos.y << ", " << throwPos.z
 					<< ") dir=(" << throwDir.x << ", " << throwDir.y << ", " << throwDir.z << ")\n";
 
+				CSoundManager::GetInstance()->PlaySFX("rogue_rk");
+
 				send_weapon_pos_packet(throwPos, throwDir);
 			}
 			else if (m_pModel == m_pKnightModel)
@@ -1386,6 +1393,7 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 				std::string soundName = "knight_rk_" + std::to_string(randomIndex);
 				CSoundManager::GetInstance()->PlaySFX(soundName);
 				std::cout << "[SKILL] 기사 방패막기 시작\n";
+
 				send_shield_block_packet(true);
 			}
 			else {

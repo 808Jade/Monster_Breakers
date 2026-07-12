@@ -766,7 +766,7 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 		{
 			if (footstepTimer >= 0.52f)
 			{
-				int randomIndex = (rand() % 3) + 1;
+				int randomIndex = (rand() % 4) + 1;
 				std::string soundName = "Footstep0" + std::to_string(randomIndex);
 				CSoundManager::GetInstance()->PlaySFX(soundName);
 
