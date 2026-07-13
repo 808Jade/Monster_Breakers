@@ -3,6 +3,7 @@
 #include "CMonster.h"
 #include "CBossMonster.h"
 #include "GameFramework.h"
+#include "SoundManager.h"
 #include <iostream>
 
 // 클라이언트 부분 (not server)
@@ -380,7 +381,7 @@ void InitializeNetwork(char serverIP[]) {
 void ProcessPacket(char* ptr)
 {
 
-    const unsigned char packet_type = ptr[1];
+    const unsigned char packet_type = ptr[1];   
 
     //std::cout << "[Client] Packet - Type : " << (int)packet_type << std::endl;
 
@@ -392,6 +393,7 @@ void ProcessPacket(char* ptr)
         sc_packet_user_info* packet = reinterpret_cast<sc_packet_user_info*>(ptr);
         g_myid = packet->id;
         gGameFramework.UpdatePlayerHP(packet->hp);
+        CSoundManager::GetInstance()->PlaySFX("player_hurt");
 
         //여기에 리스폰 관련해서 랜더링 해야할듯?? (이부분)
         gGameFramework.UpdateMyPlayerPosition(packet->position);
@@ -482,16 +484,16 @@ void ProcessPacket(char* ptr)
         break;
     }
 
-    //case SC_P_RESPAWN:
-    //{
-    //    sc_packet_respawn* packet = reinterpret_cast<sc_packet_respawn*>(ptr);
-    //
-    //    cout << "[수신] SC_P_RESPAWN | playerID=" << packet->playerID << " HP=" << packet->hp
-    //        << " pos=(" << packet->position.x << "," << packet->position.y << ","  << packet->position.z << ")\n";
-    //
-    //    // 랜더링 만 하면 될듯
-    //    break;
-    //}
+    case SC_P_RESPAWN:
+    {
+        sc_packet_respawn* packet = reinterpret_cast<sc_packet_respawn*>(ptr);
+    
+        cout << "[수신] SC_P_RESPAWN | playerID=" << packet->playerID << " HP=" << packet->hp
+            << " pos=(" << packet->position.x << "," << packet->position.y << ","  << packet->position.z << ")\n";
+    
+        // 랜더링 만 하면 될듯
+        break;
+    }
 
     case SC_P_SKILL_UPGRADE:
     {
@@ -710,6 +712,10 @@ void ProcessPacket(char* ptr)
 
         std::cout << "[몬스터] SC_P_MONSTER_DIE 수신 | ID=" << packet->monsterID << " 처치자=" << packet->killerID << "\n";
 
+        int randomIndex = (rand() % 2) + 1;
+        string sfxName = "monster_die_" + to_string(randomIndex);
+        CSoundManager::GetInstance()->PlaySFX(sfxName);
+
         auto it = g_monsters.find(packet->monsterID);
         if (it != g_monsters.end())
         {
@@ -781,6 +787,9 @@ void ProcessPacket(char* ptr)
     {
         sc_packet_boss_death* packet = reinterpret_cast<sc_packet_boss_death*>(ptr);
         cout << "[BOSS] 사망 수신\n";
+
+        CSoundManager::GetInstance()->PlaySFX("boss_die_1");
+        CSoundManager::GetInstance()->PlayBGM("bgm_winner");
 
         CScene* scene = gGameFramework.GetCurrentScene();
         if (scene && scene->m_pBoss)

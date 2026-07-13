@@ -161,7 +161,7 @@ void CBossMonster::PlayAttackPattern(BossState newState, const XMFLOAT3& xmf3Cen
         CSoundManager::GetInstance()->PlaySFX("boss_attack_2");
         break;
     case BossState::Taunt:
-        // CSoundManager::GetInstance()->PlaySFX("boss_taunt");
+        CSoundManager::GetInstance()->PlaySFX("boss_attack_3");
         break;
     }
 
@@ -185,7 +185,7 @@ void CBossMonster::TakeDamage(float damage)
     }
     else
     {
-        //CSoundManager::GetInstance()->PlaySFX("boss_hurt");
+        CSoundManager::GetInstance()->PlaySFX("boss_hurt");
     }
 }
 
@@ -212,7 +212,7 @@ void CBossMonster::Update(float fTimeElapsed)
 
         if (m_fWalkSoundTimer >= 0.8f)
         {
-            // CSoundManager::GetInstance()->PlaySFX("boss_footstep");
+            CSoundManager::GetInstance()->PlaySFX("boss_walk");
             m_fWalkSoundTimer = 0.0f;
         }
     }

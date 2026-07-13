@@ -503,7 +503,9 @@ void CGameFramework::LoadSoundResources()
 	// =================================================================
 
 	// --- 공통 행동 (Common) ---
-	CSoundManager::GetInstance()->LoadSound("player_die", "Sound/player_die.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("player_die", "Sound/player_die.mp3", false);//
+	CSoundManager::GetInstance()->LoadSound("player_respawn", "Sound/player_respawn.mp3", false);//
+	CSoundManager::GetInstance()->LoadSound("player_hurt", "Sound/player_hurt.mp3", false);//
 
 	// --- 발소리 (Footsteps) ---
 	CSoundManager::GetInstance()->LoadSound("footstep_sand_1", "Sound/footstep_sand_1.mp3", false);
@@ -541,8 +543,13 @@ void CGameFramework::LoadSoundResources()
 	// --- 몬스터 & 보스 (Monster & Boss) ---
 	CSoundManager::GetInstance()->LoadSound("monster_hurt_1", "Sound/monster_hurt_1.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("monster_hurt_2", "Sound/monster_hurt_2.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("monster_die_2", "Sound/monster_die_1.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("monster_die_2", "Sound/monster_die_2.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("boss_attack_1", "Sound/boss_attack_1.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("boss_attack_2", "Sound/boss_attack_2.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("boss_attack_3", "Sound/boss_attack_3.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("boss_hurt", "Sound/boss_hurt.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("boss_walk", "Sound/boss_walk.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("boss_die_1", "Sound/boss_die_1.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("boss_die_2", "Sound/boss_die_2.mp3", false);
 
@@ -555,6 +562,7 @@ void CGameFramework::LoadSoundResources()
 	CSoundManager::GetInstance()->LoadSound("bgm_village", "Sound/bgm_village.mp3", true);
 	CSoundManager::GetInstance()->LoadSound("bgm_ending", "Sound/bgm_ending.mp3", true);
 	CSoundManager::GetInstance()->LoadSound("bgm_battle", "Sound/bgm_battle.mp3", true);
+	CSoundManager::GetInstance()->LoadSound("bgm_winner", "Sound/bgm_winner.mp3", true);
 }
 
 void CGameFramework::ReleaseObjects()

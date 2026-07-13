@@ -57,7 +57,9 @@ void CMonster::TakeDamage(float damage)
     
     if (m_fMonsterHP <= 0.0f)
     {
-        // CSoundManager::GetInstance()->PlaySFX("monster_death");
+        int randomIndex = (rand() % 2) + 1;
+        string sfxName = "monster_die_" + to_string(randomIndex);
+        CSoundManager::GetInstance()->PlaySFX(sfxName);
         TransitionTo(MonsterState::Death);
     }
     else
