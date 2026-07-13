@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #define FRAME_BUFFER_WIDTH 1920
 #define FRAME_BUFFER_HEIGHT 1080
@@ -120,7 +120,7 @@ public:
 	{
 		m_ppScenes[m_nCurrentScene]->UpdateOtherPlayerRotate(clinetnum, right, look);
 	}
-	void UpdateOtherPlayerHP(int clientnum, float hp) 
+	void UpdateOtherPlayerHP(int clientnum, float hp)
 	{
 		m_ppScenes[m_nCurrentScene]->UpdateOtherPlayerHP(clientnum, hp);
 	}
@@ -180,11 +180,11 @@ private:
 	CGameTimer m_GameTimer;
 
 
-	CScene						*m_pScene = NULL;
-	CPlayer						*m_pPlayer = NULL;
-	CCamera						*m_pCamera = NULL;
+	CScene* m_pScene = NULL;
+	CPlayer* m_pPlayer = NULL;
+	CCamera* m_pCamera = NULL;
 
-	EPlayerModelType m_eSelectedPlayerModel = EPlayerModelType::Knight; // �⺻��
+	EPlayerModelType m_eSelectedPlayerModel = EPlayerModelType::Knight; // �⺻��
 
 	int m_nCurrentScene = 0;
 	int m_nScene = 0;
@@ -194,11 +194,13 @@ private:
 	int m_nPendingScene = -1;
 	POINT m_ptOldCursorPos;
 
+	// 마우스 휠(가운데) 버튼을 누르고 있는 동안에만 시점(카메라)을 회전시키기 위한 상태.
+	// 평소엔 커서가 자유로워 기존 좌/우클릭(공격, 스킬강화 등)이 그대로 동작한다.
+	bool m_bMouseOrbitDragging = false;
+	POINT m_ptOrbitLastPos;
+
 	_TCHAR						m_pszFrameRate[70];
 
 	//server
 	//float m_fLastPositionSendTime = 0.0f; 
 };
-
-
-

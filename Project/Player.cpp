@@ -12,7 +12,7 @@
 
 CPlayer::CPlayer()
 {
-	
+
 
 	m_pCamera = NULL;
 
@@ -36,7 +36,7 @@ CPlayer::CPlayer()
 
 	//server
 	m_pCamera = new CCamera();
-	m_pCamera->SetPosition({ 0,0,0 }); 
+	m_pCamera->SetPosition({ 0,0,0 });
 }
 
 CPlayer::~CPlayer()
@@ -46,14 +46,13 @@ CPlayer::~CPlayer()
 	if (m_pCamera) delete m_pCamera;
 }
 
-void CPlayer::CreateShaderVariables(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList)
+void CPlayer::CreateShaderVariables(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
 {
 	if (m_pCamera) m_pCamera->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }
 
-void CPlayer::UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList)
-{
-}
+void CPlayer::UpdateShaderVariables(ID3D12GraphicsCommandList* pd3dCommandList)
+{}
 
 void CPlayer::ReleaseShaderVariables()
 {
@@ -94,8 +93,9 @@ void CPlayer::Move(const XMFLOAT3& xmf3Shift, bool bUpdateVelocity)
 void CPlayer::Rotate(float x, float y, float z)
 {
 	DWORD nCurrentCameraMode = m_pCamera->GetMode();
-	if ((nCurrentCameraMode == FIRST_PERSON_CAMERA) || (nCurrentCameraMode == THIRD_PERSON_CAMERA))
+	if (nCurrentCameraMode == FIRST_PERSON_CAMERA)
 	{
+		// 1인칭은 기존과 동일하게 시점=몸통 방향이 그대로 묶여 있어야 하므로 변경하지 않음.
 		if (x != 0.0f)
 		{
 			m_fPitch += x;
@@ -121,6 +121,22 @@ void CPlayer::Rotate(float x, float y, float z)
 			m_xmf3Look = Vector3::TransformNormal(m_xmf3Look, xmmtxRotate);
 			m_xmf3Right = Vector3::TransformNormal(m_xmf3Right, xmmtxRotate);
 		}
+	}
+	else if (nCurrentCameraMode == THIRD_PERSON_CAMERA)
+	{
+		// 3인칭에서는 몸통 방향만 회전시킨다. 카메라(시점)는 마우스 휠클릭 드래그로
+		// CThirdPersonCamera::AddOrbitRotation을 통해 완전히 별도로 회전하므로 여기서는 건드리지 않는다.
+		if (y != 0.0f)
+		{
+			m_fYaw += y;
+			if (m_fYaw > 360.0f) m_fYaw -= 360.0f;
+			if (m_fYaw < 0.0f) m_fYaw += 360.0f;
+
+			XMMATRIX xmmtxRotate = XMMatrixRotationAxis(XMLoadFloat3(&m_xmf3Up), XMConvertToRadians(y));
+			m_xmf3Look = Vector3::TransformNormal(m_xmf3Look, xmmtxRotate);
+			m_xmf3Right = Vector3::TransformNormal(m_xmf3Right, xmmtxRotate);
+		}
+		// x(피치)/z(롤)는 3인칭 몸통 회전에 사용하지 않음(캐릭터가 앞으로 고꾸라지거나 기울지 않도록).
 	}
 	else if (nCurrentCameraMode == SPACESHIP_CAMERA)
 	{
@@ -235,6 +251,18 @@ BoundingBox CPlayer::GetWeaponAttackBoundingBox()
 
 void CPlayer::Update(float fTimeElapsed)
 {
+	// --- 피격 감지 (HP가 줄었으면 몬스터/다른 대상에게 공격받은 것) ---
+	if (currentHP < m_fPrevHP) {
+		TriggerHitFlash();
+	}
+	m_fPrevHP = currentHP;
+
+	if (m_fHitFlashTimer > 0.0f)
+	{
+		m_fHitFlashTimer -= fTimeElapsed;
+		if (m_fHitFlashTimer < 0.0f) m_fHitFlashTimer = 0.0f;
+	}
+
 	m_xmf3Velocity = Vector3::Add(m_xmf3Velocity, m_xmf3Gravity);
 
 	float fLength = sqrtf(m_xmf3Velocity.x * m_xmf3Velocity.x + m_xmf3Velocity.z * m_xmf3Velocity.z);
@@ -255,8 +283,8 @@ void CPlayer::Update(float fTimeElapsed)
 	if (m_pPlayerUpdatedContext) OnPlayerUpdateCallback(fTimeElapsed);
 
 	DWORD nCurrentCameraMode = m_pCamera->GetMode();
-	if (nCurrentCameraMode == THIRD_PERSON_CAMERA) { 
-		m_pCamera->Update(m_xmf3Position, fTimeElapsed); 
+	if (nCurrentCameraMode == THIRD_PERSON_CAMERA) {
+		m_pCamera->Update(m_xmf3Position, fTimeElapsed);
 		//m_pCamera->SetLookAt(m_xmf3Position);
 	}
 	if (m_pCameraUpdatedContext) OnCameraUpdateCallback(fTimeElapsed);
@@ -269,20 +297,20 @@ void CPlayer::Update(float fTimeElapsed)
 	m_xmf3Velocity = Vector3::Add(m_xmf3Velocity, Vector3::ScalarProduct(m_xmf3Velocity, -fDeceleration, true));
 }
 
-CCamera *CPlayer::OnChangeCamera(DWORD nNewCameraMode, DWORD nCurrentCameraMode)
+CCamera* CPlayer::OnChangeCamera(DWORD nNewCameraMode, DWORD nCurrentCameraMode)
 {
-	CCamera *pNewCamera = NULL;
+	CCamera* pNewCamera = NULL;
 	switch (nNewCameraMode)
 	{
-		case FIRST_PERSON_CAMERA:
-			pNewCamera = new CFirstPersonCamera(m_pCamera);
-			break;
-		case THIRD_PERSON_CAMERA:
-			pNewCamera = new CThirdPersonCamera(m_pCamera);
-			break;
-		case SPACESHIP_CAMERA:
-			pNewCamera = new CSpaceShipCamera(m_pCamera);
-			break;
+	case FIRST_PERSON_CAMERA:
+		pNewCamera = new CFirstPersonCamera(m_pCamera);
+		break;
+	case THIRD_PERSON_CAMERA:
+		pNewCamera = new CThirdPersonCamera(m_pCamera);
+		break;
+	case SPACESHIP_CAMERA:
+		pNewCamera = new CSpaceShipCamera(m_pCamera);
+		break;
 	}
 	if (nCurrentCameraMode == SPACESHIP_CAMERA)
 	{
@@ -323,8 +351,17 @@ void CPlayer::OnPrepareRender()
 	m_xmf4x4ToParent = Matrix4x4::Multiply(XMMatrixScaling(m_xmf3Scale.x, m_xmf3Scale.y, m_xmf3Scale.z), m_xmf4x4ToParent);
 }
 
-void CPlayer::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
+void CPlayer::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
 {
+	// 깜빡임: 0.4초 동안 sin파로 on/off를 반복 → "깜빡깜빡" 느낌
+	float intensity = 0.0f;
+	if (m_fHitFlashTimer > 0.0f)
+	{
+		float blink = 0.5f + 0.5f * sinf(m_fHitFlashTimer * HIT_FLASH_BLINK_SPEED);
+		intensity = blink; // 0~1
+	}
+	SetHitFlashRecursive(intensity);
+
 	DWORD nCameraMode = (pCamera) ? pCamera->GetMode() : 0x00;
 	if (nCameraMode == THIRD_PERSON_CAMERA) CGameObject::Render(pd3dCommandList, pCamera);
 }
@@ -348,7 +385,7 @@ void CPlayer::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamer
 //#endif
 //}
 
-CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, void *pContext, CLoadedModelInfo* pModel)
+CTerrainPlayer::CTerrainPlayer(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature, void* pContext, CLoadedModelInfo* pModel)
 {
 	m_pCamera = ChangeCamera(THIRD_PERSON_CAMERA, 0.0f);
 
@@ -383,12 +420,12 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 	m_pSkinnedAnimationController->SetTrackAnimationSet(4, 4); // skill 1
 	m_pSkinnedAnimationController->SetTrackAnimationSet(5, 5); // skill 2
 	m_pSkinnedAnimationController->SetTrackAnimationSet(6, 6); // skill 3
-	m_pSkinnedAnimationController->SetTrackEnable(1, false); 
-	m_pSkinnedAnimationController->SetTrackEnable(2, false); 
-	m_pSkinnedAnimationController->SetTrackEnable(3, false); 
-	m_pSkinnedAnimationController->SetTrackEnable(4, false); 
-	m_pSkinnedAnimationController->SetTrackEnable(5, false); 
-	m_pSkinnedAnimationController->SetTrackEnable(6, false); 
+	m_pSkinnedAnimationController->SetTrackEnable(1, false);
+	m_pSkinnedAnimationController->SetTrackEnable(2, false);
+	m_pSkinnedAnimationController->SetTrackEnable(3, false);
+	m_pSkinnedAnimationController->SetTrackEnable(4, false);
+	m_pSkinnedAnimationController->SetTrackEnable(5, false);
+	m_pSkinnedAnimationController->SetTrackEnable(6, false);
 	m_pSkinnedAnimationController->SetTrackType(3, ANIMATION_TYPE_ONCE);
 	m_pSkinnedAnimationController->SetTrackType(4, ANIMATION_TYPE_ONCE);
 	m_pSkinnedAnimationController->SetTrackType(5, ANIMATION_TYPE_ONCE);
@@ -412,7 +449,7 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 	//m_pSkinnedAnimationController->SetAnimationCallbackHandler(1, pAnimationCallbackHandler);
 
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
-	
+
 	SetPlayerUpdatedContext(pContext);
 	SetCameraUpdatedContext(pContext);
 
@@ -425,7 +462,7 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 	CTexture* pTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
 	pTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/hp.dds", RESOURCE_TEXTURE2D, 0);
 	CScene::CreateShaderResourceViews(pd3dDevice, pTexture, 0, 15);
-	
+
 	CScreenRectMeshTextured* pMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.25f, 0.55f, 0.85f, 0.1f);
 	m_playerHP->SetMesh(0, pMesh);
 	m_playerHP->SetTexture(pTexture);
@@ -433,7 +470,7 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 	device = pd3dDevice;
 	cmdList = pd3dCommandList;
 
-	CHeightMapTerrain *pTerrain = (CHeightMapTerrain *)pContext;
+	CHeightMapTerrain* pTerrain = (CHeightMapTerrain*)pContext;
 	SetPosition(XMFLOAT3(3, 0, 20));
 	//SetScale(XMFLOAT3(10.0f, 10.0f, 10.0f));
 
@@ -441,59 +478,58 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 }
 
 CTerrainPlayer::~CTerrainPlayer()
-{
-}
+{}
 
-CCamera *CTerrainPlayer::ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed)
+CCamera* CTerrainPlayer::ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed)
 {
 	DWORD nCurrentCameraMode = (m_pCamera) ? m_pCamera->GetMode() : 0x00;
 	if (nCurrentCameraMode == nNewCameraMode) return(m_pCamera);
 	switch (nNewCameraMode)
 	{
-		case FIRST_PERSON_CAMERA:
-			SetFriction(500.0f);
-			SetGravity(XMFLOAT3(0.0f, 0.0f, 0.0f));
-			SetMaxVelocityXZ(300.0f);
-			SetMaxVelocityY(800.0f);
-			m_pCamera = OnChangeCamera(FIRST_PERSON_CAMERA, nCurrentCameraMode);
-			m_pCamera->SetTimeLag(0.0f);
-			m_pCamera->SetOffset(XMFLOAT3(0.0f, 1.5f, 0.0f));
-			m_pCamera->GenerateProjectionMatrix(0.01f, 5000.0f, ASPECT_RATIO, 60.0f);
-			m_pCamera->SetViewport(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
-			m_pCamera->SetScissorRect(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
-			break;
-		case SPACESHIP_CAMERA:
-			SetFriction(125.0f);
-			SetGravity(XMFLOAT3(0.0f, 0.0f, 0.0f));
-			SetMaxVelocityXZ(300.0f);
-			SetMaxVelocityY(400.0f);
-			m_pCamera = OnChangeCamera(SPACESHIP_CAMERA, nCurrentCameraMode);
-			m_pCamera->SetTimeLag(0.0f);
-			m_pCamera->SetOffset(XMFLOAT3(0.0f, 0.0f, 0.0f));
-			m_pCamera->GenerateProjectionMatrix(1.01f, 5000.0f, ASPECT_RATIO, 60.0f);
-			m_pCamera->SetViewport(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
-			m_pCamera->SetScissorRect(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
-			break;
-		case THIRD_PERSON_CAMERA:
-			SetFriction(250.0f);
-			SetGravity(XMFLOAT3(0.0f, -98.0f, 0.0f));
-			SetMaxVelocityXZ(300.0f);
-			SetMaxVelocityY(400.0f);
-			m_pCamera = OnChangeCamera(THIRD_PERSON_CAMERA, nCurrentCameraMode);
-			m_pCamera->SetTimeLag(0.25f);
-			m_pCamera->SetOffset(XMFLOAT3(0.0f, 6.0f, -8.f));
-			m_pCamera->GenerateProjectionMatrix(1.01f, 5000.0f, ASPECT_RATIO, 60.0f);
-			m_pCamera->SetViewport(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
-			m_pCamera->SetScissorRect(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
-			break;
-		default:
-			break;
+	case FIRST_PERSON_CAMERA:
+		SetFriction(500.0f);
+		SetGravity(XMFLOAT3(0.0f, 0.0f, 0.0f));
+		SetMaxVelocityXZ(300.0f);
+		SetMaxVelocityY(800.0f);
+		m_pCamera = OnChangeCamera(FIRST_PERSON_CAMERA, nCurrentCameraMode);
+		m_pCamera->SetTimeLag(0.0f);
+		m_pCamera->SetOffset(XMFLOAT3(0.0f, 1.5f, 0.0f));
+		m_pCamera->GenerateProjectionMatrix(0.01f, 5000.0f, ASPECT_RATIO, 60.0f);
+		m_pCamera->SetViewport(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
+		m_pCamera->SetScissorRect(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
+		break;
+	case SPACESHIP_CAMERA:
+		SetFriction(125.0f);
+		SetGravity(XMFLOAT3(0.0f, 0.0f, 0.0f));
+		SetMaxVelocityXZ(300.0f);
+		SetMaxVelocityY(400.0f);
+		m_pCamera = OnChangeCamera(SPACESHIP_CAMERA, nCurrentCameraMode);
+		m_pCamera->SetTimeLag(0.0f);
+		m_pCamera->SetOffset(XMFLOAT3(0.0f, 0.0f, 0.0f));
+		m_pCamera->GenerateProjectionMatrix(1.01f, 5000.0f, ASPECT_RATIO, 60.0f);
+		m_pCamera->SetViewport(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
+		m_pCamera->SetScissorRect(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
+		break;
+	case THIRD_PERSON_CAMERA:
+		SetFriction(250.0f);
+		SetGravity(XMFLOAT3(0.0f, -98.0f, 0.0f));
+		SetMaxVelocityXZ(300.0f);
+		SetMaxVelocityY(400.0f);
+		m_pCamera = OnChangeCamera(THIRD_PERSON_CAMERA, nCurrentCameraMode);
+		m_pCamera->SetTimeLag(0.25f);
+		m_pCamera->SetOffset(XMFLOAT3(0.0f, 6.0f, -8.f));
+		m_pCamera->GenerateProjectionMatrix(1.01f, 5000.0f, ASPECT_RATIO, 60.0f);
+		m_pCamera->SetViewport(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
+		m_pCamera->SetScissorRect(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
+		break;
+	default:
+		break;
 	}
 	m_pCamera->SetPosition(Vector3::Add(m_xmf3Position, m_pCamera->GetOffset()));
 	Update(fTimeElapsed);
 
 	if (m_pCamera->GetMode() == THIRD_PERSON_CAMERA) ((CThirdPersonCamera*)m_pCamera)->Rotate(-90.0f, 0.0f, 0.0f);
-	
+
 	return(m_pCamera);
 }
 
@@ -647,8 +683,8 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 			}
 			break;
 		case AnimationState::SKILL2:
-			PlayAnimationTrack(5,1.5f);
-			if (IsAnimationFinished(5))	{
+			PlayAnimationTrack(5, 1.5f);
+			if (IsAnimationFinished(5)) {
 				//m_pSkinnedAnimationController->SetTrackPosition(5, 0.0f);
 				m_currentAnim = AnimationState::IDLE;
 			}
@@ -812,12 +848,12 @@ bool CTerrainPlayer::IsAnimationFinished(int trackIndex)
 void CTerrainPlayer::StartAnimationBlend(int fromTrack, int toTrack, float blendTime)
 {
 	// 진행 중인 블렌드가 있으면 현재 weight를 from의 시작값으로 사용
-    float startWeight = 1.0f;
-    if (m_animBlend.active && m_animBlend.to == fromTrack) {
-        float t = m_animBlend.elapsed / m_animBlend.duration;
-        startWeight = t; // 현재까지 올라온 weight에서 시작
-    }
-	
+	float startWeight = 1.0f;
+	if (m_animBlend.active && m_animBlend.to == fromTrack) {
+		float t = m_animBlend.elapsed / m_animBlend.duration;
+		startWeight = t; // 현재까지 올라온 weight에서 시작
+	}
+
 	m_animBlend.from = fromTrack;
 	m_animBlend.to = toTrack;
 	m_animBlend.duration = blendTime;
@@ -828,5 +864,5 @@ void CTerrainPlayer::StartAnimationBlend(int fromTrack, int toTrack, float blend
 		m_pSkinnedAnimationController->SetTrackEnable(i, i == fromTrack || i == toTrack);
 
 	m_pSkinnedAnimationController->SetTrackWeight(fromTrack, startWeight);
-    m_pSkinnedAnimationController->SetTrackWeight(toTrack, 1.0f - startWeight);
+	m_pSkinnedAnimationController->SetTrackWeight(toTrack, 1.0f - startWeight);
 }

@@ -128,10 +128,14 @@ public:
 	CShader* m_pShader = NULL;
 
 	XMFLOAT4						m_xmf4AlbedoColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	XMFLOAT4						m_xmf4EmissiveColor = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	XMFLOAT4						m_xmf4EmissiveColor = XMFLOAT4(1.0f, 0.0f, 0.0f, 0.0f);
 	XMFLOAT4						m_xmf4SpecularColor = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	XMFLOAT4						m_xmf4AmbientColor = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 
+	void SetHitFlash(float intensity, const XMFLOAT4& color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f))
+	{
+		m_xmf4EmissiveColor = XMFLOAT4(color.x, color.y, color.z, intensity);
+	}
 	CShader* GetShader() const { return m_pShader; }
 	void SetShader(CShader* pShader);
 	void SetMaterialType(UINT nType) { m_nType |= nType; }
@@ -403,7 +407,7 @@ public:
 	CMaterial* GetMaterial(int nMaterial) { return m_ppMaterials[nMaterial]; }
 
 	void SetChild(CGameObject* pChild, bool bReferenceUpdate = false);
-
+	void SetHitFlashRecursive(float intensity);
 	virtual void SetPlayer(CPlayer* p) { }
 
 	void LookAt(XMFLOAT3& xmf3LookAt, XMFLOAT3& xmf3Up)

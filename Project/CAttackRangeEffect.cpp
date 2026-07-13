@@ -143,7 +143,7 @@ void CGroundAttackRangeEffect::Spawn(const XMFLOAT3& xmf3Center, float fRadius, 
     ind.fWarmupTime = max(0.05f, fWarmupTime);
     ind.xmf3Color = XMFLOAT3(xmf4Color.x, xmf4Color.y, xmf4Color.z);
     ind.bSector = true;
-    ind.fFacingAngle = WorldDirectionToLocalAngle(xmf3Direction);
+    ind.fFacingAngle = -WorldDirectionToLocalAngle(xmf3Direction);
     ind.fHalfAngle = XMConvertToRadians(max(1.0f, fHalfAngleDeg));
 
     PlaceFlatOnGround(ind.pObject, xmf3Center, fRadius);

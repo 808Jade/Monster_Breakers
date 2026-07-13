@@ -37,7 +37,7 @@ public:
     // 한 번에 처리한다. 이펙트 모양(원형/부채꼴)·색상·웜업은 newState에 따라 보스가 직접 결정한다.
     // xmf3Center/fRadius/fSweepAngleDeg : 서버 패킷(sc_packet_boss_pattern)에서 그대로 전달.
     // fSweepAngleDeg는 부채꼴(Taunt=SWEEP)에서만 사용되고, 원형 패턴에서는 무시된다.
-    void PlayAttackPattern(BossState newState, const XMFLOAT3& xmf3Center, float fRadius, float fSweepAngleDeg = 0.0f);
+    void PlayAttackPattern(BossState newState, const XMFLOAT3& xmf3Center, const XMFLOAT3& look, float fRadius, float fSweepAngleDeg = 0.0f);
 
     void  TakeDamage(float damage);
     float GetHP()      const { return m_fMonsterHP; }

@@ -167,7 +167,12 @@ float4 PSStandard(VS_STANDARD_OUTPUT input) : SV_TARGET
     float shadow = ShadowFactor(input.positionLightH);
     cIllumination.rgb *= shadow;
 
-    return lerp(cColor, cIllumination, 0.5f);
+    float4 cFinal = lerp(cColor, cIllumination, 0.5f);
+
+    // 히트플래시: emissive.a를 강도로 사용 (평소엔 0이라 원본 색 그대로)
+    cFinal.rgb = lerp(cFinal.rgb, gMaterial.m_cEmissive.rgb, saturate(gMaterial.m_cEmissive.a));
+
+    return cFinal;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct VS_SHADOW_INPUT

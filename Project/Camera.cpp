@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Camera.h"
 #include "Player.h"
 
@@ -22,7 +22,7 @@ CCamera::CCamera()
 	m_pPlayer = NULL;
 }
 
-CCamera::CCamera(CCamera *pCamera)
+CCamera::CCamera(CCamera* pCamera)
 {
 	if (pCamera)
 	{
@@ -50,8 +50,7 @@ CCamera::CCamera(CCamera *pCamera)
 }
 
 CCamera::~CCamera()
-{ 
-}
+{}
 
 void CCamera::SetViewport(int xTopLeft, int yTopLeft, int nWidth, int nHeight, float fMinZ, float fMaxZ)
 {
@@ -74,8 +73,8 @@ void CCamera::SetScissorRect(LONG xLeft, LONG yTop, LONG xRight, LONG yBottom)
 void CCamera::GenerateProjectionMatrix(float fNearPlaneDistance, float fFarPlaneDistance, float fAspectRatio, float fFOVAngle)
 {
 	m_xmf4x4Projection = Matrix4x4::PerspectiveFovLH(XMConvertToRadians(fFOVAngle), fAspectRatio, fNearPlaneDistance, fFarPlaneDistance);
-//	XMMATRIX xmmtxProjection = XMMatrixPerspectiveFovLH(XMConvertToRadians(fFOVAngle), fAspectRatio, fNearPlaneDistance, fFarPlaneDistance);
-//	XMStoreFloat4x4(&m_xmf4x4Projection, xmmtxProjection);
+	//	XMMATRIX xmmtxProjection = XMMatrixPerspectiveFovLH(XMConvertToRadians(fFOVAngle), fAspectRatio, fNearPlaneDistance, fFarPlaneDistance);
+	//	XMStoreFloat4x4(&m_xmf4x4Projection, xmmtxProjection);
 }
 
 void CCamera::GenerateViewMatrix(XMFLOAT3 xmf3Position, XMFLOAT3 xmf3LookAt, XMFLOAT3 xmf3Up)
@@ -106,15 +105,15 @@ void CCamera::RegenerateViewMatrix()
 	m_xmf4x4View._43 = -Vector3::DotProduct(m_xmf3Position, m_xmf3Look);
 }
 
-void CCamera::CreateShaderVariables(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList)
+void CCamera::CreateShaderVariables(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
 {
-	UINT ncbElementBytes = ((sizeof(VS_CB_CAMERA_INFO) + 255) & ~255); //256�� ���
+	UINT ncbElementBytes = ((sizeof(VS_CB_CAMERA_INFO) + 255) & ~255); //256�� ���
 	m_pd3dcbCamera = ::CreateBufferResource(pd3dDevice, pd3dCommandList, NULL, ncbElementBytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, NULL);
 
-	m_pd3dcbCamera->Map(0, NULL, (void **)&m_pcbMappedCamera);
+	m_pd3dcbCamera->Map(0, NULL, (void**)&m_pcbMappedCamera);
 }
 
-void CCamera::UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList)
+void CCamera::UpdateShaderVariables(ID3D12GraphicsCommandList* pd3dCommandList)
 {
 	XMFLOAT4X4 xmf4x4View;
 	XMStoreFloat4x4(&xmf4x4View, XMMatrixTranspose(XMLoadFloat4x4(&m_xmf4x4View)));
@@ -139,7 +138,7 @@ void CCamera::ReleaseShaderVariables()
 	}
 }
 
-void CCamera::SetViewportsAndScissorRects(ID3D12GraphicsCommandList *pd3dCommandList)
+void CCamera::SetViewportsAndScissorRects(ID3D12GraphicsCommandList* pd3dCommandList)
 {
 	pd3dCommandList->RSSetViewports(1, &m_d3dViewport);
 	pd3dCommandList->RSSetScissorRects(1, &m_d3dScissorRect);
@@ -148,7 +147,7 @@ void CCamera::SetViewportsAndScissorRects(ID3D12GraphicsCommandList *pd3dCommand
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CSpaceShipCamera
 
-CSpaceShipCamera::CSpaceShipCamera(CCamera *pCamera) : CCamera(pCamera)
+CSpaceShipCamera::CSpaceShipCamera(CCamera* pCamera) : CCamera(pCamera)
 {
 	m_nMode = SPACESHIP_CAMERA;
 }
@@ -193,7 +192,7 @@ void CSpaceShipCamera::Rotate(float x, float y, float z)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CFirstPersonCamera
 
-CFirstPersonCamera::CFirstPersonCamera(CCamera *pCamera) : CCamera(pCamera)
+CFirstPersonCamera::CFirstPersonCamera(CCamera* pCamera) : CCamera(pCamera)
 {
 	m_nMode = FIRST_PERSON_CAMERA;
 	if (pCamera)
@@ -242,7 +241,7 @@ void CFirstPersonCamera::Rotate(float x, float y, float z)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CThirdPersonCamera
 
-CThirdPersonCamera::CThirdPersonCamera(CCamera *pCamera) : CCamera(pCamera)
+CThirdPersonCamera::CThirdPersonCamera(CCamera* pCamera) : CCamera(pCamera)
 {
 	m_nMode = THIRD_PERSON_CAMERA;
 	if (pCamera)
@@ -262,16 +261,15 @@ void CThirdPersonCamera::Update(XMFLOAT3& xmf3LookAt, float fTimeElapsed)
 {
 	if (m_pPlayer)
 	{
-		XMFLOAT4X4 xmf4x4Rotate = Matrix4x4::Identity();
-		XMFLOAT3 xmf3Right = m_pPlayer->GetRightVector();
-		XMFLOAT3 xmf3Up = m_pPlayer->GetUpVector();
-		XMFLOAT3 xmf3Look = m_pPlayer->GetLookVector();
-		xmf4x4Rotate._11 = xmf3Right.x; xmf4x4Rotate._21 = xmf3Up.x; xmf4x4Rotate._31 = xmf3Look.x;
-		xmf4x4Rotate._12 = xmf3Right.y; xmf4x4Rotate._22 = xmf3Up.y; xmf4x4Rotate._32 = xmf3Look.y;
-		xmf4x4Rotate._13 = xmf3Right.z; xmf4x4Rotate._23 = xmf3Up.z; xmf4x4Rotate._33 = xmf3Look.z;
+		// 카메라는 더 이상 플레이어의 Right/Up/Look(몸통 방향)을 기준으로 궤도를 돌지 않는다.
+		// 대신 마우스로만 조작되는 카메라 자체의 궤도각(m_fOrbitYaw/m_fOrbitPitch)을 사용한다.
+		// -> WASD로 몸통이 돌아도 시점은 그대로 유지되고, 시점은 오직 마우스로만 회전한다.
+		XMMATRIX xmmtxYaw = XMMatrixRotationY(XMConvertToRadians(m_fOrbitYaw));
+		XMMATRIX xmmtxPitch = XMMatrixRotationX(XMConvertToRadians(m_fOrbitPitch));
+		XMMATRIX xmmtxRotate = XMMatrixMultiply(xmmtxPitch, xmmtxYaw);
 
 		XMFLOAT3 mxf3PlayerPosition = m_pPlayer->GetPosition();
-		XMFLOAT3 xmf3Offset = Vector3::TransformCoord(m_xmf3Offset, xmf4x4Rotate);
+		XMFLOAT3 xmf3Offset = Vector3::TransformCoord(m_xmf3Offset, xmmtxRotate);
 		XMFLOAT3 xmf3Position = Vector3::Add(mxf3PlayerPosition, xmf3Offset);
 		XMFLOAT3 xmf3Direction = Vector3::Subtract(xmf3Position, m_xmf3Position);
 		float fLength = Vector3::Length(xmf3Direction);
@@ -284,7 +282,7 @@ void CThirdPersonCamera::Update(XMFLOAT3& xmf3LookAt, float fTimeElapsed)
 		{
 			m_xmf3Position = Vector3::Add(m_xmf3Position, xmf3Direction, fDistance);
 			XMFLOAT3 xmf3AdjustedLookAt = xmf3LookAt;
-			xmf3AdjustedLookAt.y += 1.5f; // �÷��̾��� �Ӹ� ���� (y + 2)
+			xmf3AdjustedLookAt.y += 1.5f; // �÷��̾��� �Ӹ� ���� (y + 2)
 			SetLookAt(xmf3AdjustedLookAt);
 		}
 	}
@@ -329,3 +327,13 @@ void CThirdPersonCamera::Rotate(float fPitch, float fYaw, float fRoll)
 	}
 }
 
+void CThirdPersonCamera::AddOrbitRotation(float deltaYaw, float deltaPitch)
+{
+	m_fOrbitYaw += deltaYaw;
+	if (m_fOrbitYaw > 360.0f) m_fOrbitYaw -= 360.0f;
+	if (m_fOrbitYaw < 0.0f)   m_fOrbitYaw += 360.0f;
+
+	m_fOrbitPitch += deltaPitch;
+	if (m_fOrbitPitch > ORBIT_PITCH_MAX) m_fOrbitPitch = ORBIT_PITCH_MAX;
+	if (m_fOrbitPitch < ORBIT_PITCH_MIN) m_fOrbitPitch = ORBIT_PITCH_MIN;
+}

@@ -86,6 +86,13 @@ public:
 	CGameObject* m_pHeldItems[4] = { nullptr };
 	CGameObject* m_pHand = NULL;
 	bool bflashlight = false;
+
+	float m_fPrevHP = 100.f;              // 직전 프레임 HP (피격 감지용)
+	float m_fHitFlashTimer = 0.0f;        // 남은 플래시 시간
+	static constexpr float HIT_FLASH_DURATION = 0.4f;  // 깜빡임 지속 시간(초)
+	static constexpr float HIT_FLASH_BLINK_SPEED = 25.0f; // 깜빡이는 속도
+
+	void TriggerHitFlash() { m_fHitFlashTimer = HIT_FLASH_DURATION; }
 public:
 	CPlayer();
 	virtual ~CPlayer();
