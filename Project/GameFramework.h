@@ -8,6 +8,7 @@
 #include "Player.h"
 #include "Scene.h"
 #include "CMonster.h"
+#include <fmod.hpp>
 
 enum class EPlayerModelType
 {
@@ -37,6 +38,7 @@ public:
 	void ChangeSwapChainState();
 
 	void BuildObjects();
+	void LoadSoundResources();
 	void ReleaseObjects();
 
 	void ProcessInput();

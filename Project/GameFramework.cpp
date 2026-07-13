@@ -6,6 +6,7 @@
 #include "GameFramework.h"
 #include "Network.h"
 #include "CMonster.h"
+#include "SoundManager.h"
 
 CGameFramework::CGameFramework()
 {
@@ -53,6 +54,8 @@ bool CGameFramework::OnCreate(HINSTANCE hInstance, HWND hMainWnd)
 	CreateDepthStencilView();
 
 	CoInitialize(NULL);
+
+	CSoundManager::GetInstance()->Init();
 
 	BuildObjects();
 	//LoadingDoneToServer();
@@ -453,6 +456,8 @@ void CGameFramework::BuildObjects()
 		m_ppScenes = new CScene * [m_nScenes] {};  // 딱 한 번만 할당, NULL로 초기화
 	}
 
+	LoadSoundResources();
+
 	bool b = false;
 	if (m_nCurrentScene == 0) {
 		m_ppScenes[0] = new CStartScene();
@@ -523,6 +528,75 @@ void CGameFramework::BuildObjects()
 
 	m_GameTimer.Reset();
 	isLoading = false;
+}
+
+void CGameFramework::LoadSoundResources()
+{
+	// =================================================================
+	// SFX (효과음)
+	// =================================================================
+
+	// --- 공통 행동 (Common) ---
+	CSoundManager::GetInstance()->LoadSound("player_die", "Sound/player_die.mp3", false);//
+	CSoundManager::GetInstance()->LoadSound("player_respawn", "Sound/player_respawn.mp3", false);//
+	CSoundManager::GetInstance()->LoadSound("player_hurt", "Sound/player_hurt.mp3", false);//
+
+	// --- 발소리 (Footsteps) ---
+	CSoundManager::GetInstance()->LoadSound("footstep_sand_1", "Sound/footstep_sand_1.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("footstep_sand_2", "Sound/footstep_sand_2.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("footstep_sand_3", "Sound/footstep_sand_3.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("Footstep01", "Sound/Footstep01.wav", false);
+	CSoundManager::GetInstance()->LoadSound("Footstep02", "Sound/Footstep02.wav", false);
+	CSoundManager::GetInstance()->LoadSound("Footstep03", "Sound/Footstep03.wav", false);
+	CSoundManager::GetInstance()->LoadSound("Footstep04", "Sound/Footstep04.wav", false);
+	CSoundManager::GetInstance()->LoadSound("walk_on_grass_1", "Sound/walk_on_grass_1.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("walk_on_grass_2", "Sound/walk_on_grass_2.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("walk_on_grass_3", "Sound/walk_on_grass_3.mp3", false);
+
+	// --- 기사 (Knight) ---
+	CSoundManager::GetInstance()->LoadSound("knight_attack_1", "Sound/knight_attack_1.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("knight_attack_2", "Sound/knight_attack_2.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("knight_e", "Sound/knight_e.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("knight_hit", "Sound/knight_hit.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("knight_q", "Sound/knight_q.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("knight_rk_1", "Sound/knight_rk_1.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("knight_rk_2", "Sound/knight_rk_2.mp3", false);
+
+	// --- 도적 (Rogue) ---
+	CSoundManager::GetInstance()->LoadSound("rogue_attack", "Sound/rogue_attack.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("rogue_e", "Sound/rogue_e.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("rogue_q", "Sound/rogue_q.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("rogue_rk", "Sound/rogue_rk.mp3", false);
+
+	// --- 마법사 (Wizard) ---
+	CSoundManager::GetInstance()->LoadSound("wizard_attack", "Sound/wizard_attack.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("wizard_e", "Sound/wizard_e.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("wizard_q", "Sound/wizard_q.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("wizard_rk", "Sound/wizard_rk.mp3", false);
+
+	// --- 몬스터 & 보스 (Monster & Boss) ---
+	CSoundManager::GetInstance()->LoadSound("monster_hurt_1", "Sound/monster_hurt_1.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("monster_hurt_2", "Sound/monster_hurt_2.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("monster_die_2", "Sound/monster_die_1.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("monster_die_2", "Sound/monster_die_2.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("boss_attack_1", "Sound/boss_attack_1.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("boss_attack_2", "Sound/boss_attack_2.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("boss_attack_3", "Sound/boss_attack_3.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("boss_hurt", "Sound/boss_hurt.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("boss_walk", "Sound/boss_walk.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("boss_die_1", "Sound/boss_die_1.mp3", false);
+	CSoundManager::GetInstance()->LoadSound("boss_die_2", "Sound/boss_die_2.mp3", false);
+
+
+	// =================================================================
+	// BGM
+	// =================================================================
+	CSoundManager::GetInstance()->LoadSound("bgm_bossstage", "Sound/bgm_bossstage.wav", true);
+	CSoundManager::GetInstance()->LoadSound("bgm_login", "Sound/bgm_login.mp3", true);
+	CSoundManager::GetInstance()->LoadSound("bgm_village", "Sound/bgm_village.mp3", true);
+	CSoundManager::GetInstance()->LoadSound("bgm_ending", "Sound/bgm_ending.mp3", true);
+	CSoundManager::GetInstance()->LoadSound("bgm_battle", "Sound/bgm_battle.mp3", true);
+	CSoundManager::GetInstance()->LoadSound("bgm_winner", "Sound/bgm_winner.mp3", true);
 }
 
 void CGameFramework::ReleaseObjects()
@@ -725,6 +799,8 @@ void CGameFramework::FrameAdvance()
 	m_pd3dCommandList->ClearDepthStencilView(d3dDsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
 #endif
 	if (m_pPlayer && !isStartScene) m_pPlayer->Render(m_pd3dCommandList, m_pCamera);
+
+	CSoundManager::GetInstance()->Update();
 
 	d3dResourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	d3dResourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;

@@ -5,6 +5,7 @@
 #include "Scene.h"
 #include "Network.h"
 #include "GameFramework.h"
+#include "SoundManager.h"
 
 #include <random>
 #include <array>
@@ -756,6 +757,8 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 //	m_Shaders[9] = pShopSpace4Shader;
 #pragma endregion
 
+	CSoundManager::GetInstance()->PlayBGM("bgm_village");
+
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 	CreateShadowResources(pd3dDevice, pd3dCommandList);
 }
@@ -1289,7 +1292,25 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 		for (int i = 0; i < 3; ++i)
 			if (PtInRect(&rt[i], pt)) { idx = i; break; }
 
-		if (idx == -1) { p->m_currentAnim = AnimationState::ATTACK; break; }
+		if (idx == -1) 
+		{ 
+			p->m_currentAnim = AnimationState::ATTACK;
+			if (m_pModel == m_pKnightModel)
+			{
+				int randomIndex = (rand() % 2) + 1;
+				std::string soundName = "knight_attack_" + std::to_string(randomIndex);
+				CSoundManager::GetInstance()->PlaySFX(soundName);
+			}
+			else if (m_pModel == m_pWizardModel)
+			{
+				CSoundManager::GetInstance()->PlaySFX("wizard_attack");
+			}
+			else if (m_pModel == m_pThiefModel)
+			{
+				CSoundManager::GetInstance()->PlaySFX("rogue_attack");
+			}
+			break; 
+		}
 
 		int lv = p->level[idx];
 		int cost = 100 + lv * 50;
@@ -1324,7 +1345,6 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 			p->m_currentAnim = AnimationState::SKILL1;
 			if (m_pModel == m_pWizardModel)
 			{
-
 				CGameObject* pHand = p->FindFrame("RightHand");
 
 				if (!pHand) break;
@@ -1339,6 +1359,8 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 				std::cout << "[SKILL] 파이어볼 송신 | pos=("
 					<< firePos.x << ", " << firePos.y << ", " << firePos.z
 					<< ") look=(" << fireLook.x << ", " << fireLook.y << ", " << fireLook.z << ")\n";
+
+				CSoundManager::GetInstance()->PlaySFX("wizard_rk");
 
 				//m_pFireballSystem->Emit(pHand->GetPosition(), p->GetLook(), 20.0f); 
 
@@ -1361,11 +1383,17 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 					<< throwPos.x << ", " << throwPos.y << ", " << throwPos.z
 					<< ") dir=(" << throwDir.x << ", " << throwDir.y << ", " << throwDir.z << ")\n";
 
+				CSoundManager::GetInstance()->PlaySFX("rogue_rk");
+
 				send_weapon_pos_packet(throwPos, throwDir);
 			}
 			else if (m_pModel == m_pKnightModel)
 			{
+				int randomIndex = (rand() % 2) + 1;
+				std::string soundName = "knight_rk_" + std::to_string(randomIndex);
+				CSoundManager::GetInstance()->PlaySFX(soundName);
 				std::cout << "[SKILL] 기사 방패막기 시작\n";
+
 				send_shield_block_packet(true);
 			}
 			else {
@@ -1425,6 +1453,8 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 						otherPlayer->damage += (pPlayer->level[2]); // 다른 플레이어 공격력 증가
 						m_pBeamSystem->Emit(otherPlayer->GetPosition(), pPlayer->GetPosition());
 					}
+
+					CSoundManager::GetInstance()->PlaySFX("wizard_q");
 				}
 				// 이부분 기사 q 스킬
 				else if (m_pModel == m_pKnightModel)
@@ -1434,6 +1464,8 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 
 					if (m_pGroundCrackEffect)
 						m_pGroundCrackEffect->Trigger(pos, look);
+
+					CSoundManager::GetInstance()->PlaySFX("knight_q");
 
 					send_strike_packet(pos, look);
 				}
@@ -1452,11 +1484,14 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 						footPos.y -= 0.5f;
 						m_pGreenSpiritSystem->Emit(footPos);
 
+						CSoundManager::GetInstance()->PlaySFX("wizard_e");
+
 						//SERVER!!
 						send_buff_hp_packet();
 					}
 				}
 				else if (m_pModel == m_pKnightModel) {
+					CSoundManager::GetInstance()->PlaySFX("knight_e");
 
 					send_taunt_packet(pPlayer->level[2] * 5); //도발범위는 플레이어 레벨에 따라 증가
 					// 기사 도발	
@@ -1515,6 +1550,7 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 						float yaw = atan2f(faceDir.x, faceDir.z);  // XZ 평면 각도
 						pPlayer->Rotate(0.0f, XMConvertToDegrees(yaw), 0.0f);
 					}
+					CSoundManager::GetInstance()->PlaySFX("rogue_q");
 				}
 				TriggerSkillCooldown(2);
 			}
@@ -1810,6 +1846,7 @@ void CStartScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLi
 	m_pFontIP = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"Enter IP : ", 0.45f, -0.75f);
 	m_GameObjects[1] = m_pFontIP;
 
+	CSoundManager::GetInstance()->PlayBGM("bgm_login");
 
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }

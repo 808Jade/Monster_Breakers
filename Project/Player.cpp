@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "Player.h"
 #include "Shader.h"
+#include "SoundManager.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CPlayer
@@ -777,6 +778,42 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 			prevAnimState = currentAnimState;
 		}
 
+	}
+
+	// Sound ---------------------------------------------------
+	static float footstepTimer = 0.0f;
+
+	if (m_currentAnim == AnimationState::RUN || m_currentAnim == AnimationState::WALK)
+	{
+		footstepTimer += fTimeElapsed;
+
+		if (m_currentAnim == AnimationState::RUN)
+		{
+			if (footstepTimer >= 0.39f)
+			{
+				int randomIndex = (rand() % 4) + 1;
+				std::string soundName = "Footstep0" + std::to_string(randomIndex);
+				CSoundManager::GetInstance()->PlaySFX(soundName);
+
+				footstepTimer = 0.0f; // 타이머 초기화
+			}
+		}
+		else
+		{
+			if (footstepTimer >= 0.52f)
+			{
+				int randomIndex = (rand() % 4) + 1;
+				std::string soundName = "Footstep0" + std::to_string(randomIndex);
+				CSoundManager::GetInstance()->PlaySFX(soundName);
+
+				footstepTimer = 0.0f; // 타이머 초기화
+			}
+		}
+	}
+	else
+	{
+		// 뛰거나 걷지 않으면 타이머 초기화
+		footstepTimer = 0.0f;
 	}
 }
 

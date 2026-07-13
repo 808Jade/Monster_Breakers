@@ -34,6 +34,9 @@
     <Filter Include="소스 파일\Object\Effect">
       <UniqueIdentifier>{264a5aa7-a08c-4344-80e5-98bdfc35077c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\Sound">
+      <UniqueIdentifier>{dad1155e-f32f-4742-a1e3-901a7a1b15f7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Client.rc">
@@ -160,6 +163,9 @@
     <ClCompile Include="DamageNumber.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="SoundManager.cpp">
+      <Filter>소스 파일\Sound</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h">
@@ -278,6 +284,9 @@
     </ClInclude>
     <ClInclude Include="DamageNumber.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="SoundManager.h">
+      <Filter>소스 파일\Sound</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
