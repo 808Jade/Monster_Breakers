@@ -240,7 +240,7 @@ BoundingBox CPlayer::GetWeaponAttackBoundingBox()
 	else if (m_ePlayerClass == PlayerClass::ROGUE)
 		pWeapon = FindFrame("SM_Weapon_01");
 	else if (m_ePlayerClass == PlayerClass::MAGE)
-		pWeapon = FindFrame("RightHand");
+		pWeapon = FindFrame("SM_Male_Wizard_Arms");
 	if (!pWeapon) {
 		cout << "Weapon not found for player class: " << static_cast<int>(m_ePlayerClass) << endl;
 		return emptyBox;
