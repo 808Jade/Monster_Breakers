@@ -147,7 +147,7 @@ void CBossMonster::TransitionTo(BossState newState)
     m_pSkinnedAnimationController->SetTrackEnable(newTrack, true);
 }
 
-void CBossMonster::PlayAttackPattern(BossState newState, const XMFLOAT3& xmf3Center, float fRadius, float fSweepAngleDeg)
+void CBossMonster::PlayAttackPattern(BossState newState, const XMFLOAT3& xmf3Center, const XMFLOAT3& look, float fRadius, float fSweepAngleDeg)
 {
     if (m_eState == BossState::Death) return; // 죽은 보스는 패턴 패킷이 와도 무시(이펙트도 스폰하지 않음)
 
