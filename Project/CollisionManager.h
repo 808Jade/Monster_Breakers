@@ -11,6 +11,7 @@
 class CGameObject;
 class CPlayer;
 class CMonster;
+class CBossMonster;
 
 class CCollisionManager
 {
@@ -19,12 +20,14 @@ private:
     std::vector<CGameObject*> m_objects;
     std::vector<ColliderInfo> m_colliderinfos;
     std::vector<CMonster*>* m_pMonsters = nullptr;
+    CBossMonster* m_pBoss = nullptr; // 보스는 목록이 아니라 단일 포인터로 별도 관리
 
     CFireballSystem* m_pFireballSystem = nullptr;
     CWeaponThrowSystem* m_pWeaponThrowSystem = nullptr;
 
     int frameCounter = 0;
-    bool m_bHitProcessed = false;
+    bool m_bHitProcessed = false;     // 일반 몬스터용 (기존 로직, 건드리지 않음)
+    bool m_bBossHitProcessed = false; // 보스용 (한 스윙에 한 번만 데미지 들어가게)
 
     CGameObject* m_pDebugCube;
     CGameObject* m_pDebugSphere;
@@ -45,6 +48,7 @@ public:
     bool CheckIntersection(const BoundingBox& bounds, const ColliderInfo& col);
 
     void SetMonsters(std::vector<CMonster*>* monsters) { m_pMonsters = monsters; }
+    void SetBoss(CBossMonster* pBoss) { m_pBoss = pBoss; }
     void SetFireballSystem(CFireballSystem* p) { m_pFireballSystem = p; }
     void SetWeaponThrowSystem(CWeaponThrowSystem* p) { m_pWeaponThrowSystem = p; }
 

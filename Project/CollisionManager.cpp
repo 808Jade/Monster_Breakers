@@ -2,6 +2,7 @@
 #include "CollisionManager.h"
 #include "Object.h"
 #include "Player.h"
+#include "CBossMonster.h"
 
 // 몬스터 머리 위쯤에 숫자가 뜨도록 주는 수직 오프셋(월드 유닛). 몬스터 모델 크기에 맞게 조정.
 static const float DAMAGE_NUMBER_Y_OFFSET = 2.0f;
@@ -117,6 +118,32 @@ void CCollisionManager::Update(CPlayer* player)
                 }
             }
         }
+
+        // ── 파이어볼 vs 보스 ──────────────────
+        if (m_pBoss && !m_pBoss->IsDead())
+        {
+            m_pBoss->CalculateBoundingBox();
+            BoundingBox bossBox = m_pBoss->GetBoundingBox();
+
+            for (auto& [idx, fpos] : activeParticles)
+            {
+                BoundingSphere sphere(fpos, 1.5f);
+                if (sphere.Intersects(bossBox))
+                {
+                    int dmg = player->damage + player->level[0] * 10;
+                    cout << "Fireball hit: Boss dmg=" << dmg << endl;
+                    m_pBoss->TakeDamage((float)dmg);
+                    if (m_pDamageNumberSystem)
+                    {
+                        XMFLOAT3 xmf3HitPos = m_pBoss->GetPosition();
+                        xmf3HitPos.y += DAMAGE_NUMBER_Y_OFFSET;
+                        m_pDamageNumberSystem->Spawn(xmf3HitPos, dmg);
+                    }
+                    m_pFireballSystem->DeactivateAt(idx);  // 파이어볼 소멸
+                    break;
+                }
+            }
+        }
     }
 
     // ── 투척 무기 충돌 (도적 SKILL1) ─────────────────
@@ -145,13 +172,31 @@ void CCollisionManager::Update(CPlayer* player)
                 break;
             }
         }
+
+        // ── 투척 무기 vs 보스 ─────────────────
+        if (m_pBoss && !m_pBoss->IsDead() && m_pWeaponThrowSystem->IsActive())
+        {
+            m_pBoss->CalculateBoundingBox();
+            if (throwSphere.Intersects(m_pBoss->GetBoundingBox()))
+            {
+                int dmg = player->damage + player->level[0] * 10;
+                cout << "Throw hit: Boss dmg=" << dmg << endl;
+                m_pBoss->TakeDamage((float)dmg);
+                if (m_pDamageNumberSystem)
+                {
+                    XMFLOAT3 xmf3HitPos = m_pBoss->GetPosition();
+                    xmf3HitPos.y += DAMAGE_NUMBER_Y_OFFSET;
+                    m_pDamageNumberSystem->Spawn(xmf3HitPos, dmg);
+                }
+                m_pWeaponThrowSystem->Deactivate();  // 무기 소멸 + 손 무기 복원
+            }
+        }
     }
 
     // ── 무기 충돌 (weapon BoundingBox 기반) ──────────────
         // 좌클릭(ATTACK): 모든 직업 공통, 기본 damage
         // 기사  Q(SKILL2): level[1] 보너스
         // 도적  Q(SKILL2): level[1] 보너스
-        // 법사는 weapon 충돌 없음
 
     int weaponDmg = 0;
     bool isWeaponSwing = false;
@@ -190,9 +235,32 @@ void CCollisionManager::Update(CPlayer* player)
         }
     }
 
+    // ── 무기 스윙(기본공격+Q) vs 보스 ──────────────────
+    if (isWeaponSwing && !m_bBossHitProcessed && m_pBoss && !m_pBoss->IsDead())
+    {
+        m_pBoss->CalculateBoundingBox();
+        BoundingBox weaponBox = player->GetWeaponAttackBoundingBox();
+        if (weaponBox.Intersects(m_pBoss->GetBoundingBox()))
+        {
+            cout << "Weapon hit: Boss dmg=" << weaponDmg << endl;
+            m_pBoss->TakeDamage((float)weaponDmg);
+            if (m_pDamageNumberSystem)
+            {
+                XMFLOAT3 xmf3HitPos = m_pBoss->GetPosition();
+                xmf3HitPos.y += DAMAGE_NUMBER_Y_OFFSET;
+                bool bCritical = !isAttacking;
+                m_pDamageNumberSystem->Spawn(xmf3HitPos, weaponDmg, bCritical);
+            }
+            m_bBossHitProcessed = true;
+        }
+    }
+
     // 공격 애니메이션 종료 시 히트 플래그 리셋
     if (!isWeaponSwing)
+    {
         m_bHitProcessed = false;
+        m_bBossHitProcessed = false;
+    }
 
     // ── 환경 충돌 (쿼드트리) ─────────────────────────
     // 플레이어가 속한 노드 탐색

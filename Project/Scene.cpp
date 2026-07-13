@@ -39,7 +39,7 @@ static bool Chance(int percent) { // 0~100
 
 extern CGameFramework gGameFramework;
 
-ID3D12DescriptorHeap *CScene::m_pd3dCbvSrvDescriptorHeap = NULL;
+ID3D12DescriptorHeap* CScene::m_pd3dCbvSrvDescriptorHeap = NULL;
 
 D3D12_CPU_DESCRIPTOR_HANDLE	CScene::m_d3dCbvCPUDescriptorStartHandle;
 D3D12_GPU_DESCRIPTOR_HANDLE	CScene::m_d3dCbvGPUDescriptorStartHandle;
@@ -52,12 +52,10 @@ D3D12_CPU_DESCRIPTOR_HANDLE	CScene::m_d3dSrvCPUDescriptorNextHandle;
 D3D12_GPU_DESCRIPTOR_HANDLE	CScene::m_d3dSrvGPUDescriptorNextHandle;
 
 CScene::CScene()
-{
-}
+{}
 
 CScene::~CScene()
-{
-}
+{}
 
 void CScene::BuildDefaultLightsAndMaterials(bool toggle)
 {
@@ -148,6 +146,7 @@ void CScene::InitializeCollisionSystem()
 	for (auto* obj : m_Monsters) {
 		m_CollisionManager.SetMonsters(&m_Monsters);
 	}
+	m_CollisionManager.SetBoss(m_pBoss); // 보스도 CollisionManager가 알도록 등록
 
 	for (const auto& pair : m_pMap->m_mInstanceGroups)
 	{
@@ -251,7 +250,7 @@ void CScene::BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 
 	auto it = skillImageMap.find(m_pModel);
 	if (it != skillImageMap.end()) {
-		for (int i = 0; i < 3; ++i) 
+		for (int i = 0; i < 3; ++i)
 			uiList.push_back({ it->second[i], skillSlotX[i], 0.2f, -0.4f, 0.4f });
 	}
 	for (size_t i = 0; i < uiList.size(); ++i)
@@ -299,7 +298,7 @@ void CScene::BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 		m_Shaders.push_back(pOverlay);
 		*/
 
-		CText* pText = new CText(pd3dDevice, pd3dCommandList,m_pd3dGraphicsRootSignature, L"", 0.3f + i * 0.25f, -0.6f);
+		CText* pText = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"", 0.3f + i * 0.25f, -0.6f);
 		pText->SetVisible(false);
 		m_pCooldownTexts[i] = pText;
 		m_GameObjects.push_back(pText);
@@ -360,9 +359,9 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 	float fScaleZ = 534.9254f / 4096.0f;
 	float fScaleY = 29.68098f;
 	m_pTerrain = new CHeightMapTerrain(
-		pd3dDevice,                  
-		pd3dCommandList,            
-		m_pd3dGraphicsRootSignature, 
+		pd3dDevice,
+		pd3dCommandList,
+		m_pd3dGraphicsRootSignature,
 		L"Terrain/HeightMap.raw",
 		4097,
 		4097,
@@ -381,7 +380,7 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 	m_pBeamSystem->Create(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 	m_pGroundCrackEffect = new CGroundCrackEffect();
 	m_pGroundCrackEffect->Create(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-	
+
 	m_pKnightModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Knight.bin", NULL);
 	m_pWizardModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Wizard.bin", NULL);
 	m_pThiefModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Thief.bin", NULL);
@@ -397,7 +396,7 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 			size_t dot = path.rfind('.');
 			std::string monsterName = path.substr(slash + 1, dot - slash - 1);
 			monster->SetFrameName(monsterName.c_str());
-			monster->SetPosition(XMFLOAT3(-99,-99,-99));
+			monster->SetPosition(XMFLOAT3(-99, -99, -99));
 			m_Monsters.push_back(monster);
 		}
 	}
@@ -426,15 +425,15 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 	g_thiefIndex = 4;
 	g_other_players.clear();
 
-	for(int i = 0; i < 2; ++i) {
+	for (int i = 0; i < 2; ++i) {
 		m_ppOtherPlayers[i] = new OtherPlayer(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, m_pKnightModel);
 		m_vPlayers.push_back(m_ppOtherPlayers[i]);
 	}
-	for(int i = 2; i < 4; ++i) {
+	for (int i = 2; i < 4; ++i) {
 		m_ppOtherPlayers[i] = new OtherPlayer(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, m_pWizardModel);
 		m_vPlayers.push_back(m_ppOtherPlayers[i]);
 	}
-	for(int i = 4; i < 6; ++i) {
+	for (int i = 4; i < 6; ++i) {
 		m_ppOtherPlayers[i] = new OtherPlayer(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, m_pThiefModel);
 		m_vPlayers.push_back(m_ppOtherPlayers[i]);
 	}
@@ -816,9 +815,9 @@ void CScene::ReleaseObjects()
 	if (m_pLights) delete[] m_pLights;
 }
 
-ID3D12RootSignature *CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevice)
+ID3D12RootSignature* CScene::CreateGraphicsRootSignature(ID3D12Device* pd3dDevice)
 {
-	ID3D12RootSignature *pd3dGraphicsRootSignature = NULL;
+	ID3D12RootSignature* pd3dGraphicsRootSignature = NULL;
 
 	D3D12_DESCRIPTOR_RANGE pd3dDescriptorRanges[13];
 
@@ -1066,25 +1065,25 @@ ID3D12RootSignature *CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevic
 	d3dRootSignatureDesc.pStaticSamplers = pd3dSamplerDescs;
 	d3dRootSignatureDesc.Flags = d3dRootSignatureFlags;
 
-	ID3DBlob *pd3dSignatureBlob = NULL;
-	ID3DBlob *pd3dErrorBlob = NULL;
+	ID3DBlob* pd3dSignatureBlob = NULL;
+	ID3DBlob* pd3dErrorBlob = NULL;
 	D3D12SerializeRootSignature(&d3dRootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &pd3dSignatureBlob, &pd3dErrorBlob);
-	pd3dDevice->CreateRootSignature(0, pd3dSignatureBlob->GetBufferPointer(), pd3dSignatureBlob->GetBufferSize(), __uuidof(ID3D12RootSignature), (void **)&pd3dGraphicsRootSignature);
+	pd3dDevice->CreateRootSignature(0, pd3dSignatureBlob->GetBufferPointer(), pd3dSignatureBlob->GetBufferSize(), __uuidof(ID3D12RootSignature), (void**)&pd3dGraphicsRootSignature);
 	if (pd3dSignatureBlob) pd3dSignatureBlob->Release();
 	if (pd3dErrorBlob) pd3dErrorBlob->Release();
 
 	return(pd3dGraphicsRootSignature);
 }
 
-void CScene::CreateShaderVariables(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList)
+void CScene::CreateShaderVariables(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
 {
 	UINT ncbElementBytes = ((sizeof(LIGHTS) + 255) & ~255); //256의 배수
 	m_pd3dcbLights = ::CreateBufferResource(pd3dDevice, pd3dCommandList, NULL, ncbElementBytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, NULL);
 
-	m_pd3dcbLights->Map(0, NULL, (void **)&m_pcbMappedLights);
+	m_pd3dcbLights->Map(0, NULL, (void**)&m_pcbMappedLights);
 }
 
-void CScene::UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList)
+void CScene::UpdateShaderVariables(ID3D12GraphicsCommandList* pd3dCommandList)
 {
 	::memcpy(m_pcbMappedLights->m_pLights, m_pLights, sizeof(LIGHT) * m_nLights);
 	::memcpy(&m_pcbMappedLights->m_xmf4GlobalAmbient, &m_xmf4GlobalAmbient, sizeof(XMFLOAT4));
@@ -1113,14 +1112,14 @@ void CScene::ReleaseUploadBuffers()
 	for (auto* otherplayer : m_vPlayers) if (otherplayer) otherplayer->ReleaseUploadBuffers();
 }
 
-void CScene::CreateCbvSrvDescriptorHeaps(ID3D12Device *pd3dDevice, int nConstantBufferViews, int nShaderResourceViews)
+void CScene::CreateCbvSrvDescriptorHeaps(ID3D12Device* pd3dDevice, int nConstantBufferViews, int nShaderResourceViews)
 {
 	D3D12_DESCRIPTOR_HEAP_DESC d3dDescriptorHeapDesc;
 	d3dDescriptorHeapDesc.NumDescriptors = nConstantBufferViews + nShaderResourceViews; //CBVs + SRVs 
 	d3dDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	d3dDescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	d3dDescriptorHeapDesc.NodeMask = 0;
-	pd3dDevice->CreateDescriptorHeap(&d3dDescriptorHeapDesc, __uuidof(ID3D12DescriptorHeap), (void **)&m_pd3dCbvSrvDescriptorHeap);
+	pd3dDevice->CreateDescriptorHeap(&d3dDescriptorHeapDesc, __uuidof(ID3D12DescriptorHeap), (void**)&m_pd3dCbvSrvDescriptorHeap);
 
 	m_d3dCbvCPUDescriptorNextHandle = m_d3dCbvCPUDescriptorStartHandle = m_pd3dCbvSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 	m_d3dCbvGPUDescriptorNextHandle = m_d3dCbvGPUDescriptorStartHandle = m_pd3dCbvSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
@@ -1128,7 +1127,7 @@ void CScene::CreateCbvSrvDescriptorHeaps(ID3D12Device *pd3dDevice, int nConstant
 	m_d3dSrvGPUDescriptorNextHandle.ptr = m_d3dSrvGPUDescriptorStartHandle.ptr = m_d3dCbvGPUDescriptorStartHandle.ptr + (::gnCbvSrvDescriptorIncrementSize * nConstantBufferViews);
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE CScene::CreateConstantBufferViews(ID3D12Device *pd3dDevice, int nConstantBufferViews, ID3D12Resource *pd3dConstantBuffers, UINT nStride)
+D3D12_GPU_DESCRIPTOR_HANDLE CScene::CreateConstantBufferViews(ID3D12Device* pd3dDevice, int nConstantBufferViews, ID3D12Resource* pd3dConstantBuffers, UINT nStride)
 {
 	D3D12_GPU_DESCRIPTOR_HANDLE d3dCbvGPUDescriptorHandle = m_d3dCbvGPUDescriptorNextHandle;
 	D3D12_GPU_VIRTUAL_ADDRESS d3dGpuVirtualAddress = pd3dConstantBuffers->GetGPUVirtualAddress();
@@ -1292,8 +1291,8 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 		for (int i = 0; i < 3; ++i)
 			if (PtInRect(&rt[i], pt)) { idx = i; break; }
 
-		if (idx == -1) 
-		{ 
+		if (idx == -1)
+		{
 			p->m_currentAnim = AnimationState::ATTACK;
 			if (m_pModel == m_pKnightModel)
 			{
@@ -1309,7 +1308,7 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 			{
 				CSoundManager::GetInstance()->PlaySFX("rogue_attack");
 			}
-			break; 
+			break;
 		}
 
 		int lv = p->level[idx];
@@ -1435,10 +1434,10 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 
 		case VK_TAB:
 			m_bEnableShadow = !m_bEnableShadow;
-				break;
+			break;
 		case 'Q':
 			if (!IsSkillOnCooldown(1)) {
-			pPlayer->m_currentAnim = AnimationState::SKILL2;
+				pPlayer->m_currentAnim = AnimationState::SKILL2;
 				// 법사 otherplayer 공격력 늘리기
 				if (m_pModel == m_pWizardModel) {
 
@@ -1469,14 +1468,14 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 
 					send_strike_packet(pos, look);
 				}
-				
+
 				TriggerSkillCooldown(1);
 			}
 			break;
 
 		case 'E':
 			if (!IsSkillOnCooldown(2)) {
-			pPlayer->m_currentAnim = AnimationState::SKILL3;
+				pPlayer->m_currentAnim = AnimationState::SKILL3;
 				if (m_pModel == m_pWizardModel) {
 					if (m_pGreenSpiritSystem)
 					{
@@ -1563,7 +1562,7 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 	}
 }
 
-bool CScene::ProcessInput(UCHAR *pKeysBuffer)
+bool CScene::ProcessInput(UCHAR* pKeysBuffer)
 {
 	return(false);
 }
@@ -1579,7 +1578,7 @@ void CScene::AnimateObjects(float fTimeElapsed)
 			if (m_pPlayer) pPrompt->Update(m_pPlayer->GetPosition());
 		}
 	}
-	
+
 	for (int i = 0; i < SKILL_COUNT; ++i)
 	{
 		// 레벨이 바뀌면 최대 쿨타임 재계산
@@ -1603,7 +1602,7 @@ void CScene::AnimateObjects(float fTimeElapsed)
 	if (m_pBeamSystem) m_pBeamSystem->Animate(fTimeElapsed);
 	if (m_pGroundCrackEffect) m_pGroundCrackEffect->Update(fTimeElapsed);
 
-	for(auto* shader : m_Shaders) if(shader) shader->AnimateObjects(fTimeElapsed);
+	for (auto* shader : m_Shaders) if (shader) shader->AnimateObjects(fTimeElapsed);
 }
 
 void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
@@ -1612,7 +1611,7 @@ void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera
 	RenderImpl(pd3dCommandList, pCamera);
 }
 
-void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv)
+void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv)
 {
 	// 현재 프레임 RT 보관
 	m_CurrentRTV = rtv;
@@ -1645,7 +1644,7 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 	pd3dCommandList->SetGraphicsRootConstantBufferView(2, d3dcbLightsGpuVirtualAddress);
 
 	// Shadow 적용을 유지한다면(메인패스)
-	if (m_bEnableShadow && m_pd3dcbShadow){
+	if (m_bEnableShadow && m_pd3dcbShadow) {
 		pd3dCommandList->SetGraphicsRootDescriptorTable(17, m_d3dShadowSRV);
 		pd3dCommandList->SetGraphicsRootConstantBufferView(18, m_pd3dcbShadow->GetGPUVirtualAddress());
 	}
@@ -1669,15 +1668,15 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 			monster->Render(pd3dCommandList, pCamera);
 		}
 	}
-/*	for (int i = 0; i < m_nOtherPlayers; ++i)
-		if (m_ppOtherPlayers[i] && m_ppOtherPlayers[i]->visible) m_ppOtherPlayers[i]->Render(pd3dCommandList, pCamera);*/
+	/*	for (int i = 0; i < m_nOtherPlayers; ++i)
+			if (m_ppOtherPlayers[i] && m_ppOtherPlayers[i]->visible) m_ppOtherPlayers[i]->Render(pd3dCommandList, pCamera);*/
 	for (auto* otherPlayer : m_vPlayers)
 		if (otherPlayer && otherPlayer->GetVisible()) otherPlayer->Render(pd3dCommandList, pCamera);
 
 	CTerrainPlayer* pTerrainPlayer = dynamic_cast<CTerrainPlayer*>(m_pPlayer);
-	if (pTerrainPlayer && pTerrainPlayer->m_playerHP) 
+	if (pTerrainPlayer && pTerrainPlayer->m_playerHP)
 		pTerrainPlayer->m_playerHP->Render(pd3dCommandList, pCamera);
-	
+
 	for (auto* shader : m_Shaders)
 	{
 		if (!shader) continue;
@@ -1815,7 +1814,7 @@ void CStartScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLi
 {
 	m_pd3dGraphicsRootSignature = CreateGraphicsRootSignature(pd3dDevice);
 
-	CreateCbvSrvDescriptorHeaps(pd3dDevice, 0, 100); 
+	CreateCbvSrvDescriptorHeaps(pd3dDevice, 0, 100);
 
 	m_Shaders.clear();
 	m_Shaders.resize(1);
@@ -1925,7 +1924,7 @@ void CStartScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM
 				m_inputID.push_back((char)wParam);
 				m_textDirty = true;
 			}
-			
+
 			break;
 		}
 		if (m_inputStep == InputStep::EnterIP) {
@@ -2062,7 +2061,7 @@ void CSelectScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM w
 	switch (nMessageID)
 	{
 	case WM_LBUTTONDOWN:
-		for(int i = 0; i < 3; ++i)
+		for (int i = 0; i < 3; ++i)
 			if (PtInRect(&rt[i], pt)) {
 				if (i == 0) gGameFramework.SetSelectedPlayerModel(EPlayerModelType::Knight);
 				if (i == 1) gGameFramework.SetSelectedPlayerModel(EPlayerModelType::Wizard);
@@ -2070,23 +2069,23 @@ void CSelectScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM w
 			}
 		break;
 	case WM_LBUTTONUP:
-		{
-			uint8_t job = gGameFramework.GetSelectedJob();
-			cs_packet_login p{};
-			p.size = sizeof(p);
-			p.type = CS_P_LOGIN;
-			strcpy_s(p.name, sizeof(p.name), user_name.c_str());
-			p.job = job;
-			send_packet(&p);
+	{
+		uint8_t job = gGameFramework.GetSelectedJob();
+		cs_packet_login p{};
+		p.size = sizeof(p);
+		p.type = CS_P_LOGIN;
+		strcpy_s(p.name, sizeof(p.name), user_name.c_str());
+		p.job = job;
+		send_packet(&p);
 
-			cout << "[Client] Login Send: Name=" << user_name << " Job=" << static_cast<int>(job) << endl;
-		}
-	
-		loading = true;
-		m_SceneId = 2;
-		m_bLoadingRenderedOnce = false;
-		break;
-		
+		cout << "[Client] Login Send: Name=" << user_name << " Job=" << static_cast<int>(job) << endl;
+	}
+
+	loading = true;
+	m_SceneId = 2;
+	m_bLoadingRenderedOnce = false;
+	break;
+
 	}
 }
 
@@ -2147,5 +2146,5 @@ void CEndScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCam
 	}
 	UpdateShaderVariables(pd3dCommandList);
 
-	for(auto* shader : m_Shaders) if(shader) shader->Render(pd3dCommandList, pCamera);
+	for (auto* shader : m_Shaders) if (shader) shader->Render(pd3dCommandList, pCamera);
 }
