@@ -247,6 +247,7 @@ void CScene::BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 	std::vector<UIInfo> uiList;
 
 	uiList.push_back({ L"Image/hpbar.dds", 0.15f, 0.7f, 0.9f, 0.2f });
+	uiList.push_back({ L"Image/mission.dds", -0.95f, 0.5f, -0.5f, 0.25f });
 
 	auto it = skillImageMap.find(m_pModel);
 	if (it != skillImageMap.end()) {
@@ -267,7 +268,12 @@ void CScene::BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 		CScreenRectMeshTextured* pMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, uiList[i].left, uiList[i].top, uiList[i].width, uiList[i].height);
 		pShader->SetMesh(0, pMesh);
 		pShader->SetTexture(pTexture);
-		pShader->SetVisible(true);
+
+		// mission.dds는 NPC 근접 상호작용 시에만 보이도록 기본 비활성화
+		bool bIsMissionBg = (uiList[i].path == L"Image/mission.dds");
+		pShader->SetVisible(!bIsMissionBg);
+		if (bIsMissionBg)
+			m_pMissionBgShader = pShader;
 
 		m_Shaders.push_back(pShader);
 
@@ -282,22 +288,6 @@ void CScene::BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 		m_fSkillMaxCooldown[i] = CalcMaxCooldown(i);
 		m_fSkillCooldown[i] = 0.0f;
 
-		/* 이건 회색 오버레이 방식일 때 추가할 것 지금은 일단 텍스트로만 구현
-		CCooldownOverlayShader* pOverlay = new CCooldownOverlayShader();
-		pOverlay->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-
-		CScreenRectMeshTextured* pOverlayMesh = new CScreenRectMeshTextured(
-			pd3dDevice, pd3dCommandList,
-			cooldownSlotX[i], 0.2f,   // 스킬 슬롯과 동일
-			-0.4f, 0.4f);
-		pOverlay->SetMesh(0, pOverlayMesh);
-		pOverlay->SetCooldownRatio(0.0f); // 초기엔 쿨타임 없음
-		pOverlay->SetVisible(false);
-
-		m_pCooldownOverlays[i] = pOverlay;
-		m_Shaders.push_back(pOverlay);
-		*/
-
 		CText* pText = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"", 0.3f + i * 0.25f, -0.6f);
 		pText->SetVisible(false);
 		m_pCooldownTexts[i] = pText;
@@ -309,6 +299,15 @@ void CScene::UpdateUI(ID3D12GraphicsCommandList* pd3dCommandList)
 {
 	for (auto* obj : m_GameObjects) {
 		if (auto* textObj = dynamic_cast<CText*>(obj)) {
+			// 쿨타임 텍스트 / 미션 텍스트는 각자 별도 로직으로 갱신되므로
+			// 여기서 레벨 텍스트("LV. n")로 덮어쓰면 안 됨
+			bool bIsCooldownText = false;
+			for (int i = 0; i < SKILL_COUNT; ++i)
+				if (m_pCooldownTexts[i] == textObj) { bIsCooldownText = true; break; }
+
+			if (bIsCooldownText || textObj == m_pMissionText)
+				continue;
+
 			textObj->UpdateText(std::to_wstring(m_pPlayer->level[0]), L"LV. ");
 			textObj->UpdateText(std::to_wstring(m_pPlayer->level[1]), L"LV. ");
 			textObj->UpdateText(std::to_wstring(m_pPlayer->level[2]), L"LV. ");
@@ -1250,6 +1249,51 @@ void CScene::CreateShadowResources(ID3D12Device* pd3dDevice, ID3D12GraphicsComma
 	m_pSkinnedShadowShader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 }
 
+void CScene::ShowMissionText(const std::wstring& text)
+{
+	// CFontMesh는 x, y를 그대로 정점(NDC, clip-space) 좌표로 사용한다.
+	// mission.dds 패널은 BuildSimpleUI에서 {left=0.35, top=0.5, width=0.25, height=0.5}
+	// (0~1, 좌상단 기준) 으로 배치되는데, 이를 NDC로 환산하면
+	//   x: left*2-1 ~ (left+width)*2-1  =>  -0.3 ~ 0.2
+	//   y: 1-top*2  ~ 1-(top+height)*2  =>   0.0 ~ -1.0
+	// 이 범위 안(패널 좌측 상단 부근)에 텍스트가 찍히도록 좌표를 잡는다.
+	constexpr float MISSION_TEXT_X = -0.9f;
+	constexpr float MISSION_TEXT_Y = -0.3f;
+
+	if (!m_pMissionText)
+	{
+		m_pMissionText = new CText(Device, Commandlist, m_pd3dGraphicsRootSignature,
+			text, MISSION_TEXT_X, MISSION_TEXT_Y);
+
+		// 쿨타임 텍스트와 동일하게 m_GameObjects 렌더 루프를 타도록 등록한다.
+		// (RenderImpl에서 별도로 수동 Render() 호출하던 방식은 제거)
+		m_GameObjects.push_back(m_pMissionText);
+	}
+	else
+	{
+		// UpdateText(text, fixText) 형태라 fixText는 빈 문자열로
+		m_pMissionText->UpdateText(text, L"");
+	}
+
+	m_pMissionText->SetVisible(true);
+
+	if (m_pMissionBgShader)
+		m_pMissionBgShader->SetVisible(true);
+
+	m_bMissionUIVisible = true;
+}
+
+void CScene::HideMissionText()
+{
+	m_bMissionUIVisible = false;
+
+	if (m_pMissionText)
+		m_pMissionText->SetVisible(false);
+
+	if (m_pMissionBgShader)
+		m_pMissionBgShader->SetVisible(false);
+}
+
 void CScene::TriggerSkillCooldown(int skillIndex)
 {
 	if (skillIndex < 0 || skillIndex >= SKILL_COUNT) return;
@@ -1422,15 +1466,38 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 	case WM_KEYDOWN:
 		switch (wParam) {
 		case 'F':
+		{
+			bool bInteractedNPC = false;
+
 			for (auto* obj : m_GameObjects)
 			{
+				// 보스맵 가기위한 작업
 				if (auto* pPrompt = dynamic_cast<CInteractPrompt*>(obj))
-					if (pPrompt->IsInRange())
+					if (pPrompt->IsInRange() && pPlayer)
 						pPlayer->SetPosition(XMFLOAT3(219, 5, 18));
+
+				// NPC위치와 플레이어 위치가 가까우면 미션 요청
+				if (auto* pNPC = dynamic_cast<CNPC*>(obj))
+				{
+					if (!pPlayer) continue;
+
+					XMFLOAT3 npcPos = pNPC->GetPosition();
+					XMFLOAT3 playerPos = pPlayer->GetPosition();
+					float distance = sqrt(pow(npcPos.x - playerPos.x, 2) + pow(npcPos.y - playerPos.y, 2) + pow(npcPos.z - playerPos.z, 2));
+					if (distance < 5.0f) {
+						// 서버로 상호작용 요청만 보냄. 실제 텍스트 표시는
+						// Network.cpp의 SC_P_NPC_MISSION 수신 핸들러에서 ShowMissionText() 호출로 처리됨.
+						send_npc_interact_packet(0);
+						bInteractedNPC = true;
+					}
+				}
 			}
-			if (m_pBoss)
+
+			// NPC와 상호작용한 프레임에는 보스 체력바 토글(디버그용)을 건너뜀
+			if (!bInteractedNPC && m_pBoss)
 				m_pBoss->ToggleHpbarVisible();
 			break;
+		}
 
 		case VK_TAB:
 			m_bEnableShadow = !m_bEnableShadow;
@@ -1569,6 +1636,22 @@ bool CScene::ProcessInput(UCHAR* pKeysBuffer)
 
 void CScene::AnimateObjects(float fTimeElapsed)
 {
+	// 네트워크 스레드가 큐에 쌓아둔 미션 텍스트를 메인 스레드에서 안전하게 반영.
+	// (ShowMissionText 내부에서 D3D12 리소스를 만들고 m_GameObjects를 건드리므로
+	//  반드시 이 루프보다 먼저, 그리고 메인 스레드에서만 호출되어야 함)
+	{
+		std::vector<PendingMissionText> pending;
+		{
+			std::lock_guard<std::mutex> lock(g_pendingMissionMutex);
+			if (!g_pendingMissionTexts.empty())
+			{
+				pending.swap(g_pendingMissionTexts);
+			}
+		}
+		for (auto& p : pending)
+			ShowMissionText(p.text);
+	}
+
 	m_CollisionManager.UpdateDamageNumbers(fTimeElapsed);
 
 	for (auto* obj : m_GameObjects) {

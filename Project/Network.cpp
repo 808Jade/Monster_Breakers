@@ -40,6 +40,8 @@ std::mutex                          g_pendingMonsterMutex;
 std::vector<PendingMonsterSpawn>    g_pendingMonsterSpawns;
 std::mutex                          g_pendingBossMutex;
 std::vector<PendingBossSpawn>       g_pendingBossSpawns;
+std::mutex                          g_pendingMissionMutex;
+std::vector<PendingMissionText>     g_pendingMissionTexts;
 
 // =================================================================
 //           otherplayer player 렌더링을 위한 other player 오브젝트 및 관리
@@ -256,7 +258,8 @@ void SendThread() {
 }
 
 void RecvThread() {
-    thread_local size_t saved_packet_size = 0;
+    thread_local size_t saved_packet_size = 0;      // 지금까지 packet_buffer에 채워진 바이트 수
+    thread_local size_t expected_packet_size = 0;   // 현재 조립 중인 패킷의 전체 크기(헤더에서 읽은 값). 0이면 "새 패킷 대기 중"
     thread_local char packet_buffer[BUF_SIZE];
 
     while (g_running) {
@@ -294,15 +297,30 @@ void RecvThread() {
         char* ptr = buffer;
         size_t remaining = recvBytes;
         while (remaining > 0) {
-            size_t packet_size = ptr[0];
-            if (packet_size == 0) break;
+            // 새 패킷의 시작일 때만 헤더(size 바이트)를 읽는다.
+            // 이전 recv에서 이어지는 중간 데이터라면 절대 다시 읽으면 안 됨.
+            if (saved_packet_size == 0) {
+                expected_packet_size = static_cast<unsigned char>(ptr[0]);
+                if (expected_packet_size == 0) break;
 
-            if (saved_packet_size + remaining >= packet_size) {
-                memcpy(packet_buffer + saved_packet_size, ptr, packet_size - saved_packet_size);
+                if (expected_packet_size > sizeof(packet_buffer)) {
+                    // 비정상 패킷 크기 - 스트림이 깨졌다고 보고 이번 recv 버퍼는 폐기
+                    std::cerr << "[Network] 비정상 패킷 크기 감지: " << expected_packet_size << std::endl;
+                    expected_packet_size = 0;
+                    saved_packet_size = 0;
+                    break;
+                }
+            }
+
+            size_t need = expected_packet_size - saved_packet_size;
+
+            if (remaining >= need) {
+                memcpy(packet_buffer + saved_packet_size, ptr, need);
                 ProcessPacket(packet_buffer);
-                ptr += packet_size - saved_packet_size;
-                remaining -= packet_size - saved_packet_size;
+                ptr += need;
+                remaining -= need;
                 saved_packet_size = 0;
+                expected_packet_size = 0;
             }
             else {
                 memcpy(packet_buffer + saved_packet_size, ptr, remaining);
@@ -330,13 +348,13 @@ void send_packet(void* packet) {
 }
 
 void InitializeNetwork(char serverIP[]) {
-    
+
     WSAStartup(MAKEWORD(2, 2), &wsaData);
 
- /*   char serverIP[16];
-    std::cout << "server IP : ";
-    std::cin >> serverIP;*/
-   
+    /*   char serverIP[16];
+       std::cout << "server IP : ";
+       std::cin >> serverIP;*/
+
 
     ConnectSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, nullptr, 0, WSA_FLAG_OVERLAPPED);
 
@@ -345,7 +363,7 @@ void InitializeNetwork(char serverIP[]) {
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(SERVER_PORT);
     inet_pton(AF_INET, serverIP, &serverAddr.sin_addr);  //serverIP.c_str()
- 
+
 
     WSAOVERLAPPED connectOverlapped{};
     connectOverlapped.hEvent = WSACreateEvent();
@@ -360,7 +378,7 @@ void InitializeNetwork(char serverIP[]) {
 
     WSACloseEvent(connectOverlapped.hEvent);
 
- 
+
     std::cout << "Sever Connect" << std::endl;
 
 
@@ -381,13 +399,13 @@ void InitializeNetwork(char serverIP[]) {
 void ProcessPacket(char* ptr)
 {
 
-    const unsigned char packet_type = ptr[1];   
+    const unsigned char packet_type = ptr[1];
 
     //std::cout << "[Client] Packet - Type : " << (int)packet_type << std::endl;
 
     switch (packet_type)
     {
-    // 서버 : 인벤토리 관련된거 만들게 되면 여기에도 정보 추가 해야함
+        // 서버 : 인벤토리 관련된거 만들게 되면 여기에도 정보 추가 해야함
     case SC_P_USER_INFO: // 클라이언트의 정보를 가지고 있는 패킷 타입
     {
         sc_packet_user_info* packet = reinterpret_cast<sc_packet_user_info*>(ptr);
@@ -397,12 +415,12 @@ void ProcessPacket(char* ptr)
 
         //여기에 리스폰 관련해서 랜더링 해야할듯?? (이부분)
         gGameFramework.UpdateMyPlayerPosition(packet->position);
-		// 보스 m_bHpbarVisible = false; // 보스 체력바 숨김
+        // 보스 m_bHpbarVisible = false; // 보스 체력바 숨김
         cout << "myid: " << packet->id << endl;
-        
+
         break;
     }
-    
+
     case SC_P_ENTER: // 새로 들어온 플레이어의 정보를 포함하고 있는 패킷 타입
     {
         sc_packet_enter* packet = reinterpret_cast<sc_packet_enter*>(ptr);
@@ -433,7 +451,7 @@ void ProcessPacket(char* ptr)
         // OtherPlayer의 위치를 반영한다
         auto it = g_other_player_slots.find(other_id);
         if (it == g_other_player_slots.end()) break;
-        
+
 
         int slot = it->second;
 
@@ -442,12 +460,12 @@ void ProcessPacket(char* ptr)
         gGameFramework.UpdateOtherPlayerAnimation(slot, packet->animState);
         gGameFramework.UpdateOtherPlayerRotate(slot, packet->right, packet->look);
 
-/*        std::cout << "[Client] New Player Information Recv " << "PlayerNo : " << packet->id << ", "
-            << " Position(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")"
-            << " Look(" << packet->look.x << "," << packet->look.y << "," << packet->look.z << ")"
-            << " Right(" << packet->right.x << "," << packet->right.y << "," << packet->right.z << ")"
-            << "Animation : " << static_cast<int>(packet->animState)
-            << std::endl;*/
+        /*        std::cout << "[Client] New Player Information Recv " << "PlayerNo : " << packet->id << ", "
+                    << " Position(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")"
+                    << " Look(" << packet->look.x << "," << packet->look.y << "," << packet->look.z << ")"
+                    << " Right(" << packet->right.x << "," << packet->right.y << "," << packet->right.z << ")"
+                    << "Animation : " << static_cast<int>(packet->animState)
+                    << std::endl;*/
 
         break;
     }
@@ -487,10 +505,10 @@ void ProcessPacket(char* ptr)
     case SC_P_RESPAWN:
     {
         sc_packet_respawn* packet = reinterpret_cast<sc_packet_respawn*>(ptr);
-    
+
         cout << "[수신] SC_P_RESPAWN | playerID=" << packet->playerID << " HP=" << packet->hp
-            << " pos=(" << packet->position.x << "," << packet->position.y << ","  << packet->position.z << ")\n";
-    
+            << " pos=(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")\n";
+
         // 랜더링 만 하면 될듯
         break;
     }
@@ -500,7 +518,7 @@ void ProcessPacket(char* ptr)
         sc_packet_skill_upgrade* packet = reinterpret_cast<sc_packet_skill_upgrade*>(ptr);
 
         // 쿨타임 감소는 클라 스킬 쿨타임 변수에 직접 적용
-        cout << "[강화완료] slot=" << (int)packet->slot   << " newValue=" << packet->newValue << "\n";
+        cout << "[강화완료] slot=" << (int)packet->slot << " newValue=" << packet->newValue << "\n";
 
         break;
     }
@@ -521,7 +539,7 @@ void ProcessPacket(char* ptr)
         if (!scene) break;
         scene->m_pFireballSystem->Emit(packet->position, packet->look);
 
- 
+
     }
 
     case SC_P_SHIELD_BLOCK: // 방패막기
@@ -547,7 +565,7 @@ void ProcessPacket(char* ptr)
         }
 
         std::cout << "[수신] SC_P_SKILL_STRIKE | playerID=" << packet->playerID
-            << " pos=(" << packet->position.x << "," << packet->position.y << ","   << packet->position.z << ")\n";
+            << " pos=(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")\n";
         break;
     }
 
@@ -604,7 +622,7 @@ void ProcessPacket(char* ptr)
 
         scene->m_pBeamSystem->Emit(casterPos, targetPos);
         std::cout << "[SC_P_BUFF_ATK 버프] Emit: casterPos=(" << casterPos.x << "," << casterPos.y << "," << casterPos.z
-			<< ") targetPos=(" << targetPos.x << "," << targetPos.y << "," << targetPos.z << ")\n";
+            << ") targetPos=(" << targetPos.x << "," << targetPos.y << "," << targetPos.z << ")\n";
 
 
         if (scene && scene->m_pPlayer)
@@ -641,10 +659,10 @@ void ProcessPacket(char* ptr)
 
             if (!otherPlayer || !otherPlayer->isConnedted) continue;
             scene->m_pGreenSpiritSystem->Emit(otherPlayer->GetPosition());
-			gGameFramework.UpdateOtherPlayerHP(slot, packet->newHp); // HP 갱신
+            gGameFramework.UpdateOtherPlayerHP(slot, packet->newHp); // HP 갱신
         }
 
-		// 내 hp 갱신 + other player hp 갱신 필요
+        // 내 hp 갱신 + other player hp 갱신 필요
         if (packet->playerID == g_myid)
         {
             gGameFramework.UpdatePlayerHP(packet->newHp);
@@ -654,18 +672,18 @@ void ProcessPacket(char* ptr)
         break;
     }
 
-	case SC_P_WEAPON_POS: // 도끼 무기 위치 (도적)
+    case SC_P_WEAPON_POS: // 도끼 무기 위치 (도적)
     {
         sc_packet_weapon_pos* packet = reinterpret_cast<sc_packet_weapon_pos*>(ptr);
 
         CScene* scene = gGameFramework.GetCurrentScene();
         if (!scene || !scene->m_pWeaponThrowSystem) break;
 
-       scene->m_pWeaponThrowSystem->Emit(packet->weaponPosition, packet->weaponRotation, 30.0f);
+        scene->m_pWeaponThrowSystem->Emit(packet->weaponPosition, packet->weaponRotation, 30.0f);
 
         break;
     }
-    
+
     case SC_P_MONSTER_SPAWN:
     {
         sc_packet_monster_spawn* packet = reinterpret_cast<sc_packet_monster_spawn*>(ptr);
@@ -685,7 +703,7 @@ void ProcessPacket(char* ptr)
     case SC_P_MONSTER_MOVE:
     {
         sc_packet_monster_move* packet = reinterpret_cast<sc_packet_monster_move*>(ptr);
-        
+
         gGameFramework.UpdateMonsterPosition(packet->monsterID, packet->position, packet->rotation, packet->state);
 
         break;
@@ -728,7 +746,7 @@ void ProcessPacket(char* ptr)
 
         break;
     }
-    
+
     case SC_P_GOLD_REWARD:
     {
         sc_packet_gold_reward* packet = reinterpret_cast<sc_packet_gold_reward*>(ptr);
@@ -827,7 +845,7 @@ void ProcessPacket(char* ptr)
         case 2: scene->m_pBoss->PlayAttackPattern(BossState::Taunt, packet->attackCenter, packet->look, packet->attackRange, packet->sweepAngle); break; // SWEEP
         }
 
-       
+
         break;
     }
 
@@ -835,10 +853,26 @@ void ProcessPacket(char* ptr)
     {
         sc_packet_npc_mission* packet = reinterpret_cast<sc_packet_npc_mission*>(ptr);
 
-        cout << "[NPC] 미션 수신 | missionID=" << packet->missionID << " desc=" << packet->description  << " target=" << packet->targetCount    << " reward=" << packet->rewardGold << "G\n";
+        // 방어적 코딩: 혹시라도 description이 널종료가 안 된 상태로 오면
+        // MultiByteToWideChar가 packet_buffer 밖을 읽어버릴 수 있으므로 강제 종료 처리
+        packet->description[sizeof(packet->description) - 1] = '\0';
 
-        // UI 나오면 될듯 이곳에서 미션 정보 받고(플레이어도 미션 내용을 알아야하니)
-  
+        cout << "[NPC] 미션 수신 | missionID=" << packet->missionID << " desc=" << packet->description << " target=" << packet->targetCount << " reward=" << packet->rewardGold << "G\n";
+
+        // description은 서버(NPC.cpp)에서 CP949(EUC-KR)로 작성된 멀티바이트 문자열이므로
+        // 해당 코드페이지 기준으로 wstring 변환 (클라이언트가 UTF-8 소스라도 이 값만은 949 기준)
+        int wlen = MultiByteToWideChar(949, 0, packet->description, -1, nullptr, 0);
+        std::wstring wDesc(wlen > 0 ? wlen - 1 : 0, L'\0');
+        if (wlen > 0)
+            MultiByteToWideChar(949, 0, packet->description, -1, &wDesc[0], wlen);
+
+        // 여기(네트워크 스레드)에서 바로 scene->ShowMissionText()를 부르면
+        // D3D12 리소스 생성 + m_GameObjects 변경이 렌더 스레드의 순회와 겹칠 수 있으므로
+        // 큐에만 넣어두고 실제 반영은 CScene::AnimateObjects(메인 스레드)에서 한다.
+        {
+            std::lock_guard<std::mutex> lock(g_pendingMissionMutex);
+            g_pendingMissionTexts.push_back({ wDesc });
+        }
 
         break;
     }
@@ -851,6 +885,13 @@ void ProcessPacket(char* ptr)
 
         gGameFramework.UpdatePlayerGold(packet->totalGold);
 
+        // mission.dds 위 텍스트를 완료 문구로 전환 (배경은 계속 보여줌).
+        // 이후 NPC 근처에서 F를 다시 누르면 SC_P_NPC_MISSION이 다시 와서 이 텍스트를 새 미션으로 덮어씀.
+        // 이것도 마찬가지로 네트워크 스레드에서 바로 호출하지 않고 큐에 적재한다.
+        {
+            std::lock_guard<std::mutex> lock(g_pendingMissionMutex);
+            g_pendingMissionTexts.push_back({ L"Mission Complete!" });
+        }
 
         break;
     }
@@ -917,12 +958,12 @@ void LoadingDoneToServer()
     std::cout << "[Client] LoadingDone send\n";
     // 로딩 중에 못 처리한 ENTER 패킷 재처리
     {
-    std::lock_guard<std::mutex> lock(g_pendingEnterMutex);
-    for (auto& p : g_pendingEnters) {
-        std::cout << "[ENTER] Queue reprocessing: id=" << p.player_id << "\n";
-        ProcessEnterPacket(p.player_id, p.job);
-    }
-    g_pendingEnters.clear();
+        std::lock_guard<std::mutex> lock(g_pendingEnterMutex);
+        for (auto& p : g_pendingEnters) {
+            std::cout << "[ENTER] Queue reprocessing: id=" << p.player_id << "\n";
+            ProcessEnterPacket(p.player_id, p.job);
+        }
+        g_pendingEnters.clear();
     }
 
     {

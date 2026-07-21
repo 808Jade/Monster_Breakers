@@ -46,6 +46,12 @@ struct PendingBossSpawn {
     int       hp;
     int       maxHp;
 };
+struct PendingMissionText {
+    std::wstring text;
+};
+
+extern std::mutex                           g_pendingMissionMutex;
+extern std::vector<PendingMissionText>      g_pendingMissionTexts;
 
 extern std::mutex                           g_pendingMonsterMutex;
 extern std::vector<PendingMonsterSpawn>     g_pendingMonsterSpawns;

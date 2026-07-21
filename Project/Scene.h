@@ -254,15 +254,21 @@ public:
 	CBeamSystem* m_pBeamSystem = nullptr;
 	CGroundCrackEffect* m_pGroundCrackEffect = nullptr;
 
+	// npc ui
+	CText* m_pMissionText = nullptr;   // 미션 설명 텍스트
+	CText* m_pMissionGoldText = nullptr;   // 미션 골드 텍스트
+	CTextureToScreenShader* m_pMissionBgShader = nullptr; // 미션 배경 ui
+	bool        m_bMissionUIVisible = false;
+
+	void ShowMissionText(const std::wstring& text);
+	void HideMissionText();
+
 	// skill cooltime
 	static constexpr int   SKILL_COUNT = 3;
 	static constexpr float SKILL_BASE_CD[3] = { 10.0f, 10.0f, 10.0f }; // 스킬별 기본 쿨타임(초)
 
 	float  m_fSkillCooldown[SKILL_COUNT] = {};   // 남은 쿨타임(초)
 	float  m_fSkillMaxCooldown[SKILL_COUNT] = {};   // 현재 레벨 기준 최대 쿨타임
-
-/*	// 쿨타임 오버레이 셰이더 (스킬 슬롯 위에 반투명 어두운 사각형)
-	std::array<CCooldownOverlayShader*, SKILL_COUNT> m_pCooldownOverlays = {};*/
 
 	// 쿨타임 텍스트 (남은 초 표시)
 	std::array<CText*, SKILL_COUNT> m_pCooldownTexts = {};
