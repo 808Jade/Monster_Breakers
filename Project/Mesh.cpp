@@ -813,7 +813,7 @@ CScreenRectMeshTextured::CScreenRectMeshTextured(ID3D12Device* pd3dDevice, ID3D1
 	m_nSlot = 0;
 	m_d3dPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
-	CTexturedVertex pVertices[6];
+/*	CTexturedVertex pVertices[6];
 	int i = 0;
 
 	pVertices[i++] = CTexturedVertex(XMFLOAT3(fxLeft, fyTop, 0.0f), XMFLOAT2(0.0f, 0.0f));
@@ -828,5 +828,63 @@ CScreenRectMeshTextured::CScreenRectMeshTextured(ID3D12Device* pd3dDevice, ID3D1
 
 	m_d3dPositionBufferView.BufferLocation = m_pd3dPositionBuffer->GetGPUVirtualAddress();
 	m_d3dPositionBufferView.StrideInBytes = m_nStride;
+	m_d3dPositionBufferView.SizeInBytes = m_nStride * m_nVertices;*/
+	// HP바처럼 폭이 자주 바뀌는 사각형은 DEFAULT 힙(+복사)이 아니라
+	// UPLOAD 힙에 만들어서 CPU가 Map()된 포인터로 직접 갱신할 수 있게 한다.
+	// 이러면 폭이 바뀔 때마다 리소스를 새로 만들고 이전 리소스를 지우는 과정 자체가 없어져서,
+	// "GPU가 이전 프레임에서 아직 읽고 있는 버퍼를 CPU가 먼저 해제"하는 문제가 생기지 않는다.
+	D3D12_HEAP_PROPERTIES d3dHeapProps = {};
+	d3dHeapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
+	d3dHeapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+	d3dHeapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+
+	D3D12_RESOURCE_DESC d3dResourceDesc = {};
+	d3dResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	d3dResourceDesc.Alignment = 0;
+	d3dResourceDesc.Width = m_nStride * m_nVertices;
+	d3dResourceDesc.Height = 1;
+	d3dResourceDesc.DepthOrArraySize = 1;
+	d3dResourceDesc.MipLevels = 1;
+	d3dResourceDesc.Format = DXGI_FORMAT_UNKNOWN;
+	d3dResourceDesc.SampleDesc.Count = 1;
+	d3dResourceDesc.SampleDesc.Quality = 0;
+	d3dResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	d3dResourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+	pd3dDevice->CreateCommittedResource(&d3dHeapProps, D3D12_HEAP_FLAG_NONE, &d3dResourceDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ, NULL, __uuidof(ID3D12Resource), (void**)&m_pd3dPositionBuffer);
+
+	D3D12_RANGE d3dReadRange = { 0, 0 }; // CPU가 읽지 않음(쓰기 전용)
+	m_pd3dPositionBuffer->Map(0, &d3dReadRange, reinterpret_cast<void**>(&m_pMappedVertices));
+
+	UpdateRect(fxLeft, fWidth, fyTop, fHeight);
+
+	m_d3dPositionBufferView.BufferLocation = m_pd3dPositionBuffer->GetGPUVirtualAddress();
+	m_d3dPositionBufferView.StrideInBytes = m_nStride;
 	m_d3dPositionBufferView.SizeInBytes = m_nStride * m_nVertices;
+}
+
+CScreenRectMeshTextured::~CScreenRectMeshTextured()
+{
+	// 실제 GPU 리소스(m_pd3dPositionBuffer) 해제는 기존과 동일하게 ~CMesh()에서 처리된다.
+	// 여기서는 Release() 전에 Map 상태만 정리한다.
+	if (m_pd3dPositionBuffer && m_pMappedVertices)
+	{
+		m_pd3dPositionBuffer->Unmap(0, NULL);
+		m_pMappedVertices = nullptr;
+	}
+}
+
+void CScreenRectMeshTextured::UpdateRect(float fxLeft, float fWidth, float fyTop, float fHeight)
+{
+	if (!m_pMappedVertices) return;
+
+	int i = 0;
+	m_pMappedVertices[i++] = CTexturedVertex(XMFLOAT3(fxLeft, fyTop, 0.0f), XMFLOAT2(0.0f, 0.0f));
+	m_pMappedVertices[i++] = CTexturedVertex(XMFLOAT3(fxLeft + fWidth, fyTop, 0.0f), XMFLOAT2(1.0f, 0.0f));
+	m_pMappedVertices[i++] = CTexturedVertex(XMFLOAT3(fxLeft + fWidth, fyTop - fHeight, 0.0f), XMFLOAT2(1.0f, 1.0f));
+
+	m_pMappedVertices[i++] = CTexturedVertex(XMFLOAT3(fxLeft, fyTop, 0.0f), XMFLOAT2(0.0f, 0.0f));
+	m_pMappedVertices[i++] = CTexturedVertex(XMFLOAT3(fxLeft + fWidth, fyTop - fHeight, 0.0f), XMFLOAT2(1.0f, 1.0f));
+	m_pMappedVertices[i++] = CTexturedVertex(XMFLOAT3(fxLeft, fyTop - fHeight, 0.0f), XMFLOAT2(0.0f, 1.0f));
 }

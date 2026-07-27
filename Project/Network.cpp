@@ -687,15 +687,19 @@ void ProcessPacket(char* ptr)
     case SC_P_MONSTER_SPAWN:
     {
         sc_packet_monster_spawn* packet = reinterpret_cast<sc_packet_monster_spawn*>(ptr);
-        if (gGameFramework.isLoading || gGameFramework.isStartScene) {
+
+        // 중요: OnMonsterSpawned()는 새 몬스터일 때 D3D12 디바이스/커맨드리스트 작업
+        // (m_pd3dCommandList->Reset/Close, ExecuteCommandLists 등)을 수행하고,
+        // g_monsters 맵에도 직접 write한다. 이 커맨드리스트/커맨드큐/g_monsters는
+        // 메인 스레드(렌더 루프, AnimateObjects)도 매 프레임 그대로 사용/순회하는 것과
+        // "동일한 객체"라서, 여기(네트워크 수신 스레드)에서 바로 호출하면
+        // 두 스레드가 같은 ID3D12GraphicsCommandList/CommandAllocator를 동시에 건드리게 되어
+        // 정의되지 않은 동작(랜덤 힙 손상/크래시)으로 이어진다.
+        // 로딩 중이든 아니든 항상 큐에 쌓아두고, 메인 스레드가 매 프레임 드레인하도록 한다.
+        {
             std::lock_guard<std::mutex> lock(g_pendingMonsterMutex);
-            g_pendingMonsterSpawns.push_back({ (int)packet->monsterID,packet->position,    packet->state });
-            std::cout << "[몬스터] 로딩중 보관 ID=" << packet->monsterID << "\n";
-            break;
+            g_pendingMonsterSpawns.push_back({ (int)packet->monsterID, packet->position, packet->state });
         }
-
-
-        gGameFramework.OnMonsterSpawned(packet->monsterID, packet->position, packet->state);
 
         break;
     }

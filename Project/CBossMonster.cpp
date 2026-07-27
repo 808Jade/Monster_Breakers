@@ -224,11 +224,18 @@ void CBossMonster::Update(float fTimeElapsed)
 
 void CBossMonster::SetHPWidth(float newWidth)
 {
-    if (!m_pBossHpbar || !m_pd3dDevice || !m_pd3dCommandList) return;
+    if (!m_pBossHpbar) return;
 
-    CScreenRectMeshTextured* pNewMesh = new CScreenRectMeshTextured(
-        m_pd3dDevice, m_pd3dCommandList, BOSS_HPBAR_LEFT, newWidth, BOSS_HPBAR_TOP, BOSS_HPBAR_HEIGHT);
-    m_pBossHpbar->SetMesh(0, pNewMesh);
+    // 더 이상 메시를 새로 만들고 SetMesh로 교체하지 않는다.
+    // (예전 방식은 폭이 바뀔 때마다 GPU 버텍스 버퍼를 즉시 해제했는데,
+    //  더블 버퍼링 때문에 GPU가 이전 프레임에서 그 버퍼를 아직 읽는 중일 수 있어
+    //  힙 손상으로 이어질 수 있었다. CScreenRectMeshTextured::UpdateRect()는
+    //  이미 매핑된 같은 버퍼의 내용만 갱신하므로 이 문제가 없다.)
+    if (m_pBossHpbar->m_nMeshes > 0 && m_pBossHpbar->m_ppMeshes[0])
+    {
+        auto* pRect = static_cast<CScreenRectMeshTextured*>(m_pBossHpbar->m_ppMeshes[0]);
+        pRect->UpdateRect(BOSS_HPBAR_LEFT, newWidth, BOSS_HPBAR_TOP, BOSS_HPBAR_HEIGHT);
+    }
 }
 
 void CBossMonster::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)

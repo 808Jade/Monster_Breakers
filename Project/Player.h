@@ -27,7 +27,7 @@ struct BoundingCylinder
 	float Radius;
 	float Height;
 
-	BoundingCylinder() : Center(0.0f,0.0f,0.0f), Radius(0.0f), Height(0.0f) {}
+	BoundingCylinder() : Center(0.0f, 0.0f, 0.0f), Radius(0.0f), Height(0.0f) {}
 };
 
 class CPlayer : public CGameObject
@@ -53,7 +53,7 @@ protected:
 	LPVOID						m_pPlayerUpdatedContext = NULL;
 	LPVOID						m_pCameraUpdatedContext = NULL;
 
-	CCamera						*m_pCamera = NULL;
+	CCamera* m_pCamera = NULL;
 
 	XMFLOAT3			m_lastPushDirection; // 마지막 충돌 방향 저장
 	BoundingCylinder	m_BoundingCylinder;
@@ -120,8 +120,8 @@ public:
 	float GetPitch() const { return(m_fPitch); }
 	float GetRoll() const { return(m_fRoll); }
 
-	CCamera *GetCamera() { return(m_pCamera); }
-	void SetCamera(CCamera *pCamera) { m_pCamera = pCamera; }
+	CCamera* GetCamera() { return(m_pCamera); }
+	void SetCamera(CCamera* pCamera) { m_pCamera = pCamera; }
 
 	virtual void Move(DWORD nDirection, float fDistance, bool bVelocity = false);
 	void Move(const XMFLOAT3& xmf3Shift, bool bVelocity = false);
@@ -138,21 +138,21 @@ public:
 
 	virtual void Update(float fTimeElapsed);
 
-	virtual void OnPlayerUpdateCallback(float fTimeElapsed) { }
+	virtual void OnPlayerUpdateCallback(float fTimeElapsed) {}
 	void SetPlayerUpdatedContext(LPVOID pContext) { m_pPlayerUpdatedContext = pContext; }
 
-	virtual void OnCameraUpdateCallback(float fTimeElapsed) { }
+	virtual void OnCameraUpdateCallback(float fTimeElapsed) {}
 	void SetCameraUpdatedContext(LPVOID pContext) { m_pCameraUpdatedContext = pContext; }
 
-	virtual void CreateShaderVariables(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList);
+	virtual void CreateShaderVariables(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
 	virtual void ReleaseShaderVariables();
-	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList);
+	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* pd3dCommandList);
 
-	CCamera *OnChangeCamera(DWORD nNewCameraMode, DWORD nCurrentCameraMode);
+	CCamera* OnChangeCamera(DWORD nNewCameraMode, DWORD nCurrentCameraMode);
 
-	virtual CCamera *ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed) { return(NULL); }
+	virtual CCamera* ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed) { return(NULL); }
 	virtual void OnPrepareRender();
-	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera = NULL);
+	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = NULL);
 };
 
 //class CSoundCallbackHandler : public CAnimationCallbackHandler
@@ -168,7 +168,7 @@ public:
 class CTerrainPlayer : public CPlayer
 {
 public:
-	CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, void *pContext=NULL, CLoadedModelInfo* pModel = NULL);
+	CTerrainPlayer(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature, void* pContext = NULL, CLoadedModelInfo* pModel = NULL);
 	virtual ~CTerrainPlayer();
 
 	CText* m_pText = nullptr;
@@ -178,7 +178,7 @@ public:
 	AnimationState m_currentAnim = AnimationState::IDLE;
 
 public:
-	virtual CCamera *ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed);
+	virtual CCamera* ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed);
 
 	virtual void OnPlayerUpdateCallback(float fTimeElapsed);
 	virtual void OnCameraUpdateCallback(float fTimeElapsed);
@@ -193,6 +193,7 @@ public:
 	ID3D12Device* device = nullptr;
 	ID3D12GraphicsCommandList* cmdList = nullptr;
 	void SetHPWidth(float newWidth);
+	float m_fPrevHPBarWidth = -1.0f; // 직전 HP바 폭 캐시(인스턴스별). 예전엔 함수 지역 static이라 모든 인스턴스/씬 재시작 간에 공유되는 버그가 있었음.
 
 	void PlayAnimationTrack(int trackIndex, float speed = 1.0f);
 	bool IsAnimationFinished(int trackIndex);
@@ -202,6 +203,3 @@ public:
 
 	void StartAnimationBlend(int fromTrack, int toTrack, float blendTime);
 };
-
-
-

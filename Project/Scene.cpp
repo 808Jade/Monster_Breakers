@@ -404,7 +404,7 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 		"Model/Monster/DemonKingPA.bin", nullptr, 50000.f, 99999);
 	//m_pBoss->SetFrameName("Boss");
 	m_pBoss->SetPosition(XMFLOAT3(-9999.0f, -9999.0f, -9999.0f));
-	m_pBoss->SetScale(XMFLOAT3(2, 2, 2));
+	m_pBoss->SetScale(XMFLOAT3(6, 6, 6));
 
 	m_pGroundAttackRangeEffect = new CGroundAttackRangeEffect();
 	m_pGroundAttackRangeEffect->Create(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, 4);
@@ -803,10 +803,11 @@ void CScene::ReleaseObjects()
 	}
 	m_vPlayers.clear();
 
-	for (auto* pTex : m_UITextures)
-	{
-		if (pTex) delete pTex;
-	}
+	// m_UITextures에 담긴 텍스처들은 BuildSimpleUI()에서 pShader->SetTexture(pTexture)로
+	// 이미 각 셰이더가 참조카운트(AddRef/Release)로 소유하고 있다.
+	// 바로 위 m_Shaders 루프에서 shader->Release() -> ~CTextureToScreenShader()가
+	// m_pTexture->Release()를 호출하면서 참조카운트가 0이 되어 이미 delete된 상태이므로,
+	// 여기서 또 delete하면 이중 해제(double free)로 힙이 손상된다. 포인터 정리만 한다.
 	m_UITextures.clear();
 
 	ReleaseShaderVariables();
@@ -1677,7 +1678,21 @@ void CScene::AnimateObjects(float fTimeElapsed)
 				m_fSkillCooldown[i] = 0.0f;
 		}
 	}
+	m_fElapsedTime += fTimeElapsed;
+
 	if (m_pBoss) { m_pBoss->Animate(fTimeElapsed); m_pBoss->Update(fTimeElapsed); }
+
+	// 보스가 죽으면 3초간 대기했다가 엔딩 씬으로 전환한다.
+	if (m_pBoss && m_pBoss->IsDead() && !m_bEndSceneRequested)
+	{
+		m_fBossDeathTimer += fTimeElapsed;
+		if (m_fBossDeathTimer >= BOSS_DEATH_TO_END_DELAY)
+		{
+			m_bEndSceneRequested = true; // 중복 요청 방지
+			gGameFramework.SetClearTime(m_fElapsedTime); // EndScene에 표시할 클리어 타임 저장
+			gGameFramework.RequestMoveToScene(3); // CEndScene
+		}
+	}
 	if (m_pGroundAttackRangeEffect) m_pGroundAttackRangeEffect->Animate(fTimeElapsed);
 	if (m_pFireballSystem) m_pFireballSystem->Animate(fTimeElapsed);
 	if (m_pGreenSpiritSystem) m_pGreenSpiritSystem->Animate(fTimeElapsed);
@@ -2201,7 +2216,36 @@ void CEndScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList
 
 	m_Shaders[0] = pTextureToScreenShader;
 
+	// VICTORY 타이틀 아래에 있던 고정 자막(이미지에 구운 한글 자막, 폰트 미지원으로 네모 깨짐) 대신
+	// 플레이어 ID / 클리어 타임을 CText로 표시한다. (다른 씬에서 쓰는 CText와 동일한 방식)
+	std::wstring wUserName(user_name.begin(), user_name.end());
+	std::wstring idLine = L"ID: " + wUserName;
+
+	float fClearTime = gGameFramework.GetClearTime();
+	int nTotalSec = (int)fClearTime;
+	int nMin = nTotalSec / 60;
+	int nSec = nTotalSec % 60;
+	wchar_t szTime[32];
+	swprintf_s(szTime, L"time: %02d:%02d", nMin, nSec);
+
+	m_pIDText = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, idLine, -0.25f, 0.15f);
+	m_pTimeText = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, szTime, -0.25f, -0.05f);
+
+	m_GameObjects.clear();
+	m_GameObjects.push_back(m_pIDText);
+	m_GameObjects.push_back(m_pTimeText);
+
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
+}
+
+void CEndScene::UpdateUI(ID3D12GraphicsCommandList* pd3dCommandList)
+{
+	// 기본 CScene::UpdateUI()는 m_GameObjects에 있는 CText를 전부
+	// "LV. " + m_pPlayer->level[...] 로 덮어쓴다. 이건 CTerrainPlayer(실제 게임 플레이 씬)의
+	// 레벨 표시 텍스트를 위한 로직인데, EndScene은 그런 텍스트가 없고 대신
+	// m_pIDText/m_pTimeText를 갖고 있어서, 기본 동작을 그대로 물려받으면
+	// 이 둘이 매 프레임 "LV. 1"(EndScene의 CPlayer는 레벨을 세팅한 적이 없어 기본값 1)로
+	// 덮어써져 버린다. EndScene에서는 이 로직 자체가 필요 없으므로 아무것도 하지 않는다.
 }
 
 void CEndScene::ReleaseObjects()
@@ -2216,6 +2260,14 @@ void CEndScene::ReleaseObjects()
 		shader->Release();
 	}
 	m_Shaders.clear();
+
+	for (auto* obj : m_GameObjects)
+	{
+		if (obj) obj->Release();
+	}
+	m_GameObjects.clear();
+	m_pIDText = nullptr;
+	m_pTimeText = nullptr;
 }
 
 void CEndScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
@@ -2230,4 +2282,5 @@ void CEndScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCam
 	UpdateShaderVariables(pd3dCommandList);
 
 	for (auto* shader : m_Shaders) if (shader) shader->Render(pd3dCommandList, pCamera);
+	for (auto* obj : m_GameObjects) if (obj) obj->Render(pd3dCommandList, pCamera);
 }

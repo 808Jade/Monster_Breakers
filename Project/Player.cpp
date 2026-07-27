@@ -632,7 +632,7 @@ void CTerrainPlayer::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera*
 {
 	if (m_pText) m_pText->Render(pd3dCommandList, pCamera);
 	for (int i = 0; i < 3; ++i)
-		if (m_plevel[i]) m_plevel[i]->Render(pd3dCommandList, pCamera);
+		if (m_plevel[i] && m_plevel[i]->visible) m_plevel[i]->Render(pd3dCommandList, pCamera);
 	// if (m_playerHP) m_playerHP->Render(pd3dCommandList, pCamera);
 	CPlayer::Render(pd3dCommandList, pCamera);
 }
@@ -720,10 +720,9 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 	float hpRatio = currentHP / 100.f;
 	float newWidth = hpRatio * 0.5f;
 
-	static float prevWidth = -1.0f;
-	if (fabs(prevWidth - newWidth) > 0.01f)
+	if (fabs(m_fPrevHPBarWidth - newWidth) > 0.01f)
 	{
-		prevWidth = newWidth;
+		m_fPrevHPBarWidth = newWidth;
 		SetHPWidth(newWidth);
 	}
 
@@ -819,12 +818,13 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 
 void CTerrainPlayer::SetHPWidth(float newWidth)
 {
-	if (m_playerHP)
+	if (m_playerHP && m_playerHP->m_nMeshes > 0 && m_playerHP->m_ppMeshes[0])
 	{
-		// 새 mesh 생성
-		CScreenRectMeshTextured* newMesh = new CScreenRectMeshTextured(device, cmdList, 0.25f, newWidth, 0.85f, 0.1f);
-		// 기존 메시 교체
-		m_playerHP->SetMesh(0, newMesh);
+		// 예전 방식(메시를 새로 만들고 SetMesh로 교체)은 GPU가 이전 프레임에서
+		// 그 버텍스 버퍼를 아직 읽는 중일 수 있어 힙 손상을 유발할 수 있었다.
+		// CScreenRectMeshTextured::UpdateRect()로 같은 버퍼의 내용만 갱신한다.
+		auto* pRect = static_cast<CScreenRectMeshTextured*>(m_playerHP->m_ppMeshes[0]);
+		pRect->UpdateRect(0.25f, newWidth, 0.85f, 0.1f);
 	}
 }
 

@@ -34,13 +34,29 @@ CMonster::CMonster(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dComm
     m_pHpbar = new Hpbar(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
 
     SetMonsterID(id);
-    g_monsters[id] = this;
+    {
+        std::lock_guard<std::mutex> lock(g_monster_mutex);
+        g_monsters[id] = this;
+    }
 
     CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }
 
 CMonster::~CMonster()
 {
+    // g_monsters에서 자신을 제거하지 않으면, 씬 전환으로 이 몬스터가 delete된 뒤에도
+    // g_monsters엔 죽은 포인터가 그대로 남아있게 된다. 그 상태에서 AnimateObjects()의
+    // 순회나 뒤늦게 도착한 네트워크 패킷(UpdateMonsterPosition 등)이 그 포인터를 쓰면
+    // use-after-free로 크래시가 난다.
+    {
+        std::lock_guard<std::mutex> lock(g_monster_mutex);
+        auto it = g_monsters.find(m_nMonsterID);
+        if (it != g_monsters.end() && it->second == this)
+        {
+            g_monsters.erase(it);
+        }
+    }
+
     if (m_pHpbar) delete m_pHpbar;
 }
 
@@ -53,8 +69,8 @@ void CMonster::TakeDamage(float damage)
     m_fMonsterHP = max(0.0f, m_fMonsterHP - damage);
     m_fHpRatio = m_fMonsterHP / m_fMaxHP;
 
-	  send_hit_damage(m_nMonsterID, (int)damage);
-    
+    send_hit_damage(m_nMonsterID, (int)damage);
+
     if (m_fMonsterHP <= 0.0f)
     {
         int randomIndex = (rand() % 2) + 1;

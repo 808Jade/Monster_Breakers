@@ -620,16 +620,26 @@ void CAnimationController::AdvanceTime(float fTimeElapsed, CGameObject* pRootGam
 	m_fTime += fTimeElapsed;
 	if (m_pAnimationTracks)
 	{
-		for (int j = 0; j < m_pAnimationSets->m_nBoneFrames; j++) m_pAnimationSets->m_ppBoneFrameCaches[j]->m_xmf4x4ToParent = Matrix4x4::Zero();
+		for (int j = 0; j < m_pAnimationSets->m_nBoneFrames; j++) if (m_pAnimationSets->m_ppBoneFrameCaches[j]) m_pAnimationSets->m_ppBoneFrameCaches[j]->m_xmf4x4ToParent = Matrix4x4::Zero();
 
 		for (int k = 0; k < m_nAnimationTracks; k++)
 		{
 			if (m_pAnimationTracks[k].m_bEnable)
 			{
-				CAnimationSet* pAnimationSet = m_pAnimationSets->m_pAnimationSets[m_pAnimationTracks[k].m_nAnimationSet];
+				int nAnimationSet = m_pAnimationTracks[k].m_nAnimationSet;
+				if (nAnimationSet < 0 || nAnimationSet >= m_pAnimationSets->m_nAnimationSets)
+				{
+					continue;
+				}
+
+				CAnimationSet* pAnimationSet = m_pAnimationSets->m_pAnimationSets[nAnimationSet];
+				if (!pAnimationSet) continue;
+
 				float fPosition = m_pAnimationTracks[k].UpdatePosition(m_pAnimationTracks[k].m_fPosition, fTimeElapsed, pAnimationSet->m_fLength);
 				for (int j = 0; j < m_pAnimationSets->m_nBoneFrames; j++)
 				{
+					if (!m_pAnimationSets->m_ppBoneFrameCaches[j]) continue;
+
 					XMFLOAT4X4 xmf4x4Transform = m_pAnimationSets->m_ppBoneFrameCaches[j]->m_xmf4x4ToParent;
 					XMFLOAT4X4 xmf4x4TrackTransform = pAnimationSet->GetSRT(j, fPosition);
 					xmf4x4Transform = Matrix4x4::Add(xmf4x4Transform, Matrix4x4::Scale(xmf4x4TrackTransform, m_pAnimationTracks[k].m_fWeight));
@@ -640,7 +650,6 @@ void CAnimationController::AdvanceTime(float fTimeElapsed, CGameObject* pRootGam
 		}
 
 		pRootGameObject->UpdateTransform(NULL);
-
 		OnRootMotion(pRootGameObject);
 		OnAnimationIK(pRootGameObject);
 	}

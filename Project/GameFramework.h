@@ -56,6 +56,11 @@ public:
 	void SetSelectedPlayerModel(EPlayerModelType type) { m_eSelectedPlayerModel = type; }
 	EPlayerModelType GetSelectedPlayerModel() const { return m_eSelectedPlayerModel; }
 
+	// 보스를 처치할 때까지 걸린 시간(초). 게임 씬이 사라지기 전에 저장해두었다가
+	// EndScene에서 "time: mm:ss" 형태로 표시하는 데 사용한다.
+	void SetClearTime(float fSeconds) { m_fClearTime = fSeconds; }
+	float GetClearTime() const { return m_fClearTime; }
+
 	uint8_t CGameFramework::GetSelectedJob() const {
 		cout << "[DEBUG] SelectedModel=" << static_cast<int>(m_eSelectedPlayerModel) << endl;
 
@@ -184,7 +189,8 @@ private:
 	CPlayer* m_pPlayer = NULL;
 	CCamera* m_pCamera = NULL;
 
-	EPlayerModelType m_eSelectedPlayerModel = EPlayerModelType::Knight; // �⺻��
+	EPlayerModelType m_eSelectedPlayerModel = EPlayerModelType::Knight;
+	float m_fClearTime = 0.0f; // 보스 처치까지 걸린 시간(초) - EndScene 표시용
 
 	int m_nCurrentScene = 0;
 	int m_nScene = 0;

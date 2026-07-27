@@ -128,7 +128,7 @@ public:
 	void GenerateGameObjectsBoundingBox();
 
 	void BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
-	void UpdateUI(ID3D12GraphicsCommandList* pd3dCommandList);
+	virtual void UpdateUI(ID3D12GraphicsCommandList* pd3dCommandList);
 
 protected:
 	// 실제 렌더 본문(공통). 자식들은 이걸 override하면 됨.
@@ -226,6 +226,11 @@ public:
 	CGroundAttackRangeEffect* m_pGroundAttackRangeEffect = nullptr;
 	std::vector<CShader*>     m_Shaders;
 	
+	// 보스 사망->엔딩 씬 전환까지의 대기 시간 처리용
+	static constexpr float BOSS_DEATH_TO_END_DELAY = 3.0f; // 보스 사망 후 엔딩 씬으로 넘어가기까지 대기 시간(초)
+	float m_fBossDeathTimer = 0.0f;
+	bool  m_bEndSceneRequested = false;
+
 	CLoadedModelInfo* m_pModel = NULL; // 플레이어 모델
 	CLoadedModelInfo* m_pKnightModel = NULL; // 기사
 	CLoadedModelInfo* m_pWizardModel = NULL; // 법사
@@ -397,4 +402,9 @@ public:
 	virtual void ReleaseObjects();
 
 	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
+	virtual void UpdateUI(ID3D12GraphicsCommandList* pd3dCommandList) override;
+
+private:
+	CText* m_pIDText = nullptr;   // "ID: <플레이어 이름>"
+	CText* m_pTimeText = nullptr; // "time: mm:ss" (보스 처치까지 걸린 시간)
 };

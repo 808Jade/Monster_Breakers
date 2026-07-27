@@ -127,7 +127,15 @@ class CScreenRectMeshTextured : public CMesh
 {
 public:
 	CScreenRectMeshTextured(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, float fxLeft = 0.0f, float fWidth = 2.0f, float fyTop = 0.0f, float fHeight = 2.0f);
-	virtual ~CScreenRectMeshTextured() {}
+	virtual ~CScreenRectMeshTextured();
+	// HP바처럼 매 프레임 폭이 바뀔 수 있는 사각형을 위해, 버텍스 버퍼를 새로 만들지 않고
+// 이미 Map()되어 있는 업로드 힙 버퍼에 정점 값만 갱신한다.
+// (기존처럼 메시를 통째로 new/Release 하면, GPU가 이전 프레임에서 그 버텍스 버퍼를
+//  아직 읽고 있는 도중에 CPU가 리소스를 지워버릴 수 있어 힙 손상으로 이어질 수 있었다.)
+	void UpdateRect(float fxLeft, float fWidth, float fyTop, float fHeight);
+
+private:
+	CTexturedVertex* m_pMappedVertices = nullptr; // 상시 Map()된 CPU 포인터 (Unmap 전까지 유효)
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

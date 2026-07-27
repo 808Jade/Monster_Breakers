@@ -7,6 +7,11 @@
 #include "Network.h"
 #include "CMonster.h"
 #include "SoundManager.h"
+#include <mutex>
+
+// g_monsters, g_monster_mutex, g_pendingMonsterMutex, g_pendingMonsterSpawns는
+// 모두 Network.h에 선언되어 있다 (위 #include "Network.h"로 이미 가져옴).
+// g_monsters는 네트워크 스레드와 메인 스레드가 동시에 접근하므로 반드시 g_monster_mutex로 보호해야 한다.
 
 CGameFramework::CGameFramework()
 {
@@ -494,10 +499,12 @@ void CGameFramework::BuildObjects()
 		m_ppScenes[2]->InitializeCollisionSystem();
 	}
 	else if (m_nCurrentScene == 3) {
-		m_ppScenes[4] = new CEndScene();
-		m_ppScenes[4]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
-		CPlayer* pPlayer = new CPlayer();
-		m_ppScenes[4]->SetPlayer(pPlayer);
+		m_ppScenes[3] = new CEndScene();
+		m_ppScenes[3]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
+		CTerrainPlayer* pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_ppScenes[3]->GetGraphicsRootSignature(), NULL, NULL);
+		m_ppScenes[3]->SetPlayer(pPlayer);
+		for (int i = 0; i < 3; i++)
+			pPlayer->m_plevel[i]->visible = false;
 	}
 
 	//#ifdef _WITH_TERRAIN_PLAYER
@@ -695,10 +702,34 @@ void CGameFramework::AnimateObjects()
 				m_pScene->m_ppOtherPlayers[slot]->Animate(otherPlayer->targetAnim, fTimeElapsed);
 			}
 		if (!isLoading && !isStartScene) {
-			for (auto& [id, pMonster] : g_monsters) {
-				if (pMonster) {
-					pMonster->Animate(fTimeElapsed);
+			// 네트워크 스레드가 쌓아둔 몬스터 스폰 요청을 메인 스레드에서 처리한다.
+			// (OnMonsterSpawned가 D3D12 디바이스/커맨드리스트 작업을 하기 때문에
+			//  네트워크 스레드에서 직접 호출하면 안 된다 - Network.cpp 쪽 수정 참고)
+			std::vector<PendingMonsterSpawn> spawnsToProcess;
+			{
+				std::lock_guard<std::mutex> lock(g_pendingMonsterMutex);
+				if (!g_pendingMonsterSpawns.empty())
+				{
+					spawnsToProcess.swap(g_pendingMonsterSpawns);
 				}
+			}
+			for (auto& s : spawnsToProcess)
+			{
+				OnMonsterSpawned(s.monsterID, s.position, s.state);
+			}
+
+			// g_monsters는 네트워크 스레드(몬스터 갱신 패킷 처리)에서도 접근하는 전역 컨테이너다.
+			// std::map/unordered_map은 스레드 안전하지 않으므로, 다른 스레드가 insert하는 도중
+			// 여기서 그대로 순회(iterate)하면 이터레이터가 깨져 임의 주소를 읽다가 크래시가 난다.
+			// g_monster_mutex로 잠근 상태에서 포인터만 스냅샷으로 복사한 뒤, 락을 풀고 안전하게 순회한다.
+			std::vector<CMonster*> monstersSnapshot;
+			{
+				std::lock_guard<std::mutex> lock(g_monster_mutex);
+				monstersSnapshot.reserve(g_monsters.size());
+				for (auto& [id, pMonster] : g_monsters) monstersSnapshot.push_back(pMonster);
+			}
+			for (auto* pMonster : monstersSnapshot) {
+				if (pMonster) pMonster->Animate(fTimeElapsed);
 			}
 		}
 	}
@@ -907,11 +938,17 @@ void CGameFramework::UpdateItemRotation(long long itemID, const XMFLOAT3& look, 
 
 void CGameFramework::OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int state)
 {
-	auto it = g_monsters.find(monsterID);
-	if (it != g_monsters.end())
+	CMonster* pExisting = nullptr;
+	{
+		std::lock_guard<std::mutex> lock(g_monster_mutex);
+		auto it = g_monsters.find(monsterID);
+		if (it != g_monsters.end()) pExisting = it->second;
+	}
+
+	if (pExisting)
 	{
 		// ── 기존: 이미 등록된 몬스터 위치/상태 갱신 (리스폰 포함) ──
-		CMonster* pMonster = it->second;
+		CMonster* pMonster = pExisting;
 
 		// 죽었다가 다시 스폰되는 경우 → 상태 초기화
 		if (pMonster->IsDead())
@@ -1010,15 +1047,19 @@ void CGameFramework::UpdateMonsterState(CMonster* pMonster, int state)
 
 void CGameFramework::UpdateMonsterPosition(int monsterID, const XMFLOAT3& pos, const XMFLOAT3& rot, int state)
 {
-	auto it = g_monsters.find(monsterID);
-	if (it == g_monsters.end())
+	CMonster* pMonster = nullptr;
+	{
+		std::lock_guard<std::mutex> lock(g_monster_mutex);
+		auto it = g_monsters.find(monsterID);
+		if (it != g_monsters.end()) pMonster = it->second;
+	}
+	if (!pMonster)
 	{
 		std::cout << "[Error] Monster ID not found: " << monsterID << std::endl;
 		return;
 	}
 	/*	printf("[Net] Monster %d → pos=(%.1f, %.1f, %.1f) state=%d\n",
 			monsterID, pos.x, pos.y, pos.z, state);*/
-	CMonster* pMonster = it->second;
 	pMonster->SetPosition(pos);
 	//pMonster->CalculateBoundingBox();
 
