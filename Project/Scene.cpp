@@ -247,7 +247,7 @@ void CScene::BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 	std::vector<UIInfo> uiList;
 
 	uiList.push_back({ L"Image/hpbar.dds", 0.15f, 0.7f, 0.9f, 0.2f });
-	uiList.push_back({ L"Image/mission.dds", -0.95f, 0.5f, -0.5f, 0.25f });
+	uiList.push_back({ L"Image/mission.dds", -0.95f, 0.8f, -0.5f, 0.25f });
 
 	auto it = skillImageMap.find(m_pModel);
 	if (it != skillImageMap.end()) {
@@ -1259,7 +1259,7 @@ void CScene::ShowMissionText(const std::wstring& text)
 	//   y: 1-top*2  ~ 1-(top+height)*2  =>   0.0 ~ -1.0
 	// 이 범위 안(패널 좌측 상단 부근)에 텍스트가 찍히도록 좌표를 잡는다.
 	constexpr float MISSION_TEXT_X = -0.9f;
-	constexpr float MISSION_TEXT_Y = -0.3f;
+	constexpr float MISSION_TEXT_Y = -0.5f;
 
 	if (!m_pMissionText)
 	{
