@@ -124,7 +124,22 @@ void CMonster::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCame
         XMFLOAT3 pos = GetPosition();
 
         m_pHpbar->SetPosition(pos.x, pos.y + 2.5f, pos.z);
-        m_pHpbar->LookAt(pCamera->GetPosition(), XMFLOAT3(0.0f, 1.0f, 0.0f));
+
+        // forward = HP바 -> 카메라 방향
+        XMFLOAT3 hpPos = m_pHpbar->GetPosition();
+        XMFLOAT3 camPos = pCamera->GetPosition();
+        XMVECTOR vForward = XMVector3Normalize(
+            XMLoadFloat3(&camPos) - XMLoadFloat3(&hpPos));
+
+        // world up과 거의 평행하면(내려다보거나 올려다볼 때) 대체 up 사용
+        XMVECTOR vWorldUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+        float fDot = fabsf(XMVectorGetX(XMVector3Dot(vForward, vWorldUp)));
+
+        XMFLOAT3 up = (fDot > 0.98f)
+            ? XMFLOAT3(0.0f, 0.0f, 1.0f)   // 평행에 가까우면 대체 up
+            : XMFLOAT3(0.0f, 1.0f, 0.0f);
+
+        m_pHpbar->LookAt(camPos, up);
         m_pHpbar->SetHpRatio(m_fHpRatio);
         m_pHpbar->Render(pd3dCommandList, pCamera);
     }

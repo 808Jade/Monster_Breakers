@@ -18,7 +18,7 @@ namespace
     // 좌표계는 플레이어 hpbar와 동일: left는 시작 x, 거기서 MAX_WIDTH만큼 우측으로 뻗는다.
     constexpr float BOSS_HPBAR_LEFT = -0.5f;
     constexpr float BOSS_HPBAR_MAX_WIDTH = 1.0f;
-    constexpr float BOSS_HPBAR_TOP = 0.75f;
+    constexpr float BOSS_HPBAR_TOP = 0.7f;
     constexpr float BOSS_HPBAR_HEIGHT = 0.01f;
 }
 
