@@ -261,11 +261,14 @@ public:
 
 	// npc ui
 	CText* m_pMissionText = nullptr;   // 미션 설명 텍스트
-	CText* m_pMissionGoldText = nullptr;   // 미션 골드 텍스트
+	CText* m_pMissionGoldText = nullptr;
+	CText* m_pMissionProgressText = nullptr;
 	CTextureToScreenShader* m_pMissionBgShader = nullptr; // 미션 배경 ui
 	bool        m_bMissionUIVisible = false;
 
 	void ShowMissionText(const std::wstring& text);
+	void ShowMissionProgress(int currentCount, int targetCount);
+	void HideMissionProgress();
 	void HideMissionText();
 
 	// skill cooltime

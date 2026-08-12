@@ -875,7 +875,7 @@ void ProcessPacket(char* ptr)
         // 큐에만 넣어두고 실제 반영은 CScene::AnimateObjects(메인 스레드)에서 한다.
         {
             std::lock_guard<std::mutex> lock(g_pendingMissionMutex);
-            g_pendingMissionTexts.push_back({ wDesc });
+            g_pendingMissionTexts.push_back({ PendingMissionUiType::Info, wDesc });
         }
 
         break;
@@ -894,9 +894,18 @@ void ProcessPacket(char* ptr)
         // 이것도 마찬가지로 네트워크 스레드에서 바로 호출하지 않고 큐에 적재한다.
         {
             std::lock_guard<std::mutex> lock(g_pendingMissionMutex);
-            g_pendingMissionTexts.push_back({ L"Mission Complete!" });
+            g_pendingMissionTexts.push_back({ PendingMissionUiType::Complete, L"Mission Complete!" });
         }
 
+        break;
+    }
+
+    case SC_P_MISSION_PROGRESS:
+    {
+        sc_packet_mission_progress* packet = reinterpret_cast<sc_packet_mission_progress*>(ptr);
+
+        std::lock_guard<std::mutex> lock(g_pendingMissionMutex);
+        g_pendingMissionTexts.push_back({ PendingMissionUiType::Progress, L"", packet->currentCount, packet->targetCount });
         break;
     }
 

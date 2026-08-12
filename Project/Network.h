@@ -46,8 +46,17 @@ struct PendingBossSpawn {
     int       hp;
     int       maxHp;
 };
+enum class PendingMissionUiType {
+    Info,
+    Progress,
+    Complete
+};
+
 struct PendingMissionText {
+    PendingMissionUiType type;
     std::wstring text;
+    int currentCount = 0;
+    int targetCount = 0;
 };
 
 extern std::mutex                           g_pendingMissionMutex;
