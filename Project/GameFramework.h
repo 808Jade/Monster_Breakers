@@ -9,6 +9,7 @@
 #include "Scene.h"
 #include "CMonster.h"
 #include <fmod.hpp>
+#include <mutex>
 
 enum class EPlayerModelType
 {
@@ -87,9 +88,8 @@ public:
 	void UpdatePlayerGold(int gold) {
 		m_pPlayer->Pgold = gold;
 	}
-	void UpdateMyPlayerPosition(const XMFLOAT3& position) {
-		m_pPlayer->SetPosition(position);
-	}
+	// The receive thread queues the spawn; the main thread applies it.
+	void UpdateMyPlayerPosition(const XMFLOAT3& position);
 
 	void OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int state);
 	void OnBossSpawned(long long bossID, const XMFLOAT3& pos, int hp, int maxHp);
@@ -148,6 +148,13 @@ public:
 	bool isStartScene = true;
 
 private:
+	void ApplyPendingMyPlayerPosition();
+
+	std::mutex m_myPlayerPositionMutex;
+	XMFLOAT3 m_pendingMyPlayerPosition = { 0.0f, 0.0f, 0.0f };
+	bool m_hasPendingMyPlayerPosition = false;
+	bool m_isServerSpawnApplied = false;
+
 	HINSTANCE m_hInstance;
 	HWND m_hWnd;
 

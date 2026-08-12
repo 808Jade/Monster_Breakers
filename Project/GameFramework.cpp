@@ -453,6 +453,7 @@ void CGameFramework::OnDestroy()
 void CGameFramework::BuildObjects()
 {
 	isLoading = true;
+	if (m_nCurrentScene == 2) m_isServerSpawnApplied = false;
 
 	m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
 
@@ -682,6 +683,31 @@ void CGameFramework::ProcessInput()
 	m_pPlayer->Update(m_GameTimer.GetTimeElapsed());
 }
 
+void CGameFramework::UpdateMyPlayerPosition(const XMFLOAT3& position)
+{
+	std::lock_guard<std::mutex> lock(m_myPlayerPositionMutex);
+	m_pendingMyPlayerPosition = position;
+	m_hasPendingMyPlayerPosition = true;
+}
+
+void CGameFramework::ApplyPendingMyPlayerPosition()
+{
+	// Keep the packet until the game-scene player exists on the main thread.
+	if (m_nCurrentScene != 2 || !m_pPlayer) return;
+
+	XMFLOAT3 serverPosition{};
+	{
+		std::lock_guard<std::mutex> lock(m_myPlayerPositionMutex);
+		if (!m_hasPendingMyPlayerPosition) return;
+		serverPosition = m_pendingMyPlayerPosition;
+		m_hasPendingMyPlayerPosition = false;
+	}
+
+	m_pPlayer->SetPosition(serverPosition);
+	m_isServerSpawnApplied = true;
+	LoadingDoneToServer();
+}
+
 void CGameFramework::AnimateObjects()
 {
 	float fTimeElapsed = m_GameTimer.GetTimeElapsed();
@@ -734,6 +760,7 @@ void CGameFramework::AnimateObjects()
 		}
 	}
 
+	ApplyPendingMyPlayerPosition();
 	m_pPlayer->Animate(fTimeElapsed);
 
 	if (m_nCurrentScene == 0) m_pPlayer->SetPosition(XMFLOAT3(3, 0, 20));
@@ -777,7 +804,6 @@ void CGameFramework::MoveToNextScene(int i)
 	}
 	m_nCurrentScene = i;
 	BuildObjects();
-	LoadingDoneToServer();
 	if (i == 2) isStartScene = false;
 }
 
@@ -819,7 +845,7 @@ void CGameFramework::FrameAdvance()
 
 	m_pd3dCommandList->OMSetRenderTargets(1, &d3dRtvCPUDescriptorHandle, TRUE, &d3dDsvCPUDescriptorHandle);
 
-	if (!isStartScene) ProcessInput();
+	if (!isStartScene && (m_nCurrentScene != 2 || m_isServerSpawnApplied)) ProcessInput();
 	AnimateObjects();
 
 	//WaitForGpuComplete();
