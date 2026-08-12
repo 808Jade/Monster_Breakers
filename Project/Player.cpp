@@ -88,6 +88,41 @@ void CPlayer::Move(const XMFLOAT3& xmf3Shift, bool bUpdateVelocity)
 		m_pCamera->Move(xmf3Shift);
 	}
 	CalculateBoundingBox();
+
+	// BGM 재생 로직 하드 코딩
+	BgmState nextBgmState;
+	float x = m_xmf3Position.x;
+	float z = m_xmf3Position.z;
+	if (x >= 178.0f && x <= 348.0f && z >= -56.0f && z <= 67.0f)
+	{
+		nextBgmState = BOSS;
+	}
+	else if ((x >= -37.6f && x <= 93.0f && z >= 73.3f && z <= 163.7f) ||
+		(x >= 9.6f && x <= 50.3f && z >= -25.6f && z <= -0.6f))
+	{
+		nextBgmState = BATTLE;
+	}
+	else
+	{
+		nextBgmState = PEACEFUL;
+	}
+
+	if (m_eBgmState != nextBgmState)
+	{
+		m_eBgmState = nextBgmState;
+		if (m_eBgmState == BOSS)
+		{
+			CSoundManager::GetInstance()->PlayBGM("bgm_bossstage");
+		}
+		else if (m_eBgmState == BATTLE)
+		{
+			CSoundManager::GetInstance()->PlayBGM("bgm_battle");
+		}
+		else
+		{
+			CSoundManager::GetInstance()->PlayBGM("bgm_village");
+		}
+	}
 }
 
 void CPlayer::Rotate(float x, float y, float z)
@@ -128,15 +163,43 @@ void CPlayer::Rotate(float x, float y, float z)
 		// CThirdPersonCamera::AddOrbitRotation을 통해 완전히 별도로 회전하므로 여기서는 건드리지 않는다.
 		if (y != 0.0f)
 		{
-			m_fYaw += y;
-			if (m_fYaw > 360.0f) m_fYaw -= 360.0f;
-			if (m_fYaw < 0.0f) m_fYaw += 360.0f;
+			// 1. 카메라의 Look(앞) 방향 벡터를 가져옵니다. 
+			// (주의: m_pCamera->GetLookVector() 부분은 실제 카메라의 Look을 가져오는 함수나 변수로 수정해주세요)
+			XMFLOAT3 camLook = m_pCamera->GetLookVector();
 
-			XMMATRIX xmmtxRotate = XMMatrixRotationAxis(XMLoadFloat3(&m_xmf3Up), XMConvertToRadians(y));
-			m_xmf3Look = Vector3::TransformNormal(m_xmf3Look, xmmtxRotate);
-			m_xmf3Right = Vector3::TransformNormal(m_xmf3Right, xmmtxRotate);
+			// 2. 입력된 y만큼 회전했을 때의 '예상' 플레이어 Look 벡터 구하기
+			XMMATRIX mtxPredictedRot = XMMatrixRotationAxis(XMLoadFloat3(&m_xmf3Up), XMConvertToRadians(y));
+			XMFLOAT3 predictedLook = Vector3::TransformNormal(m_xmf3Look, mtxPredictedRot);
+
+			// 3. 카메라 Look과 예상 플레이어 Look 사이의 각도 차이 구하기 (Y축 회전이므로 XZ 평면 기준)
+			// 내적(Dot)과 외적(Cross)의 Y성분을 이용해 -180도 ~ 180도 사이의 정확한 각도를 도출합니다.
+			float dot = camLook.x * predictedLook.x + camLook.z * predictedLook.z;
+			float cross = camLook.z * predictedLook.x - camLook.x * predictedLook.z;
+			float diffAngle = XMConvertToDegrees(atan2(cross, dot));
+
+			// 4. 각도가 좌우 90도를 넘어가면 실제 적용할 회전량(actualY)을 90도 컷에 맞게 줄입니다.
+			float actualY = y;
+			if (diffAngle > 90.0f)
+			{
+				actualY = y - (diffAngle - 90.0f); // 오른쪽 90도 초과분만큼 뺌
+			}
+			else if (diffAngle < -90.0f)
+			{
+				actualY = y - (diffAngle - (-90.0f)); // 왼쪽 90도 초과분만큼 더함
+			}
+
+			// 5. 제한된 회전값(actualY)으로만 실제 회전 적용
+			if (actualY != 0.0f)
+			{
+				m_fYaw += actualY;
+				if (m_fYaw > 360.0f) m_fYaw -= 360.0f;
+				if (m_fYaw < 0.0f) m_fYaw += 360.0f;
+
+				XMMATRIX xmmtxRotate = XMMatrixRotationAxis(XMLoadFloat3(&m_xmf3Up), XMConvertToRadians(actualY));
+				m_xmf3Look = Vector3::TransformNormal(m_xmf3Look, xmmtxRotate);
+				m_xmf3Right = Vector3::TransformNormal(m_xmf3Right, xmmtxRotate);
+			}
 		}
-		// x(피치)/z(롤)는 3인칭 몸통 회전에 사용하지 않음(캐릭터가 앞으로 고꾸라지거나 기울지 않도록).
 	}
 	else if (nCurrentCameraMode == SPACESHIP_CAMERA)
 	{
