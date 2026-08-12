@@ -18,6 +18,8 @@
 class CShader;
 class CStandardShader;
 class CInteractPromptShader;
+class CShadowShader;
+class CSkinnedShadowShader;
 struct QuadTreeNode;
 
 struct GameObjectInfo
@@ -495,9 +497,8 @@ public:
 	UINT GetMeshType() { return((m_pMesh) ? m_pMesh->GetType() : 0x00); }
 
 public:
-	virtual void RenderShadow(ID3D12GraphicsCommandList* pd3dCommandList);
+	virtual void RenderShadow(ID3D12GraphicsCommandList* pd3dCommandList, CShadowShader* pRigidShadowShader, CSkinnedShadowShader* pSkinnedShadowShader);	
 	bool IsSkinned() const { return (m_pSkinnedAnimationController != nullptr); }
-
 	void FindAndSetSkinnedMesh(CSkinnedMesh** ppSkinnedMeshes, int* pnSkinnedMesh);
 
 	void SetTrackAnimationSet(int nAnimationTrack, int nAnimationSet);

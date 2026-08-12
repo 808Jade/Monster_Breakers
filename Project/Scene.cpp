@@ -1860,7 +1860,7 @@ void CScene::RenderShadowPass(ID3D12GraphicsCommandList* pd3dCommandList)
 		XMVECTOR vEye = vFocus - vDir * dist;
 
 		XMMATRIX mLightView = XMMatrixLookAtLH(vEye, vFocus, XMVectorSet(0, 1, 0, 0));
-		XMMATRIX mLightProj = XMMatrixOrthographicLH(60.0f, 60.0f, 1.0f, 300.0f);
+		XMMATRIX mLightProj = XMMatrixOrthographicLH(60.0f, 60.0f, 80.0f, 160.0f);
 
 		XMFLOAT4X4 lv, lp;
 		XMStoreFloat4x4(&lv, XMMatrixTranspose(mLightView));
@@ -1895,21 +1895,25 @@ void CScene::RenderShadowPass(ID3D12GraphicsCommandList* pd3dCommandList)
 	for (auto* monster : m_Monsters)
 	{
 		if (!monster) continue;
-		m_pSkinnedShadowShader->OnPrepareRender(pd3dCommandList);
-		monster->RenderShadow(pd3dCommandList);
+		/*m_pSkinnedShadowShader->OnPrepareRender(pd3dCommandList);
+		monster->RenderShadow(pd3dCommandList);*/
+		monster->RenderShadow(pd3dCommandList, m_pShadowShader, m_pSkinnedShadowShader);
 	}
 
 	if (m_pBoss)
 	{
-		m_pSkinnedShadowShader->OnPrepareRender(pd3dCommandList);
-		m_pBoss->RenderShadow(pd3dCommandList);
+/*		m_pSkinnedShadowShader->OnPrepareRender(pd3dCommandList);
+		m_pBoss->RenderShadow(pd3dCommandList);*/
+		m_pBoss->RenderShadow(pd3dCommandList, m_pShadowShader, m_pSkinnedShadowShader);
 	}
 
 	// Player (스키닝이라고 가정)
 	if (m_pPlayer)
 	{
-		m_pSkinnedShadowShader->OnPrepareRender(pd3dCommandList);
-		m_pPlayer->RenderShadow(pd3dCommandList);
+/*		m_pSkinnedShadowShader->OnPrepareRender(pd3dCommandList);
+		m_pPlayer->RenderShadow(pd3dCommandList);*/
+		m_pPlayer->RenderShadow(pd3dCommandList, m_pShadowShader, m_pSkinnedShadowShader);
+			
 	}
 
 	// GameObjects
@@ -1918,24 +1922,14 @@ void CScene::RenderShadowPass(ID3D12GraphicsCommandList* pd3dCommandList)
 		if (!obj) continue;
 		if (!obj->GetVisible()) continue;
 
-		if (obj->IsSkinned())
-		{
-			m_pSkinnedShadowShader->OnPrepareRender(pd3dCommandList);
-			obj->RenderShadow(pd3dCommandList);
-		}
-		else
-		{
-			m_pShadowShader->OnPrepareRender(pd3dCommandList);
-			obj->RenderShadow(pd3dCommandList);
-		}
+		obj->RenderShadow(pd3dCommandList, m_pShadowShader, m_pSkinnedShadowShader);
 	}
 
 	for (auto* otherPlayer : m_vPlayers)
 	{
 		if (otherPlayer && otherPlayer->GetVisible())
 		{
-			m_pSkinnedShadowShader->OnPrepareRender(pd3dCommandList);
-			otherPlayer->RenderShadow(pd3dCommandList);
+			otherPlayer->RenderShadow(pd3dCommandList, m_pShadowShader, m_pSkinnedShadowShader);
 		}
 	}
 

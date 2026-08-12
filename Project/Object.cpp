@@ -884,14 +884,26 @@ void CGameObject::RenderInstanced(ID3D12GraphicsCommandList* pd3dCommandList, CC
 	if (m_pChild && m_pChild->GetVisible())	m_pChild->RenderInstanced(pd3dCommandList, pCamera, nInstances, pInstanceBuffer, pInstanceBufferView);
 }
 
-void CGameObject::RenderShadow(ID3D12GraphicsCommandList* pd3dCommandList)
+void CGameObject::RenderShadow(ID3D12GraphicsCommandList * pd3dCommandList, CShadowShader * pRigidShadowShader, CSkinnedShadowShader * pSkinnedShadowShader)
 {
 	if (m_pSkinnedAnimationController)
 		m_pSkinnedAnimationController->UpdateShaderVariables(pd3dCommandList); // b7/b8
 
 	if (m_pMesh)
 	{
-		UpdateShaderVariable(pd3dCommandList, &m_xmf4x4World);
+		//FindAndSetSkinnedMesh와 동일한 기준(정점에 본 가중치가 있는지)으로
+		// 이 서브메시가 스킨 메시인지 리지드(무기/방패 등) 메시인지 판별해서
+		// 그에 맞는 그림자 PSO로 전환한다. 한 계층 안에 몸통(스킨)과 무기(리지드)가
+		// 섞여 있어도 각각 올바른 파이프라인으로 그려지도록 하기 위함.
+		bool bMeshSkinned = (m_pMesh->GetType() & VERTEXT_BONE_INDEX_WEIGHT) != 0;
+		if (bMeshSkinned)
+		{
+			if (pSkinnedShadowShader) pSkinnedShadowShader->OnPrepareRender(pd3dCommandList);
+		}
+		else
+		{
+			if (pRigidShadowShader) pRigidShadowShader->OnPrepareRender(pd3dCommandList);
+		}
 
 		int nSubMeshes = m_pMesh->GetSubMeshCount();
 		if (nSubMeshes > 0)
@@ -905,8 +917,8 @@ void CGameObject::RenderShadow(ID3D12GraphicsCommandList* pd3dCommandList)
 		}
 	}
 
-	if (m_pSibling && m_pSibling->GetVisible()) m_pSibling->RenderShadow(pd3dCommandList);
-	if (m_pChild && m_pChild->GetVisible()) m_pChild->RenderShadow(pd3dCommandList);
+	if (m_pSibling && m_pSibling->GetVisible()) m_pSibling->RenderShadow(pd3dCommandList, pRigidShadowShader, pSkinnedShadowShader);
+	if (m_pChild && m_pChild->GetVisible()) m_pChild->RenderShadow(pd3dCommandList, pRigidShadowShader, pSkinnedShadowShader);
 }
 
 void CGameObject::CreateShaderVariables(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList)
