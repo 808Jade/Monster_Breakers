@@ -1504,8 +1504,10 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 			{
 				// 보스맵 가기위한 작업
 				if (auto* pPrompt = dynamic_cast<CInteractPrompt*>(obj))
-					if (pPrompt->IsInRange() && pPlayer)
+					if (pPrompt->IsInRange() && pPlayer) {
 						pPlayer->SetPosition(XMFLOAT3(219, 5, 18));
+						m_pBoss->ToggleHpbarVisible();
+					}
 
 				// NPC위치와 플레이어 위치가 가까우면 미션 요청
 				if (auto* pNPC = dynamic_cast<CNPC*>(obj))
