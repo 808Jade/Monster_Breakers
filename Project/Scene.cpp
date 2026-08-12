@@ -305,7 +305,7 @@ void CScene::UpdateUI(ID3D12GraphicsCommandList* pd3dCommandList)
 			for (int i = 0; i < SKILL_COUNT; ++i)
 				if (m_pCooldownTexts[i] == textObj) { bIsCooldownText = true; break; }
 
-			if (bIsCooldownText || textObj == m_pMissionText)
+			if (bIsCooldownText || textObj == m_pMissionText || textObj == m_pMissionProgressText)
 				continue;
 
 			textObj->UpdateText(std::to_wstring(m_pPlayer->level[0]), L"LV. ");
@@ -1291,8 +1291,36 @@ void CScene::HideMissionText()
 	if (m_pMissionText)
 		m_pMissionText->SetVisible(false);
 
+	HideMissionProgress();
+
 	if (m_pMissionBgShader)
 		m_pMissionBgShader->SetVisible(false);
+}
+
+void CScene::ShowMissionProgress(int currentCount, int targetCount)
+{
+	constexpr float MISSION_PROGRESS_X = -0.9f;
+	constexpr float MISSION_PROGRESS_Y = -0.65f;
+	const std::wstring progress = L"Progress: " + std::to_wstring(currentCount) + L"/" + std::to_wstring(targetCount);
+
+	if (!m_pMissionProgressText)
+	{
+		m_pMissionProgressText = new CText(Device, Commandlist, m_pd3dGraphicsRootSignature,
+			progress, MISSION_PROGRESS_X, MISSION_PROGRESS_Y);
+		m_GameObjects.push_back(m_pMissionProgressText);
+	}
+	else
+	{
+		m_pMissionProgressText->UpdateText(progress, L"");
+	}
+
+	m_pMissionProgressText->SetVisible(true);
+}
+
+void CScene::HideMissionProgress()
+{
+	if (m_pMissionProgressText)
+		m_pMissionProgressText->SetVisible(false);
 }
 
 void CScene::TriggerSkillCooldown(int skillIndex)
@@ -1650,7 +1678,21 @@ void CScene::AnimateObjects(float fTimeElapsed)
 			}
 		}
 		for (auto& p : pending)
-			ShowMissionText(p.text);
+		{
+			switch (p.type)
+			{
+			case PendingMissionUiType::Info:
+				ShowMissionText(p.text);
+				break;
+			case PendingMissionUiType::Progress:
+				ShowMissionProgress(p.currentCount, p.targetCount);
+				break;
+			case PendingMissionUiType::Complete:
+				ShowMissionText(p.text);
+				HideMissionProgress();
+				break;
+			}
+		}
 	}
 
 	m_CollisionManager.UpdateDamageNumbers(fTimeElapsed);

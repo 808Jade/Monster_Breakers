@@ -703,9 +703,14 @@ void CGameFramework::ApplyPendingMyPlayerPosition()
 		m_hasPendingMyPlayerPosition = false;
 	}
 
+	const bool firstServerSpawn = !m_isServerSpawnApplied;
 	m_pPlayer->SetPosition(serverPosition);
 	m_isServerSpawnApplied = true;
-	LoadingDoneToServer();
+
+	// The initial loading acknowledgement is sent once per game scene.
+	// Later SC_P_USER_INFO packets (for example, respawn) only update position.
+	if (firstServerSpawn)
+		LoadingDoneToServer();
 }
 
 void CGameFramework::AnimateObjects()
