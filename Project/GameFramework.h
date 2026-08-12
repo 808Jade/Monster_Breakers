@@ -8,6 +8,7 @@
 #include "Player.h"
 #include "Scene.h"
 #include "CMonster.h"
+#include "SoundManager.h"
 #include <fmod.hpp>
 #include <mutex>
 
@@ -82,6 +83,9 @@ public:
 	void RequestMoveToScene(int i) { m_nPendingScene = i; }
 
 	void UpdatePlayerHP(float hp) {
+		if (m_pPlayer->currentHP > hp) {
+			CSoundManager::GetInstance()->PlaySFX("player_hurt");
+		}
 		m_pPlayer->currentHP = hp;
 		m_pPlayer->maxHP += hp;
 	}

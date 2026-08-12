@@ -411,7 +411,6 @@ void ProcessPacket(char* ptr)
         sc_packet_user_info* packet = reinterpret_cast<sc_packet_user_info*>(ptr);
         g_myid = packet->id;
         gGameFramework.UpdatePlayerHP(packet->hp);
-        CSoundManager::GetInstance()->PlaySFX("player_hurt");
 
         //여기에 리스폰 관련해서 랜더링 해야할듯?? (이부분)
         gGameFramework.UpdateMyPlayerPosition(packet->position);

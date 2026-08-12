@@ -1369,6 +1369,10 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 		if (idx == -1)
 		{
 			p->m_currentAnim = AnimationState::ATTACK;
+			if (m_pModel == NULL)
+			{
+				break;
+			}
 			if (m_pModel == m_pKnightModel)
 			{
 				int randomIndex = (rand() % 2) + 1;
