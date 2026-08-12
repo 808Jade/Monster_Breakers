@@ -403,8 +403,10 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 	m_pBoss = new CBossMonster(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature,
 		"Model/Monster/DemonKingPA.bin", nullptr, 50000.f, 99999);
 	//m_pBoss->SetFrameName("Boss");
+	m_pBoss->SetTerrain(m_pTerrain);
 	m_pBoss->SetPosition(XMFLOAT3(-9999.0f, -9999.0f, -9999.0f));
-	m_pBoss->SetScale(XMFLOAT3(6, 6, 6));
+	// 이동 패킷의 LookAt 이후에도 유지되는 보스 전용 시각 크기.
+	m_pBoss->SetVisualScale(3.0f);
 
 	m_pGroundAttackRangeEffect = new CGroundAttackRangeEffect();
 	m_pGroundAttackRangeEffect->Create(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, 4);

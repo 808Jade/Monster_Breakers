@@ -5,6 +5,7 @@
 
 class CPlayer;
 class CGroundAttackRangeEffect;
+class CHeightMapTerrain;
 
 enum class BossState
 {
@@ -44,13 +45,15 @@ public:
     float GetHPRatio() const { return m_fHpRatio; }
     bool  IsDead()     const { return m_fMonsterHP <= 0.0f; }
 
-    void SetLookDirection(const XMFLOAT3& xmf3Look)
-    {
-        XMFLOAT3 pos = GetPosition();
-        XMFLOAT3 target = XMFLOAT3(pos.x + xmf3Look.x, pos.y + xmf3Look.y, pos.z + xmf3Look.z);
-        XMFLOAT3 up = XMFLOAT3(0.0f, 1.0f, 0.0f);
-        LookAt(target, up);
-    }
+    // LookAt()은 회전 행렬을 단위 크기로 다시 쓰므로, 보스의 시각 크기를
+    // 다시 적용해 둔다. 그렇지 않으면 다음 이동 패킷에서 보스가 1배가 된다.
+    void SetLookDirection(const XMFLOAT3& xmf3Look);
+    void SetVisualScale(float fScale);
+    void SetTerrain(CHeightMapTerrain* pTerrain) { m_pTerrain = pTerrain; }
+
+    // 서버는 X/Z 위치만 권위 있게 전달한다. Y는 클라이언트의 동일한 HeightMap에서
+    // 계산해 보스의 발이 지형 위에 붙도록 한다.
+    void SetPositionOnTerrain(const XMFLOAT3& xmf3ServerPosition);
 
     void SetPlayer(CPlayer* p) { m_pPlayer = p; }
     void SetMonsterID(int id) { m_nMonsterID = id; }
@@ -85,10 +88,12 @@ private:
     // newState(애니메이션 트랙)에 따라 공격범위 이펙트를 스폰한다.
     // Idle/Walk/Death 등 비공격 상태에서는 아무 일도 하지 않는다.
     void SpawnAttackEffectFor(BossState newState, const XMFLOAT3& xmf3Center, float fRadius, float fSweepAngleDeg);
+    void ApplyVisualScale();
 
     CGroundAttackRangeEffect* m_pGroundAttackRangeEffect = nullptr;
 
     CPlayer* m_pPlayer = nullptr;
+    CHeightMapTerrain* m_pTerrain = nullptr;
     int          m_nMonsterID = -1;
 
     float        m_fMonsterHP = 50000.f;
@@ -107,4 +112,5 @@ private:
     bool m_bHpbarVisible = false;
 
     float m_fWalkSoundTimer = 0.0f; // 걷는 소리 타이머
+    float m_fVisualScale = 6.0f;
 };

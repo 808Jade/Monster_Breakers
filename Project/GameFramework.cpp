@@ -1151,7 +1151,7 @@ void CGameFramework::OnBossSpawned(long long bossID, const XMFLOAT3& pos, int hp
 
 	scene->m_pBoss->SetMaxHP((float)maxHp);
 	scene->m_pBoss->SetHP((float)hp);         // ResetHP() 대신 서버가 준 실제 HP로 설정
-	scene->m_pBoss->SetPosition(pos.x, pos.y, pos.z);
+	scene->m_pBoss->SetPositionOnTerrain(pos);
 	scene->m_pBoss->TransitionTo(BossState::Idle);
 
 	cout << "[BOSS] Spawned ID=" << bossID << " HP=" << hp << "/" << maxHp << "\n";
