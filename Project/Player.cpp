@@ -88,6 +88,41 @@ void CPlayer::Move(const XMFLOAT3& xmf3Shift, bool bUpdateVelocity)
 		m_pCamera->Move(xmf3Shift);
 	}
 	CalculateBoundingBox();
+
+	// BGM 재생 로직 하드 코딩
+	BgmState nextBgmState;
+	float x = m_xmf3Position.x;
+	float z = m_xmf3Position.z;
+	if (x >= 178.0f && x <= 348.0f && z >= -56.0f && z <= 67.0f)
+	{
+		nextBgmState = BOSS;
+	}
+	else if ((x >= -37.6f && x <= 93.0f && z >= 73.3f && z <= 163.7f) ||
+		(x >= 9.6f && x <= 50.3f && z >= -25.6f && z <= -0.6f))
+	{
+		nextBgmState = BATTLE;
+	}
+	else
+	{
+		nextBgmState = PEACEFUL;
+	}
+
+	if (m_eBgmState != nextBgmState)
+	{
+		m_eBgmState = nextBgmState;
+		if (m_eBgmState == BOSS)
+		{
+			CSoundManager::GetInstance()->PlayBGM("bgm_bossstage");
+		}
+		else if (m_eBgmState == BATTLE)
+		{
+			CSoundManager::GetInstance()->PlayBGM("bgm_battle");
+		}
+		else
+		{
+			CSoundManager::GetInstance()->PlayBGM("bgm_village");
+		}
+	}
 }
 
 void CPlayer::Rotate(float x, float y, float z)

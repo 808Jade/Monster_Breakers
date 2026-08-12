@@ -11,6 +11,7 @@
 #include "Camera.h"
 #include "Network.h"
 #include "CText.h"
+#include "SoundManager.h"
 #include "GroundCrackEffect.h"
 
 enum class PlayerClass
@@ -19,6 +20,12 @@ enum class PlayerClass
 	MAGE,     // 법사  - 화염구 등 별도 이펙트
 	ROGUE,    // 도적  - SM_Weapon_01
 	UNKNOWN
+};
+
+enum BgmState {
+	PEACEFUL,
+	BATTLE,
+	BOSS
 };
 
 struct BoundingCylinder
@@ -59,6 +66,8 @@ protected:
 	BoundingCylinder	m_BoundingCylinder;
 
 	BoundingBox			m_swordAttackBoundingBox;
+
+	BgmState m_eBgmState = PEACEFUL;
 
 public:
 	//bool	isSwing = false;
