@@ -73,6 +73,71 @@ CBossMonster::CBossMonster(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 CBossMonster::~CBossMonster()
 {}
 
+void CBossMonster::SetVisualScale(float fScale)
+{
+    m_fVisualScale = (std::max)(fScale, 0.01f);
+    ApplyVisualScale();
+}
+
+void CBossMonster::SetLookDirection(const XMFLOAT3& xmf3Look)
+{
+    XMFLOAT3 pos = GetPosition();
+    XMFLOAT3 target(pos.x + xmf3Look.x, pos.y + xmf3Look.y, pos.z + xmf3Look.z);
+    XMFLOAT3 up(0.0f, 1.0f, 0.0f);
+    LookAt(target, up);
+    ApplyVisualScale();
+}
+
+void CBossMonster::SetPositionOnTerrain(const XMFLOAT3& xmf3ServerPosition)
+{
+    XMFLOAT3 position = xmf3ServerPosition;
+
+    if (m_pTerrain)
+    {
+        // CTerrainPlayer와 같은 HeightMap 원점/보간 규칙을 사용한다.
+        constexpr float TERRAIN_WORLD_X = -156.71f;
+        constexpr float TERRAIN_WORLD_Y = -14.43f;
+        constexpr float TERRAIN_WORLD_Z = -255.0f;
+
+        const XMFLOAT3 terrainScale = m_pTerrain->GetScale();
+        const float localX = position.x - TERRAIN_WORLD_X;
+        const float localZ = position.z - TERRAIN_WORLD_Z;
+        const float terrainWidth = (m_pTerrain->GetHeightMapWidth() - 1) * terrainScale.x;
+        const float terrainLength = (m_pTerrain->GetHeightMapLength() - 1) * terrainScale.z;
+
+        // 맵 바깥 위치(스폰 전의 숨김 좌표 등)는 원래 서버 Y를 유지한다.
+        if (localX >= 0.0f && localZ >= 0.0f && localX < terrainWidth && localZ < terrainLength)
+        {
+            const int z = static_cast<int>(localZ / terrainScale.z);
+            const bool bReverseQuad = (z % 2) != 0;
+            position.y = m_pTerrain->GetHeight(localX, localZ, bReverseQuad) + TERRAIN_WORLD_Y;
+        }
+    }
+
+    CGameObject::SetPosition(position);
+}
+
+void CBossMonster::ApplyVisualScale()
+{
+    // GetRight/Up/Look은 정규화한 축을 돌려준다. 따라서 LookAt으로 방향이
+    // 갱신된 뒤에도 여기서 축에만 크기를 곱하면 위치를 건드리지 않고 크기가 유지된다.
+    const XMFLOAT3 right = GetRight();
+    const XMFLOAT3 up = GetUp();
+    const XMFLOAT3 look = GetLook();
+
+    m_xmf4x4ToParent._11 = right.x * m_fVisualScale;
+    m_xmf4x4ToParent._12 = right.y * m_fVisualScale;
+    m_xmf4x4ToParent._13 = right.z * m_fVisualScale;
+    m_xmf4x4ToParent._21 = up.x * m_fVisualScale;
+    m_xmf4x4ToParent._22 = up.y * m_fVisualScale;
+    m_xmf4x4ToParent._23 = up.z * m_fVisualScale;
+    m_xmf4x4ToParent._31 = look.x * m_fVisualScale;
+    m_xmf4x4ToParent._32 = look.y * m_fVisualScale;
+    m_xmf4x4ToParent._33 = look.z * m_fVisualScale;
+
+    UpdateTransform(NULL);
+}
+
 int CBossMonster::TrackOf(BossState s) const
 {
     switch (s)
@@ -192,6 +257,7 @@ void CBossMonster::TakeDamage(float damage)
 void CBossMonster::Animate(float fTimeElapsed)
 {
     CGameObject::Animate(fTimeElapsed);
+    ApplyVisualScale();
 }
 
 void CBossMonster::Update(float fTimeElapsed)
