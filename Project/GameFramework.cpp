@@ -737,6 +737,8 @@ void CGameFramework::ApplyPendingMyPlayerPosition()
 	const XMFLOAT3 beforePosition = m_pPlayer->GetPosition();
 	// Player spawn/respawn is server-authoritative, including Y.
 	 m_pPlayer->SnapToServerPosition(serverPosition);
+	// Ignore map overlap briefly while the server spawn is being settled.
+	m_pPlayer->BeginSpawnCollisionGrace(1.0f);
 	m_isServerSpawnApplied = true;
 	const XMFLOAT3 appliedPosition = m_pPlayer->GetPosition();
 	std::cout << "[SPAWN][CLIENT][APPLY] job=" << static_cast<int>(serverJob)
@@ -838,7 +840,10 @@ void CGameFramework::MoveToNextFrame()
 void CGameFramework::MoveToNextScene(int i)
 {
 	int prev = m_nCurrentScene;
-	if (prev >= 0 && prev < 4 && m_ppScenes[prev])
+	// Keep gameplay objects alive during the ending: the receive thread can
+	// still process monster packets immediately after the boss-death packet.
+	const bool preserveGameplayForEnding = (prev == 2 && i == 3);
+	if (prev >= 0 && prev < 4 && m_ppScenes[prev] && !preserveGameplayForEnding)
 	{
 		m_ppScenes[prev]->ReleaseObjects();
 		delete m_ppScenes[prev];
