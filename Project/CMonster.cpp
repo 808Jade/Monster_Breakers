@@ -124,20 +124,6 @@ void CMonster::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCame
         XMFLOAT3 pos = GetPosition();
 
         m_pHpbar->SetPosition(pos.x, pos.y + 2.5f, pos.z);
-
-        // HP바 -> 카메라 방향(forward)이 월드 up과 거의 평행해지면
-        // (카메라가 몬스터를 거의 수직으로 내려다볼 때) LookAt 내부에서
-        // cross(up, forward)가 0에 가까워져 회전이 깨진다.
-        // 이 경우에만 대체 up 벡터를 사용해 방어한다.
-        XMFLOAT3 hpPos = m_pHpbar->GetPosition();
-        XMFLOAT3 camPos = pCamera->GetPosition();
-        XMVECTOR vForward = XMVector3Normalize(XMLoadFloat3(&camPos) - XMLoadFloat3(&hpPos));
-        XMVECTOR vWorldUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-        float fDot = fabsf(XMVectorGetX(XMVector3Dot(vForward, vWorldUp)));
-
-        XMFLOAT3 up = (fDot > 0.98f) ? XMFLOAT3(0.0f, 0.0f, 1.0f) : XMFLOAT3(0.0f, 1.0f, 0.0f);
-
-        m_pHpbar->LookAt(camPos, up);
         m_pHpbar->SetHpRatio(m_fHpRatio);
         m_pHpbar->Render(pd3dCommandList, pCamera);
     }

@@ -697,10 +697,12 @@ VS_HPBAR_OUT VSHpbar(VS_HPBAR_IN input)
     float3 camRight = normalize(float3(gmtxView._11, gmtxView._21, gmtxView._31));
     float3 camUp = normalize(float3(gmtxView._12, gmtxView._22, gmtxView._32));
 
-    float3 worldPos = worldCenter
-                    + camRight * (input.position.x * scaleX)
-                    + camUp * (input.position.y * scaleY);
+    float localX = (input.position.x + 0.5f) * scaleX - 0.5f;
 
+    float3 worldPos = worldCenter
+                + camRight * localX
+                + camUp * (input.position.y * scaleY);
+    
     o.position = mul(mul(float4(worldPos, 1.0f), gmtxView), gmtxProjection);
     o.uv = input.uv;
     return o;
