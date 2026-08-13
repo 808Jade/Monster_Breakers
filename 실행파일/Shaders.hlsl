@@ -134,7 +134,7 @@ VS_STANDARD_OUTPUT VSStandard(VS_STANDARD_INPUT input)
 
 float4 PSStandard(VS_STANDARD_OUTPUT input) : SV_TARGET
 {
-    float4 cAlbedoColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
+    float4 cAlbedoColor = gMaterial.m_cDiffuse;
     if (gnTexturesMask & MATERIAL_ALBEDO_MAP)
         cAlbedoColor = gtxtAlbedoTexture.Sample(gssWrap, input.uv);
     float4 cSpecularColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -167,7 +167,12 @@ float4 PSStandard(VS_STANDARD_OUTPUT input) : SV_TARGET
     float shadow = ShadowFactor(input.positionLightH);
     cIllumination.rgb *= shadow;
 
-    return lerp(cColor, cIllumination, 0.5f);
+    float4 cFinal = lerp(cColor, cIllumination, 0.5f);
+
+    // 히트플래시: emissive.a를 강도로 사용 (평소엔 0이라 원본 색 그대로)
+    cFinal.rgb = lerp(cFinal.rgb, gMaterial.m_cEmissive.rgb, saturate(gMaterial.m_cEmissive.a));
+
+    return cFinal;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct VS_SHADOW_INPUT
@@ -692,10 +697,12 @@ VS_HPBAR_OUT VSHpbar(VS_HPBAR_IN input)
     float3 camRight = normalize(float3(gmtxView._11, gmtxView._21, gmtxView._31));
     float3 camUp = normalize(float3(gmtxView._12, gmtxView._22, gmtxView._32));
 
-    float3 worldPos = worldCenter
-                    + camRight * (input.position.x * scaleX)
-                    + camUp * (input.position.y * scaleY);
+    float localX = (input.position.x + 0.5f) * scaleX - 0.5f;
 
+    float3 worldPos = worldCenter
+                + camRight * localX
+                + camUp * (input.position.y * scaleY);
+    
     o.position = mul(mul(float4(worldPos, 1.0f), gmtxView), gmtxProjection);
     o.uv = input.uv;
     return o;
@@ -719,6 +726,18 @@ float4 PSInteractPrompt(VS_HPBAR_OUT input) : SV_TARGET
     float4 texColor = gtxtAlbedoTexture.Sample(gssWrap, input.uv);
 
     // gMaterial.m_cDiffuse.a 를 전체 페이드(등장/소멸)용으로 사용. CPU에서 갱신.
+    texColor.a *= saturate(gMaterial.m_cDiffuse.a);
+
+    clip(texColor.a - 0.01f);
+
+    return texColor;
+}
+
+float4 PSDamageNumber(VS_HPBAR_OUT input) : SV_TARGET
+{
+    float4 texColor = gtxtAlbedoTexture.Sample(gssWrap, input.uv);
+
+    texColor.rgb *= gMaterial.m_cDiffuse.rgb;
     texColor.a *= saturate(gMaterial.m_cDiffuse.a);
 
     clip(texColor.a - 0.01f);
