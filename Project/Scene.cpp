@@ -1302,7 +1302,7 @@ void CScene::HideMissionText()
 void CScene::ShowMissionProgress(int currentCount, int targetCount)
 {
 	constexpr float MISSION_PROGRESS_X = -0.9f;
-	constexpr float MISSION_PROGRESS_Y = -0.65f;
+	constexpr float MISSION_PROGRESS_Y = -0.6f;
 	const std::wstring progress = L"Progress: " + std::to_wstring(currentCount) + L"/" + std::to_wstring(targetCount);
 
 	if (!m_pMissionProgressText)

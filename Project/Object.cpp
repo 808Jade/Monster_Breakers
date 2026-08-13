@@ -1835,7 +1835,7 @@ CNPC::CNPC(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList,
 	m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); // 기본
 	m_pSkinnedAnimationController->SetTrackEnable(0, true);
 
-	SetPosition(0, 0, 0);
+	SetPosition(-35.2, 6.6, -23);
 
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }
