@@ -1,4 +1,4 @@
-ï»¿#include "stdafx.h"
+#include "stdafx.h"
 #include "Network.h"
 #include "CMonster.h"
 #include "CBossMonster.h"
@@ -6,7 +6,7 @@
 #include "SoundManager.h"
 #include <iostream>
 
-// í´ë¼ì´ì–¸íŠ¸ ë¶€ë¶„ (not server)
+// Å¬¶óÀÌ¾ğÆ® ºÎºĞ (not server)
 CScene* g_pScene = nullptr;
 ID3D12Device* g_pd3dDevice = nullptr;
 ID3D12GraphicsCommandList* g_pd3dCommandList = nullptr;
@@ -17,7 +17,7 @@ void* g_pContext = nullptr;
 extern CGameFramework gGameFramework;
 CGameObject object;
 
-// ì „ì—­ ë³€ìˆ˜ ì •ì˜
+// Àü¿ª º¯¼ö Á¤ÀÇ
 SOCKET ConnectSocket = INVALID_SOCKET;
 std::atomic<bool> g_running{ true };
 //std::string user_name;
@@ -29,7 +29,7 @@ std::condition_variable g_sendCV;
 
 WSADATA wsaData;
 
-// ê°ì²´ ê´€ë¦¬ ë§µ
+// °´Ã¼ °ü¸® ¸Ê
 std::unordered_map<long long, OtherPlayer*> g_other_players;
 std::mutex g_player_mutex;
 std::unordered_map<long long, Item*> g_items;
@@ -40,11 +40,12 @@ std::mutex                          g_pendingMonsterMutex;
 std::vector<PendingMonsterSpawn>    g_pendingMonsterSpawns;
 std::mutex                          g_pendingBossMutex;
 std::vector<PendingBossSpawn>       g_pendingBossSpawns;
+std::vector<PendingBossDeath>       g_pendingBossDeaths;
 std::mutex                          g_pendingMissionMutex;
 std::vector<PendingMissionText>     g_pendingMissionTexts;
 
 // =================================================================
-//           otherplayer player ë Œë”ë§ì„ ìœ„í•œ other player ì˜¤ë¸Œì íŠ¸ ë° ê´€ë¦¬
+//           otherplayer player ·»´õ¸µÀ» À§ÇÑ other player ¿ÀºêÁ§Æ® ¹× °ü¸®
 // =================================================================
 int g_knightIndex = 0; // 0~1
 int g_wizardIndex = 2; // 2~3
@@ -81,15 +82,15 @@ void ProcessEnterPacket(long long player_id, uint8_t job)
     std::cout << "[ENTER] success: id=" << player_id << " slot=" << slot << "\n";
 }
 // =================================================================
-//           ëª¬ìŠ¤í„° ë Œë”ë§ì„ ìœ„í•œ ëª¬ìŠ¤í„° ì˜¤ë¸Œì íŠ¸ ë° ê´€ë¦¬ 
+//           ¸ó½ºÅÍ ·»´õ¸µÀ» À§ÇÑ ¸ó½ºÅÍ ¿ÀºêÁ§Æ® ¹× °ü¸® 
 // =================================================================
 
-// ì•„ë˜ì˜ ì €ì¥ì†ŒëŠ” ëª¬ìŠ¤í„°(CMonster) ê³ ìœ IDë¥¼ ì €ì¥
+// ¾Æ·¡ÀÇ ÀúÀå¼Ò´Â ¸ó½ºÅÍ(CMonster) °íÀ¯ID¸¦ ÀúÀå
 std::unordered_map<long long, CMonster*> g_monsters;
 std::mutex g_monster_mutex;
 
 
-void send_hit_damage(long long monsterID, int damage) // ì´ í•¨ìˆ˜ë¥¼ í”Œë ˆì´ì–´ê°€ ê³µê²©í•˜ëŠ” ê³³ì— ë„£ìœ¼ë©´ ëœë‹¤. ì¼ë‹¨ í•œë²ˆ í•´ë³´ê³  ì•ˆë˜ë©´ ìˆ˜ì •ã„±ã„±
+void send_hit_damage(long long monsterID, int damage) // ÀÌ ÇÔ¼ö¸¦ ÇÃ·¹ÀÌ¾î°¡ °ø°İÇÏ´Â °÷¿¡ ³ÖÀ¸¸é µÈ´Ù. ÀÏ´Ü ÇÑ¹ø ÇØº¸°í ¾ÈµÇ¸é ¼öÁ¤¤¡¤¡
 {
     cs_packet_hit_damage pkt{};
     pkt.size = sizeof(pkt);
@@ -103,7 +104,7 @@ void send_hit_damage(long long monsterID, int damage) // ì´ í•¨ìˆ˜ë¥¼ í”Œë ˆì´
 
 
 // =================================================================
-//                           ìŠ¤í‚¬ ê´€ë¦¬
+//                           ½ºÅ³ °ü¸®
 // =================================================================
 
 void send_skill_upgrade(SkillSlot slot)
@@ -115,7 +116,7 @@ void send_skill_upgrade(SkillSlot slot)
     send_packet(&pkt);
 }
 
-// ê¸°ì‚¬
+// ±â»ç
 void send_shield_block_packet(bool isBlocking)
 {
     cs_packet_shield_block pkt{};
@@ -124,7 +125,7 @@ void send_shield_block_packet(bool isBlocking)
     pkt.isBlocking = isBlocking;
     send_packet(&pkt);
 
-    std::cout << "[SHIELD] ë°©íŒ¨ë§‰ê¸° ì „ì†¡ | isBlocking=" << isBlocking << "\n";
+    std::cout << "[SHIELD] ¹æÆĞ¸·±â Àü¼Û | isBlocking=" << isBlocking << "\n";
 }
 
 void send_strike_packet(const XMFLOAT3& position, const XMFLOAT3& look)
@@ -136,7 +137,7 @@ void send_strike_packet(const XMFLOAT3& position, const XMFLOAT3& look)
     pkt.look = look;
     send_packet(&pkt);
 
-    std::cout << "[STRIKE] ê°•íƒ€ ì „ì†¡ | pos=(" << position.x << ","
+    std::cout << "[STRIKE] °­Å¸ Àü¼Û | pos=(" << position.x << ","
         << position.y << "," << position.z << ")\n";
 }
 
@@ -148,10 +149,10 @@ void send_taunt_packet(float range)
     pkt.range = range;
     send_packet(&pkt);
 
-    std::cout << "[TAUNT] ë„ë°œ ì „ì†¡ | range=" << range << "\n";
+    std::cout << "[TAUNT] µµ¹ß Àü¼Û | range=" << range << "\n";
 }
 
-// ë²•ì‚¬
+// ¹ı»ç
 void send_skill_packet(const XMFLOAT3& position, const XMFLOAT3& look)
 {
     cs_packet_skill pkt{};
@@ -161,7 +162,7 @@ void send_skill_packet(const XMFLOAT3& position, const XMFLOAT3& look)
     pkt.look = look;
     send_packet(&pkt);
 
-    std::cout << "[FIREBALL] cs_packet_skill ì „ì†¡ | size=" << (int)pkt.size << "\n";
+    std::cout << "[FIREBALL] cs_packet_skill Àü¼Û | size=" << (int)pkt.size << "\n";
 }
 
 void send_buff_atk_packet()
@@ -171,7 +172,7 @@ void send_buff_atk_packet()
     pkt.type = CS_P_BUFF_ATK;
     send_packet(&pkt);
 
-    std::cout << "[BUFF_ATK] ê³µê²©ë ¥ ë²„í”„ ì „ì†¡\n";
+    std::cout << "[BUFF_ATK] °ø°İ·Â ¹öÇÁ Àü¼Û\n";
 }
 
 void send_buff_hp_packet()
@@ -181,10 +182,10 @@ void send_buff_hp_packet()
     pkt.type = CS_P_BUFF_HP;
     send_packet(&pkt);
 
-    std::cout << "[BUFF_HP] ì²´ë ¥ ë²„í”„ ì „ì†¡\n";
+    std::cout << "[BUFF_HP] Ã¼·Â ¹öÇÁ Àü¼Û\n";
 }
 
-// ë„ì  
+// µµÀû 
 void send_weapon_pos_packet(const XMFLOAT3& weaponPosition, const XMFLOAT3& weaponRotation)
 {
     cs_packet_weapon_pos pkt{};
@@ -194,12 +195,12 @@ void send_weapon_pos_packet(const XMFLOAT3& weaponPosition, const XMFLOAT3& weap
     pkt.weaponRotation = weaponRotation;
     send_packet(&pkt);
 
-    std::cout << "[WEAPON_POS] ë„ë¼ ìœ„ì¹˜ ì „ì†¡ | pos=(" << weaponPosition.x << ","
+    std::cout << "[WEAPON_POS] µµ³¢ À§Ä¡ Àü¼Û | pos=(" << weaponPosition.x << ","
         << weaponPosition.y << "," << weaponPosition.z << ")\n";
 }
 
 // =================================================================
-//                          NPC ê´€ë¦¬
+//                          NPC °ü¸®
 // =================================================================
 
 void send_npc_interact_packet(long long npcID)
@@ -210,16 +211,16 @@ void send_npc_interact_packet(long long npcID)
     pkt.npcID = npcID;
     send_packet(&pkt);
 
-    cout << "[NPC] ìƒí˜¸ì‘ìš© íŒ¨í‚· ì „ì†¡ | npcID=" << npcID << "\n";
+    cout << "[NPC] »óÈ£ÀÛ¿ë ÆĞÅ¶ Àü¼Û | npcID=" << npcID << "\n";
 }
 
 // =================================================================
-//                          íŒŒí‹°í´ ê´€ë¦¬
+//                          ÆÄÆ¼Å¬ °ü¸®
 // =================================================================
 
 
 // =================================================================
-//                      ë„¤íŠ¸ì›Œí¬ ì½”ì–´ ë¡œì§
+//                      ³×Æ®¿öÅ© ÄÚ¾î ·ÎÁ÷
 // =================================================================
 
 void SendThread() {
@@ -244,13 +245,13 @@ void SendThread() {
             if (WSAGetLastError() == WSA_IO_PENDING) {
                 DWORD result = WSAWaitForMultipleEvents(1, &overlapped.hEvent, TRUE, 1000, FALSE);
                 if (result == WSA_WAIT_FAILED) {
-                    std::cerr << "ì†¡ì‹  ì˜¤ë¥˜: " << WSAGetLastError() << std::endl;
+                    std::cerr << "¼Û½Å ¿À·ù: " << WSAGetLastError() << std::endl;
                     break;
                 }
                 WSAGetOverlappedResult(ConnectSocket, &overlapped, &sent, TRUE, nullptr);
             }
             else {
-                std::cerr << "ì†¡ì‹  ì‹¤íŒ¨: " << WSAGetLastError() << std::endl;
+                std::cerr << "¼Û½Å ½ÇÆĞ: " << WSAGetLastError() << std::endl;
             }
         }
         WSACloseEvent(overlapped.hEvent);
@@ -258,8 +259,8 @@ void SendThread() {
 }
 
 void RecvThread() {
-    thread_local size_t saved_packet_size = 0;      // ì§€ê¸ˆê¹Œì§€ packet_bufferì— ì±„ì›Œì§„ ë°”ì´íŠ¸ ìˆ˜
-    thread_local size_t expected_packet_size = 0;   // í˜„ì¬ ì¡°ë¦½ ì¤‘ì¸ íŒ¨í‚·ì˜ ì „ì²´ í¬ê¸°(í—¤ë”ì—ì„œ ì½ì€ ê°’). 0ì´ë©´ "ìƒˆ íŒ¨í‚· ëŒ€ê¸° ì¤‘"
+    thread_local size_t saved_packet_size = 0;      // Áö±İ±îÁö packet_buffer¿¡ Ã¤¿öÁø ¹ÙÀÌÆ® ¼ö
+    thread_local size_t expected_packet_size = 0;   // ÇöÀç Á¶¸³ ÁßÀÎ ÆĞÅ¶ÀÇ ÀüÃ¼ Å©±â(Çì´õ¿¡¼­ ÀĞÀº °ª). 0ÀÌ¸é "»õ ÆĞÅ¶ ´ë±â Áß"
     thread_local char packet_buffer[BUF_SIZE];
 
     while (g_running) {
@@ -288,24 +289,24 @@ void RecvThread() {
         WSACloseEvent(overlapped.hEvent);
 
         if (recvBytes == 0) {
-            std::cout << "ì„œë²„ ì—°ê²° ì¢…ë£Œ" << std::endl;
+            std::cout << "¼­¹ö ¿¬°á Á¾·á" << std::endl;
             g_running = false;
             break;
         }
 
-        // íŒ¨í‚· ì²˜ë¦¬
+        // ÆĞÅ¶ Ã³¸®
         char* ptr = buffer;
         size_t remaining = recvBytes;
         while (remaining > 0) {
-            // ìƒˆ íŒ¨í‚·ì˜ ì‹œì‘ì¼ ë•Œë§Œ í—¤ë”(size ë°”ì´íŠ¸)ë¥¼ ì½ëŠ”ë‹¤.
-            // ì´ì „ recvì—ì„œ ì´ì–´ì§€ëŠ” ì¤‘ê°„ ë°ì´í„°ë¼ë©´ ì ˆëŒ€ ë‹¤ì‹œ ì½ìœ¼ë©´ ì•ˆ ë¨.
+            // »õ ÆĞÅ¶ÀÇ ½ÃÀÛÀÏ ¶§¸¸ Çì´õ(size ¹ÙÀÌÆ®)¸¦ ÀĞ´Â´Ù.
+            // ÀÌÀü recv¿¡¼­ ÀÌ¾îÁö´Â Áß°£ µ¥ÀÌÅÍ¶ó¸é Àı´ë ´Ù½Ã ÀĞÀ¸¸é ¾È µÊ.
             if (saved_packet_size == 0) {
                 expected_packet_size = static_cast<unsigned char>(ptr[0]);
                 if (expected_packet_size == 0) break;
 
                 if (expected_packet_size > sizeof(packet_buffer)) {
-                    // ë¹„ì •ìƒ íŒ¨í‚· í¬ê¸° - ìŠ¤íŠ¸ë¦¼ì´ ê¹¨ì¡Œë‹¤ê³  ë³´ê³  ì´ë²ˆ recv ë²„í¼ëŠ” íê¸°
-                    std::cerr << "[Network] ë¹„ì •ìƒ íŒ¨í‚· í¬ê¸° ê°ì§€: " << expected_packet_size << std::endl;
+                    // ºñÁ¤»ó ÆĞÅ¶ Å©±â - ½ºÆ®¸²ÀÌ ±úÁ³´Ù°í º¸°í ÀÌ¹ø recv ¹öÆÛ´Â Æó±â
+                    std::cerr << "[Network] ºñÁ¤»ó ÆĞÅ¶ Å©±â °¨Áö: " << expected_packet_size << std::endl;
                     expected_packet_size = 0;
                     saved_packet_size = 0;
                     break;
@@ -332,7 +333,7 @@ void RecvThread() {
 }
 
 // =================================================================
-//                      ìœ í‹¸ë¦¬í‹° í•¨ìˆ˜
+//                      À¯Æ¿¸®Æ¼ ÇÔ¼ö
 // =================================================================
 
 void send_packet(void* packet) {
@@ -358,7 +359,7 @@ void InitializeNetwork(char serverIP[]) {
 
     ConnectSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, nullptr, 0, WSA_FLAG_OVERLAPPED);
 
-    // ë¹„ë™ê¸° ì—°ê²° ì„¤ì •
+    // ºñµ¿±â ¿¬°á ¼³Á¤
     sockaddr_in serverAddr{};
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(SERVER_PORT);
@@ -405,15 +406,17 @@ void ProcessPacket(char* ptr)
 
     switch (packet_type)
     {
-        // ì„œë²„ : ì¸ë²¤í† ë¦¬ ê´€ë ¨ëœê±° ë§Œë“¤ê²Œ ë˜ë©´ ì—¬ê¸°ì—ë„ ì •ë³´ ì¶”ê°€ í•´ì•¼í•¨
-    case SC_P_USER_INFO: // í´ë¼ì´ì–¸íŠ¸ì˜ ì •ë³´ë¥¼ ê°€ì§€ê³  ìˆëŠ” íŒ¨í‚· íƒ€ì…
+        // ¼­¹ö : ÀÎº¥Åä¸® °ü·ÃµÈ°Å ¸¸µé°Ô µÇ¸é ¿©±â¿¡µµ Á¤º¸ Ãß°¡ ÇØ¾ßÇÔ
+    case SC_P_USER_INFO: // Å¬¶óÀÌ¾ğÆ®ÀÇ Á¤º¸¸¦ °¡Áö°í ÀÖ´Â ÆĞÅ¶ Å¸ÀÔ
     {
         sc_packet_user_info* packet = reinterpret_cast<sc_packet_user_info*>(ptr);
         g_myid = packet->id;
         gGameFramework.UpdatePlayerHP(packet->hp);
 
-        //ì—¬ê¸°ì— ë¦¬ìŠ¤í° ê´€ë ¨í•´ì„œ ëœë”ë§ í•´ì•¼í• ë“¯?? (ì´ë¶€ë¶„)
-        gGameFramework.UpdateMyPlayerPosition(packet->position);
+        //¿©±â¿¡ ¸®½ºÆù °ü·ÃÇØ¼­ ·£´õ¸µ ÇØ¾ßÇÒµí?? (ÀÌºÎºĞ)
+        std::cout << "[SPAWN][CLIENT][RECV] job=" << static_cast<int>(packet->job)
+            << " pos=(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")\n";
+        gGameFramework.UpdateMyPlayerPosition(packet->position, packet->job);
         if (packet->hp <= 0)
         {
             CScene* scene = gGameFramework.GetCurrentScene();
@@ -425,13 +428,13 @@ void ProcessPacket(char* ptr)
         break;
     }
 
-    case SC_P_ENTER: // ìƒˆë¡œ ë“¤ì–´ì˜¨ í”Œë ˆì´ì–´ì˜ ì •ë³´ë¥¼ í¬í•¨í•˜ê³  ìˆëŠ” íŒ¨í‚· íƒ€ì…
+    case SC_P_ENTER: // »õ·Î µé¾î¿Â ÇÃ·¹ÀÌ¾îÀÇ Á¤º¸¸¦ Æ÷ÇÔÇÏ°í ÀÖ´Â ÆĞÅ¶ Å¸ÀÔ
     {
         sc_packet_enter* packet = reinterpret_cast<sc_packet_enter*>(ptr);
         long long player_id = packet->id;
         if (player_id == g_myid) break;
 
-        // ë¡œë”© ì¤‘ì´ë©´ ë²„ë¦¬ì§€ ë§ê³  ë³´ê´€
+        // ·Îµù ÁßÀÌ¸é ¹ö¸®Áö ¸»°í º¸°ü
         if (gGameFramework.isLoading || gGameFramework.isStartScene) {
             std::lock_guard<std::mutex> lock(g_pendingEnterMutex);
             g_pendingEnters.push_back({ player_id, packet->job });
@@ -445,14 +448,14 @@ void ProcessPacket(char* ptr)
         break;
     }
 
-    case SC_P_MOVE: // ìƒëŒ€ í”Œë ˆì´ì–´ (ì›€ì§ì´ë©´) ì¢Œí‘œ ë°›ê¸°
+    case SC_P_MOVE: // »ó´ë ÇÃ·¹ÀÌ¾î (¿òÁ÷ÀÌ¸é) ÁÂÇ¥ ¹Ş±â
     {
         sc_packet_move* packet = reinterpret_cast<sc_packet_move*>(ptr);
         long long other_id = packet->id;
 
         if (other_id == g_myid) break;
 
-        // OtherPlayerì˜ ìœ„ì¹˜ë¥¼ ë°˜ì˜í•œë‹¤
+        // OtherPlayerÀÇ À§Ä¡¸¦ ¹İ¿µÇÑ´Ù
         auto it = g_other_player_slots.find(other_id);
         if (it == g_other_player_slots.end()) break;
 
@@ -474,7 +477,7 @@ void ProcessPacket(char* ptr)
         break;
     }
 
-    case SC_P_LEAVE: // ì„œë²„ê°€ í´ë¼ì—ê²Œ ë‹¤ë¥¸ í”Œë ˆì´ì–´ê°€ ê²Œì„ì„ ë– ë‚¬ìŒì„ ì•Œë ¤ì£¼ëŠ” íŒ¨í‚· íƒ€ì…
+    case SC_P_LEAVE: // ¼­¹ö°¡ Å¬¶ó¿¡°Ô ´Ù¸¥ ÇÃ·¹ÀÌ¾î°¡ °ÔÀÓÀ» ¶°³µÀ½À» ¾Ë·ÁÁÖ´Â ÆĞÅ¶ Å¸ÀÔ
     {
         sc_packet_leave* packet = reinterpret_cast<sc_packet_leave*>(ptr);
         int other_id = packet->id;
@@ -494,7 +497,7 @@ void ProcessPacket(char* ptr)
                     target->isConnedted = false;
             }
 
-            // ìŠ¬ë¡¯ ì¸ë±ìŠ¤ ë°˜í™˜ (job ë³„ë¡œ slot ë²”ìœ„ë¥¼ ì—­ì¶”ì‚°)
+            // ½½·Ô ÀÎµ¦½º ¹İÈ¯ (job º°·Î slot ¹üÀ§¸¦ ¿ªÃß»ê)
             if (slot < 2) { g_knightIndex = min(g_knightIndex, slot); }
             else if (slot < 4) { g_wizardIndex = min(g_wizardIndex, slot); }
             else { g_thiefIndex = min(g_thiefIndex, slot); }
@@ -510,10 +513,10 @@ void ProcessPacket(char* ptr)
     {
         sc_packet_respawn* packet = reinterpret_cast<sc_packet_respawn*>(ptr);
 
-        cout << "[ìˆ˜ì‹ ] SC_P_RESPAWN | playerID=" << packet->playerID << " HP=" << packet->hp
+        cout << "[¼ö½Å] SC_P_RESPAWN | playerID=" << packet->playerID << " HP=" << packet->hp
             << " pos=(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")\n";
 
-        // ëœë”ë§ ë§Œ í•˜ë©´ ë ë“¯
+        // ·£´õ¸µ ¸¸ ÇÏ¸é µÉµí
         break;
     }
 
@@ -521,8 +524,8 @@ void ProcessPacket(char* ptr)
     {
         sc_packet_skill_upgrade* packet = reinterpret_cast<sc_packet_skill_upgrade*>(ptr);
 
-        // ì¿¨íƒ€ì„ ê°ì†ŒëŠ” í´ë¼ ìŠ¤í‚¬ ì¿¨íƒ€ì„ ë³€ìˆ˜ì— ì§ì ‘ ì ìš©
-        cout << "[ê°•í™”ì™„ë£Œ] slot=" << (int)packet->slot << " newValue=" << packet->newValue << "\n";
+        // ÄğÅ¸ÀÓ °¨¼Ò´Â Å¬¶ó ½ºÅ³ ÄğÅ¸ÀÓ º¯¼ö¿¡ Á÷Á¢ Àû¿ë
+        cout << "[°­È­¿Ï·á] slot=" << (int)packet->slot << " newValue=" << packet->newValue << "\n";
 
         break;
     }
@@ -531,11 +534,11 @@ void ProcessPacket(char* ptr)
     {
         sc_packet_skill* packet = reinterpret_cast<sc_packet_skill*>(ptr);
 
-        std::cout << "[SKILL] SC_P_SKILL ìˆ˜ì‹  | playerID=" << packet->playerID << " pos=(" << packet->position.x << ", " << packet->position.y << ", " << packet->position.z << ")\n";
+        std::cout << "[SKILL] SC_P_SKILL ¼ö½Å | playerID=" << packet->playerID << " pos=(" << packet->position.x << ", " << packet->position.y << ", " << packet->position.z << ")\n";
 
 
         if (packet->playerID == g_myid) {
-            std::cout << "[SKILL] ë‚´ íŒ¨í‚· ë£¨í”„ë°± â†’ ë¬´ì‹œ\n";
+            std::cout << "[SKILL] ³» ÆĞÅ¶ ·çÇÁ¹é ¡æ ¹«½Ã\n";
             break;
         }
 
@@ -546,15 +549,15 @@ void ProcessPacket(char* ptr)
 
     }
 
-    case SC_P_SHIELD_BLOCK: // ë°©íŒ¨ë§‰ê¸°
+    case SC_P_SHIELD_BLOCK: // ¹æÆĞ¸·±â
     {
         sc_packet_shield_block* packet = reinterpret_cast<sc_packet_shield_block*>(ptr);
 
-        std::cout << "[ìˆ˜ì‹ ] SC_P_SHIELD_BLOCK | playerID=" << packet->playerID << " isBlocking=" << (int)packet->isBlocking << "\n";
+        std::cout << "[¼ö½Å] SC_P_SHIELD_BLOCK | playerID=" << packet->playerID << " isBlocking=" << (int)packet->isBlocking << "\n";
         break;
     }
 
-    case SC_P_SKILL_STRIKE: // ê°•íƒ€
+    case SC_P_SKILL_STRIKE: // °­Å¸
     {
         sc_packet_skill_strike* packet = reinterpret_cast<sc_packet_skill_strike*>(ptr);
 
@@ -568,20 +571,20 @@ void ProcessPacket(char* ptr)
             scene->m_pGroundCrackEffect->Trigger(packet->position, packet->look);
         }
 
-        std::cout << "[ìˆ˜ì‹ ] SC_P_SKILL_STRIKE | playerID=" << packet->playerID
+        std::cout << "[¼ö½Å] SC_P_SKILL_STRIKE | playerID=" << packet->playerID
             << " pos=(" << packet->position.x << "," << packet->position.y << "," << packet->position.z << ")\n";
         break;
     }
 
-    case SC_P_TAUNT: // ë„ë°œ
+    case SC_P_TAUNT: // µµ¹ß
     {
         sc_packet_taunt* packet = reinterpret_cast<sc_packet_taunt*>(ptr);
 
-        std::cout << "[ìˆ˜ì‹ ] SC_P_TAUNT | playerID=" << packet->playerID << "\n";
+        std::cout << "[¼ö½Å] SC_P_TAUNT | playerID=" << packet->playerID << "\n";
         break;
     }
 
-    case SC_P_BUFF_ATK: // ê³µê²©ë ¥ ë¹”
+    case SC_P_BUFF_ATK: // °ø°İ·Â ºö
     {
         sc_packet_buff_atk* packet = reinterpret_cast<sc_packet_buff_atk*>(ptr);
         //if (packet->playerID == g_myid) break;
@@ -592,7 +595,7 @@ void ProcessPacket(char* ptr)
         XMFLOAT3 casterPos;
         XMFLOAT3 targetPos;
 
-        // ì‹œì „ì ìœ„ì¹˜
+        // ½ÃÀüÀÚ À§Ä¡
         if (packet->playerID == g_myid)
         {
             casterPos = scene->m_pPlayer->GetPosition();
@@ -608,7 +611,7 @@ void ProcessPacket(char* ptr)
             casterPos = caster->GetPosition();
         }
 
-        // ëŒ€ìƒ ìœ„ì¹˜
+        // ´ë»ó À§Ä¡
         if (packet->targetID == g_myid)
         {
             targetPos = scene->m_pPlayer->GetPosition();
@@ -625,7 +628,7 @@ void ProcessPacket(char* ptr)
         }
 
         scene->m_pBeamSystem->Emit(casterPos, targetPos);
-        std::cout << "[SC_P_BUFF_ATK ë²„í”„] Emit: casterPos=(" << casterPos.x << "," << casterPos.y << "," << casterPos.z
+        std::cout << "[SC_P_BUFF_ATK ¹öÇÁ] Emit: casterPos=(" << casterPos.x << "," << casterPos.y << "," << casterPos.z
             << ") targetPos=(" << targetPos.x << "," << targetPos.y << "," << targetPos.z << ")\n";
 
 
@@ -635,15 +638,15 @@ void ProcessPacket(char* ptr)
             {
                 scene->m_pPlayer->damage = packet->newDamage;
                 scene->m_pPlayer->m_bIsAtkBuffed = (packet->newDamage > 10);
-                cout << "[BUFF_ATK] ë‚´ ê³µê²©ë ¥ ê°±ì‹ : " << packet->newDamage << "\n";
+                cout << "[BUFF_ATK] ³» °ø°İ·Â °»½Å: " << packet->newDamage << "\n";
             }
         }
 
-        std::cout << "[SC_P_BUFF_ATK ë²„í”„] | playerID=" << packet->playerID << " newDamage=" << packet->newDamage << "\n";
+        std::cout << "[SC_P_BUFF_ATK ¹öÇÁ] | playerID=" << packet->playerID << " newDamage=" << packet->newDamage << "\n";
         break;
     }
 
-    case SC_P_BUFF_HP: // ì²´ë ¥íšŒë³µ
+    case SC_P_BUFF_HP: // Ã¼·ÂÈ¸º¹
     {
         sc_packet_buff_hp* packet = reinterpret_cast<sc_packet_buff_hp*>(ptr);
 
@@ -655,7 +658,7 @@ void ProcessPacket(char* ptr)
             scene->m_pGreenSpiritSystem->Emit(scene->m_pPlayer->GetPosition());
         }
 
-        // ì ‘ì† ì¤‘ì¸ ëª¨ë“  OtherPlayer
+        // Á¢¼Ó ÁßÀÎ ¸ğµç OtherPlayer
         for (auto& kv : g_other_player_slots)
         {
             int slot = kv.second;
@@ -663,20 +666,20 @@ void ProcessPacket(char* ptr)
 
             if (!otherPlayer || !otherPlayer->isConnedted) continue;
             scene->m_pGreenSpiritSystem->Emit(otherPlayer->GetPosition());
-            gGameFramework.UpdateOtherPlayerHP(slot, packet->newHp); // HP ê°±ì‹ 
+            gGameFramework.UpdateOtherPlayerHP(slot, packet->newHp); // HP °»½Å
         }
 
-        // ë‚´ hp ê°±ì‹  + other player hp ê°±ì‹  í•„ìš”
+        // ³» hp °»½Å + other player hp °»½Å ÇÊ¿ä
         if (packet->playerID == g_myid)
         {
             gGameFramework.UpdatePlayerHP(packet->newHp);
         }
 
-        std::cout << "[ìˆ˜ì‹ ] SC_P_BUFF_HP | playerID=" << packet->playerID << " newHp=" << packet->newHp << "\n";
+        std::cout << "[¼ö½Å] SC_P_BUFF_HP | playerID=" << packet->playerID << " newHp=" << packet->newHp << "\n";
         break;
     }
 
-    case SC_P_WEAPON_POS: // ë„ë¼ ë¬´ê¸° ìœ„ì¹˜ (ë„ì )
+    case SC_P_WEAPON_POS: // µµ³¢ ¹«±â À§Ä¡ (µµÀû)
     {
         sc_packet_weapon_pos* packet = reinterpret_cast<sc_packet_weapon_pos*>(ptr);
 
@@ -692,14 +695,14 @@ void ProcessPacket(char* ptr)
     {
         sc_packet_monster_spawn* packet = reinterpret_cast<sc_packet_monster_spawn*>(ptr);
 
-        // ì¤‘ìš”: OnMonsterSpawned()ëŠ” ìƒˆ ëª¬ìŠ¤í„°ì¼ ë•Œ D3D12 ë””ë°”ì´ìŠ¤/ì»¤ë§¨ë“œë¦¬ìŠ¤íŠ¸ ì‘ì—…
-        // (m_pd3dCommandList->Reset/Close, ExecuteCommandLists ë“±)ì„ ìˆ˜í–‰í•˜ê³ ,
-        // g_monsters ë§µì—ë„ ì§ì ‘ writeí•œë‹¤. ì´ ì»¤ë§¨ë“œë¦¬ìŠ¤íŠ¸/ì»¤ë§¨ë“œí/g_monstersëŠ”
-        // ë©”ì¸ ìŠ¤ë ˆë“œ(ë Œë” ë£¨í”„, AnimateObjects)ë„ ë§¤ í”„ë ˆì„ ê·¸ëŒ€ë¡œ ì‚¬ìš©/ìˆœíšŒí•˜ëŠ” ê²ƒê³¼
-        // "ë™ì¼í•œ ê°ì²´"ë¼ì„œ, ì—¬ê¸°(ë„¤íŠ¸ì›Œí¬ ìˆ˜ì‹  ìŠ¤ë ˆë“œ)ì—ì„œ ë°”ë¡œ í˜¸ì¶œí•˜ë©´
-        // ë‘ ìŠ¤ë ˆë“œê°€ ê°™ì€ ID3D12GraphicsCommandList/CommandAllocatorë¥¼ ë™ì‹œì— ê±´ë“œë¦¬ê²Œ ë˜ì–´
-        // ì •ì˜ë˜ì§€ ì•Šì€ ë™ì‘(ëœë¤ í™ ì†ìƒ/í¬ë˜ì‹œ)ìœ¼ë¡œ ì´ì–´ì§„ë‹¤.
-        // ë¡œë”© ì¤‘ì´ë“  ì•„ë‹ˆë“  í•­ìƒ íì— ìŒ“ì•„ë‘ê³ , ë©”ì¸ ìŠ¤ë ˆë“œê°€ ë§¤ í”„ë ˆì„ ë“œë ˆì¸í•˜ë„ë¡ í•œë‹¤.
+        // Áß¿ä: OnMonsterSpawned()´Â »õ ¸ó½ºÅÍÀÏ ¶§ D3D12 µğ¹ÙÀÌ½º/Ä¿¸Çµå¸®½ºÆ® ÀÛ¾÷
+        // (m_pd3dCommandList->Reset/Close, ExecuteCommandLists µî)À» ¼öÇàÇÏ°í,
+        // g_monsters ¸Ê¿¡µµ Á÷Á¢ writeÇÑ´Ù. ÀÌ Ä¿¸Çµå¸®½ºÆ®/Ä¿¸ÇµåÅ¥/g_monsters´Â
+        // ¸ŞÀÎ ½º·¹µå(·»´õ ·çÇÁ, AnimateObjects)µµ ¸Å ÇÁ·¹ÀÓ ±×´ë·Î »ç¿ë/¼øÈ¸ÇÏ´Â °Í°ú
+        // "µ¿ÀÏÇÑ °´Ã¼"¶ó¼­, ¿©±â(³×Æ®¿öÅ© ¼ö½Å ½º·¹µå)¿¡¼­ ¹Ù·Î È£ÃâÇÏ¸é
+        // µÎ ½º·¹µå°¡ °°Àº ID3D12GraphicsCommandList/CommandAllocator¸¦ µ¿½Ã¿¡ °Çµå¸®°Ô µÇ¾î
+        // Á¤ÀÇµÇÁö ¾ÊÀº µ¿ÀÛ(·£´ı Èü ¼Õ»ó/Å©·¡½Ã)À¸·Î ÀÌ¾îÁø´Ù.
+        // ·Îµù ÁßÀÌµç ¾Æ´Ïµç Ç×»ó Å¥¿¡ ½×¾ÆµÎ°í, ¸ŞÀÎ ½º·¹µå°¡ ¸Å ÇÁ·¹ÀÓ µå·¹ÀÎÇÏµµ·Ï ÇÑ´Ù.
         {
             std::lock_guard<std::mutex> lock(g_pendingMonsterMutex);
             g_pendingMonsterSpawns.push_back({ (int)packet->monsterID, packet->position, packet->state });
@@ -721,7 +724,7 @@ void ProcessPacket(char* ptr)
     {
         sc_packet_update_monster_hp* packet = reinterpret_cast<sc_packet_update_monster_hp*>(ptr);
 
-        std::cout << "[ëª¬ìŠ¤í„°] HP ê°±ì‹  ìˆ˜ì‹  | ID=" << packet->monsterID << " HP=" << packet->hp << "\n";
+        std::cout << "[¸ó½ºÅÍ] HP °»½Å ¼ö½Å | ID=" << packet->monsterID << " HP=" << packet->hp << "\n";
 
         auto it = g_monsters.find(packet->monsterID);
         if (it != g_monsters.end())
@@ -736,7 +739,7 @@ void ProcessPacket(char* ptr)
     {
         sc_packet_monster_die* packet = reinterpret_cast<sc_packet_monster_die*>(ptr);
 
-        std::cout << "[ëª¬ìŠ¤í„°] SC_P_MONSTER_DIE ìˆ˜ì‹  | ID=" << packet->monsterID << " ì²˜ì¹˜ì=" << packet->killerID << "\n";
+        std::cout << "[¸ó½ºÅÍ] SC_P_MONSTER_DIE ¼ö½Å | ID=" << packet->monsterID << " Ã³Ä¡ÀÚ=" << packet->killerID << "\n";
 
         int randomIndex = (rand() % 2) + 1;
         string sfxName = "monster_die_" + to_string(randomIndex);
@@ -761,7 +764,7 @@ void ProcessPacket(char* ptr)
 
         gGameFramework.UpdatePlayerGold(packet->totalGold);
 
-        std::cout << "[ê³¨ë“œ] SC_P_GOLD_REWARD ìˆ˜ì‹  | +" << packet->amount << "G (í˜„ì¬=" << packet->totalGold << "G)\n";
+        std::cout << "[°ñµå] SC_P_GOLD_REWARD ¼ö½Å | +" << packet->amount << "G (ÇöÀç=" << packet->totalGold << "G)\n";
 
         break;
 
@@ -774,7 +777,7 @@ void ProcessPacket(char* ptr)
         if (gGameFramework.isLoading || gGameFramework.isStartScene) {
             std::lock_guard<std::mutex> lock(g_pendingBossMutex);
             g_pendingBossSpawns.push_back({ packet->bossID, packet->position, packet->hp, packet->maxHp });
-            cout << "[BOSS] ë¡œë”©ì¤‘ ë³´ê´€ ID=" << packet->bossID << "\n";
+            cout << "[BOSS] ·ÎµùÁß º¸°ü ID=" << packet->bossID << "\n";
             break;
         }
 
@@ -794,12 +797,12 @@ void ProcessPacket(char* ptr)
 
         BossState cur = scene->m_pBoss->GetState();
 
-        // ê³µê²©/ì‚¬ë§ ëª¨ì…˜ ì¬ìƒ ì¤‘ì—ëŠ” Move íŒ¨í‚·ìœ¼ë¡œ ë¼ì–´ë“¤ì§€ ì•ŠìŒ
+        // °ø°İ/»ç¸Á ¸ğ¼Ç Àç»ı Áß¿¡´Â Move ÆĞÅ¶À¸·Î ³¢¾îµéÁö ¾ÊÀ½
         bool isBusy = (cur == BossState::Attack01 || cur == BossState::Attack02 ||
             cur == BossState::Taunt || cur == BossState::Death);
 
-        // Deathë§Œ ë³´í˜¸. Attack/TauntëŠ” ONCEë¼ì„œ ëë‚˜ë©´ ë©ˆì¶°ìˆì„ ë¿ì´ë¯€ë¡œ
-        // Move íŒ¨í‚·ì´ ì˜¤ë©´ ê·¸ ì‹œì ì— í’€ì–´ì¤˜ë„ ì•ˆì „í•¨ (ì„œë²„ê°€ ì–´ì°¨í”¼ íŒ¨í„´ ì¢…ë£Œ í›„ì—ë§Œ ë³´ëƒ„)
+        // Death¸¸ º¸È£. Attack/Taunt´Â ONCE¶ó¼­ ³¡³ª¸é ¸ØÃçÀÖÀ» »ÓÀÌ¹Ç·Î
+        // Move ÆĞÅ¶ÀÌ ¿À¸é ±× ½ÃÁ¡¿¡ Ç®¾îÁàµµ ¾ÈÀüÇÔ (¼­¹ö°¡ ¾îÂ÷ÇÇ ÆĞÅÏ Á¾·á ÈÄ¿¡¸¸ º¸³¿)
         if (cur != BossState::Death) {
             if (packet->isMoving && cur != BossState::Walk)
                 scene->m_pBoss->TransitionTo(BossState::Walk);
@@ -812,14 +815,11 @@ void ProcessPacket(char* ptr)
     case SC_P_BOSS_DEATH:
     {
         sc_packet_boss_death* packet = reinterpret_cast<sc_packet_boss_death*>(ptr);
-        cout << "[BOSS] ì‚¬ë§ ìˆ˜ì‹ \n";
-
-        CSoundManager::GetInstance()->PlaySFX("boss_die_1");
-        CSoundManager::GetInstance()->PlayBGM("bgm_winner");
-
-        CScene* scene = gGameFramework.GetCurrentScene();
-        if (scene && scene->m_pBoss)
-            scene->m_pBoss->TransitionTo(BossState::Death);
+        {
+            std::lock_guard<std::mutex> lock(g_pendingBossMutex);
+            g_pendingBossDeaths.push_back({ packet->bossID, packet->killerID });
+        }
+        cout << "[BOSS] Death queued boss=" << packet->bossID << " killer=" << packet->killerID << "\n";
         break;
     }
 
@@ -832,7 +832,7 @@ void ProcessPacket(char* ptr)
             scene->m_pBoss->SetHP((float)packet->hp);
         }
 
-        //cout << "[BOSS] SC_P_BOSS_HP ìˆ˜ì‹  HP=" << packet->hp << "/" << packet->maxHp << "\n";
+        //cout << "[BOSS] SC_P_BOSS_HP ¼ö½Å HP=" << packet->hp << "/" << packet->maxHp << "\n";
 
         break;
     }
@@ -840,13 +840,13 @@ void ProcessPacket(char* ptr)
     case SC_P_BOSS_PATTERN:
     {
         sc_packet_boss_pattern* packet = reinterpret_cast<sc_packet_boss_pattern*>(ptr);
-        //cout << "[BOSS] íŒ¨í„´ ìˆ˜ì‹  íŒ¨í„´=" << (int)packet->patternType << "\n";
+        //cout << "[BOSS] ÆĞÅÏ ¼ö½Å ÆĞÅÏ=" << (int)packet->patternType << "\n";
 
         CScene* scene = gGameFramework.GetCurrentScene();
         if (!scene || !scene->m_pBoss) break;
 
-        // ì• ë‹ˆë©”ì´ì…˜ ì „í™˜ + ê³µê²©ë²”ìœ„ ì´í™íŠ¸(ëª¨ì–‘/ìƒ‰ìƒ/ì›œì—… ê²°ì •)ëŠ” ëª¨ë‘ CBossMonsterê°€ ì²˜ë¦¬í•œë‹¤.
-        // (ë³´ìŠ¤ê°€ ì–´ë–¤ íŠ¸ë™ìœ¼ë¡œ ë“¤ì–´ê°€ëŠ”ì§€ì— ë”°ë¼ ìŠ¤ìŠ¤ë¡œ ì´í™íŠ¸ë¥¼ ìŠ¤í°í•¨ - PlayAttackPattern ì°¸ê³ )
+        // ¾Ö´Ï¸ŞÀÌ¼Ç ÀüÈ¯ + °ø°İ¹üÀ§ ÀÌÆåÆ®(¸ğ¾ç/»ö»ó/¿ú¾÷ °áÁ¤)´Â ¸ğµÎ CBossMonster°¡ Ã³¸®ÇÑ´Ù.
+        // (º¸½º°¡ ¾î¶² Æ®·¢À¸·Î µé¾î°¡´ÂÁö¿¡ µû¶ó ½º½º·Î ÀÌÆåÆ®¸¦ ½ºÆùÇÔ - PlayAttackPattern Âü°í)
         switch (packet->patternType) {
         case 0: scene->m_pBoss->PlayAttackPattern(BossState::Attack01, packet->attackCenter, packet->look, packet->attackRange); break; // NORMAL
         case 1: scene->m_pBoss->PlayAttackPattern(BossState::Attack02, packet->attackCenter, packet->look, packet->attackRange); break; // SLAM
@@ -861,22 +861,22 @@ void ProcessPacket(char* ptr)
     {
         sc_packet_npc_mission* packet = reinterpret_cast<sc_packet_npc_mission*>(ptr);
 
-        // ë°©ì–´ì  ì½”ë”©: í˜¹ì‹œë¼ë„ descriptionì´ ë„ì¢…ë£Œê°€ ì•ˆ ëœ ìƒíƒœë¡œ ì˜¤ë©´
-        // MultiByteToWideCharê°€ packet_buffer ë°–ì„ ì½ì–´ë²„ë¦´ ìˆ˜ ìˆìœ¼ë¯€ë¡œ ê°•ì œ ì¢…ë£Œ ì²˜ë¦¬
+        // ¹æ¾îÀû ÄÚµù: È¤½Ã¶óµµ descriptionÀÌ ³ÎÁ¾·á°¡ ¾È µÈ »óÅÂ·Î ¿À¸é
+        // MultiByteToWideChar°¡ packet_buffer ¹ÛÀ» ÀĞ¾î¹ö¸± ¼ö ÀÖÀ¸¹Ç·Î °­Á¦ Á¾·á Ã³¸®
         packet->description[sizeof(packet->description) - 1] = '\0';
 
-        cout << "[NPC] ë¯¸ì…˜ ìˆ˜ì‹  | missionID=" << packet->missionID << " desc=" << packet->description << " target=" << packet->targetCount << " reward=" << packet->rewardGold << "G\n";
+        cout << "[NPC] ¹Ì¼Ç ¼ö½Å | missionID=" << packet->missionID << " desc=" << packet->description << " target=" << packet->targetCount << " reward=" << packet->rewardGold << "G\n";
 
-        // descriptionì€ ì„œë²„(NPC.cpp)ì—ì„œ CP949(EUC-KR)ë¡œ ì‘ì„±ëœ ë©€í‹°ë°”ì´íŠ¸ ë¬¸ìì—´ì´ë¯€ë¡œ
-        // í•´ë‹¹ ì½”ë“œí˜ì´ì§€ ê¸°ì¤€ìœ¼ë¡œ wstring ë³€í™˜ (í´ë¼ì´ì–¸íŠ¸ê°€ UTF-8 ì†ŒìŠ¤ë¼ë„ ì´ ê°’ë§Œì€ 949 ê¸°ì¤€)
+        // descriptionÀº ¼­¹ö(NPC.cpp)¿¡¼­ CP949(EUC-KR)·Î ÀÛ¼ºµÈ ¸ÖÆ¼¹ÙÀÌÆ® ¹®ÀÚ¿­ÀÌ¹Ç·Î
+        // ÇØ´ç ÄÚµåÆäÀÌÁö ±âÁØÀ¸·Î wstring º¯È¯ (Å¬¶óÀÌ¾ğÆ®°¡ UTF-8 ¼Ò½º¶óµµ ÀÌ °ª¸¸Àº 949 ±âÁØ)
         int wlen = MultiByteToWideChar(949, 0, packet->description, -1, nullptr, 0);
         std::wstring wDesc(wlen > 0 ? wlen - 1 : 0, L'\0');
         if (wlen > 0)
             MultiByteToWideChar(949, 0, packet->description, -1, &wDesc[0], wlen);
 
-        // ì—¬ê¸°(ë„¤íŠ¸ì›Œí¬ ìŠ¤ë ˆë“œ)ì—ì„œ ë°”ë¡œ scene->ShowMissionText()ë¥¼ ë¶€ë¥´ë©´
-        // D3D12 ë¦¬ì†ŒìŠ¤ ìƒì„± + m_GameObjects ë³€ê²½ì´ ë Œë” ìŠ¤ë ˆë“œì˜ ìˆœíšŒì™€ ê²¹ì¹  ìˆ˜ ìˆìœ¼ë¯€ë¡œ
-        // íì—ë§Œ ë„£ì–´ë‘ê³  ì‹¤ì œ ë°˜ì˜ì€ CScene::AnimateObjects(ë©”ì¸ ìŠ¤ë ˆë“œ)ì—ì„œ í•œë‹¤.
+        // ¿©±â(³×Æ®¿öÅ© ½º·¹µå)¿¡¼­ ¹Ù·Î scene->ShowMissionText()¸¦ ºÎ¸£¸é
+        // D3D12 ¸®¼Ò½º »ı¼º + m_GameObjects º¯°æÀÌ ·»´õ ½º·¹µåÀÇ ¼øÈ¸¿Í °ãÄ¥ ¼ö ÀÖÀ¸¹Ç·Î
+        // Å¥¿¡¸¸ ³Ö¾îµÎ°í ½ÇÁ¦ ¹İ¿µÀº CScene::AnimateObjects(¸ŞÀÎ ½º·¹µå)¿¡¼­ ÇÑ´Ù.
         {
             std::lock_guard<std::mutex> lock(g_pendingMissionMutex);
             g_pendingMissionTexts.push_back({ PendingMissionUiType::Info, wDesc });
@@ -889,13 +889,13 @@ void ProcessPacket(char* ptr)
     {
         sc_packet_mission_complete* packet = reinterpret_cast<sc_packet_mission_complete*>(ptr);
 
-        //cout << "[NPC] ë¯¸ì…˜ ì™„ë£Œ | missionID=" << packet->missionID  << " reward=" << packet->rewardGold  << " totalGold=" << packet->totalGold << "\n";
+        //cout << "[NPC] ¹Ì¼Ç ¿Ï·á | missionID=" << packet->missionID  << " reward=" << packet->rewardGold  << " totalGold=" << packet->totalGold << "\n";
 
         gGameFramework.UpdatePlayerGold(packet->totalGold);
 
-        // mission.dds ìœ„ í…ìŠ¤íŠ¸ë¥¼ ì™„ë£Œ ë¬¸êµ¬ë¡œ ì „í™˜ (ë°°ê²½ì€ ê³„ì† ë³´ì—¬ì¤Œ).
-        // ì´í›„ NPC ê·¼ì²˜ì—ì„œ Fë¥¼ ë‹¤ì‹œ ëˆ„ë¥´ë©´ SC_P_NPC_MISSIONì´ ë‹¤ì‹œ ì™€ì„œ ì´ í…ìŠ¤íŠ¸ë¥¼ ìƒˆ ë¯¸ì…˜ìœ¼ë¡œ ë®ì–´ì”€.
-        // ì´ê²ƒë„ ë§ˆì°¬ê°€ì§€ë¡œ ë„¤íŠ¸ì›Œí¬ ìŠ¤ë ˆë“œì—ì„œ ë°”ë¡œ í˜¸ì¶œí•˜ì§€ ì•Šê³  íì— ì ì¬í•œë‹¤.
+        // mission.dds À§ ÅØ½ºÆ®¸¦ ¿Ï·á ¹®±¸·Î ÀüÈ¯ (¹è°æÀº °è¼Ó º¸¿©ÁÜ).
+        // ÀÌÈÄ NPC ±ÙÃ³¿¡¼­ F¸¦ ´Ù½Ã ´©¸£¸é SC_P_NPC_MISSIONÀÌ ´Ù½Ã ¿Í¼­ ÀÌ ÅØ½ºÆ®¸¦ »õ ¹Ì¼ÇÀ¸·Î µ¤¾î¾¸.
+        // ÀÌ°Íµµ ¸¶Âù°¡Áö·Î ³×Æ®¿öÅ© ½º·¹µå¿¡¼­ ¹Ù·Î È£ÃâÇÏÁö ¾Ê°í Å¥¿¡ ÀûÀçÇÑ´Ù.
         {
             std::lock_guard<std::mutex> lock(g_pendingMissionMutex);
             g_pendingMissionTexts.push_back({ PendingMissionUiType::Complete, L"Mission Complete!" });
@@ -919,7 +919,7 @@ void ProcessPacket(char* ptr)
     }
 }
 
-// process_data() í•¨ìˆ˜ ê°œì„ 
+// process_data() ÇÔ¼ö °³¼±
 void process_data(char* net_buf, size_t io_byte) {
 
     char* ptr = net_buf;
@@ -963,7 +963,7 @@ void CleanupNetwork() {
     g_running = false;
     closesocket(ConnectSocket);
     WSACleanup();
-    g_sendCV.notify_all(); // ì†¡ì‹  ìŠ¤ë ˆë“œ ê¹¨ìš°ê¸°
+    g_sendCV.notify_all(); // ¼Û½Å ½º·¹µå ±ú¿ì±â
 }
 
 void LoadingDoneToServer()
@@ -973,7 +973,7 @@ void LoadingDoneToServer()
     pkt.type = CS_P_LOADING_DONE;
     send_packet(&pkt);
     std::cout << "[Client] LoadingDone send\n";
-    // ë¡œë”© ì¤‘ì— ëª» ì²˜ë¦¬í•œ ENTER íŒ¨í‚· ì¬ì²˜ë¦¬
+    // ·Îµù Áß¿¡ ¸ø Ã³¸®ÇÑ ENTER ÆĞÅ¶ ÀçÃ³¸®
     {
         std::lock_guard<std::mutex> lock(g_pendingEnterMutex);
         for (auto& p : g_pendingEnters) {
@@ -995,7 +995,7 @@ void LoadingDoneToServer()
     {
         std::lock_guard<std::mutex> lock(g_pendingBossMutex);
         for (auto& b : g_pendingBossSpawns) {
-            cout << "[BOSS] pending ì²˜ë¦¬ ID=" << b.bossID << "\n";
+            cout << "[BOSS] pending Ã³¸® ID=" << b.bossID << "\n";
             gGameFramework.OnBossSpawned(b.bossID, b.position, b.hp, b.maxHp);
         }
         g_pendingBossSpawns.clear();

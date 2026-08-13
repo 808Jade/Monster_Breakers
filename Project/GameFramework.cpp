@@ -1,4 +1,4 @@
-ï»¿//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // File: CGameFramework.cpp
 //-----------------------------------------------------------------------------
 
@@ -9,9 +9,36 @@
 #include "SoundManager.h"
 #include <mutex>
 
-// g_monsters, g_monster_mutex, g_pendingMonsterMutex, g_pendingMonsterSpawnsëŠ”
-// ëª¨ë‘ Network.hì— ì„ ì–¸ë˜ì–´ ìˆë‹¤ (ìœ„ #include "Network.h"ë¡œ ì´ë¯¸ ê°€ì ¸ì˜´).
-// g_monstersëŠ” ë„¤íŠ¸ì›Œí¬ ìŠ¤ë ˆë“œì™€ ë©”ì¸ ìŠ¤ë ˆë“œê°€ ë™ì‹œì— ì ‘ê·¼í•˜ë¯€ë¡œ ë°˜ë“œì‹œ g_monster_mutexë¡œ ë³´í˜¸í•´ì•¼ í•œë‹¤.
+namespace
+{
+	// ¼­¹ö TerrainHeightMap ¹× CTerrainPlayer¿Í °°Àº ¿ùµå ¿øÁ¡/½ºÄÉÀÏÀÌ´Ù.
+	// ±¸¹öÀü ¼­¹ö°¡ °íÁ¤ Y¸¦ º¸³»´õ¶óµµ Å¬¶óÀÌ¾ğÆ® ½ºÆùÀÌ ÁöÇü°ú ¾î±ß³ªÁö ¾Ê°Ô ÇÑ´Ù.
+	bool ProjectPositionToTerrain(CHeightMapTerrain* pTerrain, XMFLOAT3& position)
+	{
+		if (!pTerrain) return false;
+
+		constexpr float TERRAIN_WORLD_X = -156.71f;
+		constexpr float TERRAIN_WORLD_Y = -14.43f;
+		constexpr float TERRAIN_WORLD_Z = -255.0f;
+
+		const XMFLOAT3 terrainScale = pTerrain->GetScale();
+		const float localX = position.x - TERRAIN_WORLD_X;
+		const float localZ = position.z - TERRAIN_WORLD_Z;
+		const float terrainWidth = (pTerrain->GetHeightMapWidth() - 1) * terrainScale.x;
+		const float terrainLength = (pTerrain->GetHeightMapLength() - 1) * terrainScale.z;
+		if (localX < 0.0f || localZ < 0.0f || localX >= terrainWidth || localZ >= terrainLength)
+			return false;
+
+		const int z = static_cast<int>(localZ / terrainScale.z);
+		const bool bReverseQuad = (z % 2) != 0;
+		position.y = pTerrain->GetHeight(localX, localZ, bReverseQuad) + TERRAIN_WORLD_Y;
+		return true;
+	}
+}
+
+// g_monsters, g_monster_mutex, g_pendingMonsterMutex, g_pendingMonsterSpawns´Â
+// ¸ğµÎ Network.h¿¡ ¼±¾ğµÇ¾î ÀÖ´Ù (À§ #include "Network.h"·Î ÀÌ¹Ì °¡Á®¿È).
+// g_monsters´Â ³×Æ®¿öÅ© ½º·¹µå¿Í ¸ŞÀÎ ½º·¹µå°¡ µ¿½Ã¿¡ Á¢±ÙÇÏ¹Ç·Î ¹İµå½Ã g_monster_mutex·Î º¸È£ÇØ¾ß ÇÑ´Ù.
 
 CGameFramework::CGameFramework()
 {
@@ -311,8 +338,8 @@ void CGameFramework::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM
 		::ReleaseCapture();
 		break;
 	case WM_MBUTTONDOWN:
-		// ê°€ìš´ë° ë²„íŠ¼ì„ ëˆ„ë¥´ê³  ìˆëŠ” ë™ì•ˆì—ë§Œ ì‹œì (ì¹´ë©”ë¼)ì„ íšŒì „ì‹œí‚¨ë‹¤.
-		// ì¢Œ/ìš°í´ë¦­(ê³µê²©, ìŠ¤í‚¬ê°•í™” UI ë“±)ì—ëŠ” ì „í˜€ ì˜í–¥ì„ ì£¼ì§€ ì•ŠëŠ”ë‹¤.
+		// °¡¿îµ¥ ¹öÆ°À» ´©¸£°í ÀÖ´Â µ¿¾È¿¡¸¸ ½ÃÁ¡(Ä«¸Ş¶ó)À» È¸Àü½ÃÅ²´Ù.
+		// ÁÂ/¿ìÅ¬¸¯(°ø°İ, ½ºÅ³°­È­ UI µî)¿¡´Â ÀüÇô ¿µÇâÀ» ÁÖÁö ¾Ê´Â´Ù.
 		m_bMouseOrbitDragging = true;
 		::SetCapture(hWnd);
 		::GetCursorPos(&m_ptOrbitLastPos);
@@ -336,9 +363,9 @@ void CGameFramework::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM
 				{
 					CThirdPersonCamera* p3rdPersonCamera = (CThirdPersonCamera*)pCamera;
 
-					const float fOrbitSensitivity = 0.15f; // ë„(degree) / í”½ì…€
+					const float fOrbitSensitivity = 0.15f; // µµ(degree) / ÇÈ¼¿
 					float fDeltaYaw = nDeltaX * fOrbitSensitivity;
-					float fDeltaPitch = -nDeltaY * fOrbitSensitivity; // ë§ˆìš°ìŠ¤ë¥¼ ìœ„ë¡œ ì˜¬ë¦¬ë©´ ìœ„ë¥¼ ë³´ë„ë¡ ë¶€í˜¸ ë°˜ì „
+					float fDeltaPitch = -nDeltaY * fOrbitSensitivity; // ¸¶¿ì½º¸¦ À§·Î ¿Ã¸®¸é À§¸¦ º¸µµ·Ï ºÎÈ£ ¹İÀü
 
 					p3rdPersonCamera->AddOrbitRotation(fDeltaYaw, fDeltaPitch);
 				}
@@ -457,9 +484,9 @@ void CGameFramework::BuildObjects()
 
 	m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
 
-	m_nScenes = 4; // ì´ Scene ê°œìˆ˜
+	m_nScenes = 4; // ÃÑ Scene °³¼ö
 	if (!m_ppScenes) {
-		m_ppScenes = new CScene * [m_nScenes] {};  // ë”± í•œ ë²ˆë§Œ í• ë‹¹, NULLë¡œ ì´ˆê¸°í™”
+		m_ppScenes = new CScene * [m_nScenes] {};  // µü ÇÑ ¹ø¸¸ ÇÒ´ç, NULL·Î ÃÊ±âÈ­
 	}
 
 	LoadSoundResources();
@@ -515,12 +542,12 @@ void CGameFramework::BuildObjects()
 	//	pPlayer->SetPosition(XMFLOAT3(425.0f, 240.0f, 640.0f));
 	//#endif
 
-	m_nScene = m_nCurrentScene; // í˜„ì¬ í™œì„±í™” Scene ì¸ë±ìŠ¤
+	m_nScene = m_nCurrentScene; // ÇöÀç È°¼ºÈ­ Scene ÀÎµ¦½º
 	m_pScene = m_ppScenes[m_nScene];
 	m_pScene->m_pPlayer = m_pPlayer = m_pScene->GetPlayer();
 	m_pCamera = m_pPlayer->ChangeCamera(THIRD_PERSON_CAMERA, m_GameTimer.GetTimeElapsed());
 
-	// ê³µê²©ì„ ìœ„í•œ ëª¬ìŠ¤í„°ì˜ í”Œë ˆì´ì–´ ì„¸íŒ…
+	// °ø°İÀ» À§ÇÑ ¸ó½ºÅÍÀÇ ÇÃ·¹ÀÌ¾î ¼¼ÆÃ
 	//if (m_nCurrentScene == 1)
 	//	m_pScene->m_ppMonsters[0]->SetPlayer(m_pPlayer);
 
@@ -541,15 +568,15 @@ void CGameFramework::BuildObjects()
 void CGameFramework::LoadSoundResources()
 {
 	// =================================================================
-	// SFX (íš¨ê³¼ìŒ)
+	// SFX (È¿°úÀ½)
 	// =================================================================
 
-	// --- ê³µí†µ í–‰ë™ (Common) ---
+	// --- °øÅë Çàµ¿ (Common) ---
 	CSoundManager::GetInstance()->LoadSound("player_die", "Sound/player_die.mp3", false);//
 	CSoundManager::GetInstance()->LoadSound("player_respawn", "Sound/player_respawn.mp3", false);//
 	CSoundManager::GetInstance()->LoadSound("player_hurt", "Sound/player_hurt.mp3", false);//
 
-	// --- ë°œì†Œë¦¬ (Footsteps) ---
+	// --- ¹ß¼Ò¸® (Footsteps) ---
 	CSoundManager::GetInstance()->LoadSound("footstep_sand_1", "Sound/footstep_sand_1.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("footstep_sand_2", "Sound/footstep_sand_2.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("footstep_sand_3", "Sound/footstep_sand_3.mp3", false);
@@ -561,7 +588,7 @@ void CGameFramework::LoadSoundResources()
 	CSoundManager::GetInstance()->LoadSound("walk_on_grass_2", "Sound/walk_on_grass_2.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("walk_on_grass_3", "Sound/walk_on_grass_3.mp3", false);
 
-	// --- ê¸°ì‚¬ (Knight) ---
+	// --- ±â»ç (Knight) ---
 	CSoundManager::GetInstance()->LoadSound("knight_attack_1", "Sound/knight_attack_1.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("knight_attack_2", "Sound/knight_attack_2.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("knight_e", "Sound/knight_e.mp3", false);
@@ -570,19 +597,19 @@ void CGameFramework::LoadSoundResources()
 	CSoundManager::GetInstance()->LoadSound("knight_rk_1", "Sound/knight_rk_1.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("knight_rk_2", "Sound/knight_rk_2.mp3", false);
 
-	// --- ë„ì  (Rogue) ---
+	// --- µµÀû (Rogue) ---
 	CSoundManager::GetInstance()->LoadSound("rogue_attack", "Sound/rogue_attack.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("rogue_e", "Sound/rogue_e.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("rogue_q", "Sound/rogue_q.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("rogue_rk", "Sound/rogue_rk.mp3", false);
 
-	// --- ë§ˆë²•ì‚¬ (Wizard) ---
+	// --- ¸¶¹ı»ç (Wizard) ---
 	CSoundManager::GetInstance()->LoadSound("wizard_attack", "Sound/wizard_attack.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("wizard_e", "Sound/wizard_e.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("wizard_q", "Sound/wizard_q.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("wizard_rk", "Sound/wizard_rk.mp3", false);
 
-	// --- ëª¬ìŠ¤í„° & ë³´ìŠ¤ (Monster & Boss) ---
+	// --- ¸ó½ºÅÍ & º¸½º (Monster & Boss) ---
 	CSoundManager::GetInstance()->LoadSound("monster_hurt_1", "Sound/monster_hurt_1.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("monster_hurt_2", "Sound/monster_hurt_2.mp3", false);
 	CSoundManager::GetInstance()->LoadSound("monster_die_2", "Sound/monster_die_1.mp3", false);
@@ -642,7 +669,7 @@ void CGameFramework::ProcessInput()
 
 		float fTimeElapsed = m_GameTimer.GetTimeElapsed();
 
-		const float fTurnSpeed = 180.0f; // 180~360 ì‚¬ì´ë¡œ ì·¨í–¥ ì¡°ì ˆ
+		const float fTurnSpeed = 180.0f; // 180~360 »çÀÌ·Î ÃëÇâ Á¶Àı
 
 		float yawInput = 0.0f;
 		if (bCurrA) yawInput -= 1.0f;
@@ -683,10 +710,11 @@ void CGameFramework::ProcessInput()
 	m_pPlayer->Update(m_GameTimer.GetTimeElapsed());
 }
 
-void CGameFramework::UpdateMyPlayerPosition(const XMFLOAT3& position)
+void CGameFramework::UpdateMyPlayerPosition(const XMFLOAT3& position, uint8_t job)
 {
 	std::lock_guard<std::mutex> lock(m_myPlayerPositionMutex);
 	m_pendingMyPlayerPosition = position;
+	m_pendingMyPlayerJob = job;
 	m_hasPendingMyPlayerPosition = true;
 }
 
@@ -696,16 +724,25 @@ void CGameFramework::ApplyPendingMyPlayerPosition()
 	if (m_nCurrentScene != 2 || !m_pPlayer) return;
 
 	XMFLOAT3 serverPosition{};
+	uint8_t serverJob = 0;
 	{
 		std::lock_guard<std::mutex> lock(m_myPlayerPositionMutex);
 		if (!m_hasPendingMyPlayerPosition) return;
 		serverPosition = m_pendingMyPlayerPosition;
+		serverJob = m_pendingMyPlayerJob;
 		m_hasPendingMyPlayerPosition = false;
 	}
 
 	const bool firstServerSpawn = !m_isServerSpawnApplied;
-	m_pPlayer->SetPosition(serverPosition);
+	const XMFLOAT3 beforePosition = m_pPlayer->GetPosition();
+	// Player spawn/respawn is server-authoritative, including Y.
+	 m_pPlayer->SnapToServerPosition(serverPosition);
 	m_isServerSpawnApplied = true;
+	const XMFLOAT3 appliedPosition = m_pPlayer->GetPosition();
+	std::cout << "[SPAWN][CLIENT][APPLY] job=" << static_cast<int>(serverJob)
+		<< " before=(" << beforePosition.x << "," << beforePosition.y << "," << beforePosition.z << ")"
+		<< " server=(" << serverPosition.x << "," << serverPosition.y << "," << serverPosition.z << ")"
+		<< " applied=(" << appliedPosition.x << "," << appliedPosition.y << "," << appliedPosition.z << ")\n";
 
 	// The initial loading acknowledgement is sent once per game scene.
 	// Later SC_P_USER_INFO packets (for example, respawn) only update position.
@@ -733,9 +770,9 @@ void CGameFramework::AnimateObjects()
 				m_pScene->m_ppOtherPlayers[slot]->Animate(otherPlayer->targetAnim, fTimeElapsed);
 			}
 		if (!isLoading && !isStartScene) {
-			// ë„¤íŠ¸ì›Œí¬ ìŠ¤ë ˆë“œê°€ ìŒ“ì•„ë‘” ëª¬ìŠ¤í„° ìŠ¤í° ìš”ì²­ì„ ë©”ì¸ ìŠ¤ë ˆë“œì—ì„œ ì²˜ë¦¬í•œë‹¤.
-			// (OnMonsterSpawnedê°€ D3D12 ë””ë°”ì´ìŠ¤/ì»¤ë§¨ë“œë¦¬ìŠ¤íŠ¸ ì‘ì—…ì„ í•˜ê¸° ë•Œë¬¸ì—
-			//  ë„¤íŠ¸ì›Œí¬ ìŠ¤ë ˆë“œì—ì„œ ì§ì ‘ í˜¸ì¶œí•˜ë©´ ì•ˆ ëœë‹¤ - Network.cpp ìª½ ìˆ˜ì • ì°¸ê³ )
+			// ³×Æ®¿öÅ© ½º·¹µå°¡ ½×¾ÆµĞ ¸ó½ºÅÍ ½ºÆù ¿äÃ»À» ¸ŞÀÎ ½º·¹µå¿¡¼­ Ã³¸®ÇÑ´Ù.
+			// (OnMonsterSpawned°¡ D3D12 µğ¹ÙÀÌ½º/Ä¿¸Çµå¸®½ºÆ® ÀÛ¾÷À» ÇÏ±â ¶§¹®¿¡
+			//  ³×Æ®¿öÅ© ½º·¹µå¿¡¼­ Á÷Á¢ È£ÃâÇÏ¸é ¾È µÈ´Ù - Network.cpp ÂÊ ¼öÁ¤ Âü°í)
 			std::vector<PendingMonsterSpawn> spawnsToProcess;
 			{
 				std::lock_guard<std::mutex> lock(g_pendingMonsterMutex);
@@ -749,10 +786,10 @@ void CGameFramework::AnimateObjects()
 				OnMonsterSpawned(s.monsterID, s.position, s.state);
 			}
 
-			// g_monstersëŠ” ë„¤íŠ¸ì›Œí¬ ìŠ¤ë ˆë“œ(ëª¬ìŠ¤í„° ê°±ì‹  íŒ¨í‚· ì²˜ë¦¬)ì—ì„œë„ ì ‘ê·¼í•˜ëŠ” ì „ì—­ ì»¨í…Œì´ë„ˆë‹¤.
-			// std::map/unordered_mapì€ ìŠ¤ë ˆë“œ ì•ˆì „í•˜ì§€ ì•Šìœ¼ë¯€ë¡œ, ë‹¤ë¥¸ ìŠ¤ë ˆë“œê°€ insertí•˜ëŠ” ë„ì¤‘
-			// ì—¬ê¸°ì„œ ê·¸ëŒ€ë¡œ ìˆœíšŒ(iterate)í•˜ë©´ ì´í„°ë ˆì´í„°ê°€ ê¹¨ì ¸ ì„ì˜ ì£¼ì†Œë¥¼ ì½ë‹¤ê°€ í¬ë˜ì‹œê°€ ë‚œë‹¤.
-			// g_monster_mutexë¡œ ì ê·¼ ìƒíƒœì—ì„œ í¬ì¸í„°ë§Œ ìŠ¤ëƒ…ìƒ·ìœ¼ë¡œ ë³µì‚¬í•œ ë’¤, ë½ì„ í’€ê³  ì•ˆì „í•˜ê²Œ ìˆœíšŒí•œë‹¤.
+			// g_monsters´Â ³×Æ®¿öÅ© ½º·¹µå(¸ó½ºÅÍ °»½Å ÆĞÅ¶ Ã³¸®)¿¡¼­µµ Á¢±ÙÇÏ´Â Àü¿ª ÄÁÅ×ÀÌ³Ê´Ù.
+			// std::map/unordered_mapÀº ½º·¹µå ¾ÈÀüÇÏÁö ¾ÊÀ¸¹Ç·Î, ´Ù¸¥ ½º·¹µå°¡ insertÇÏ´Â µµÁß
+			// ¿©±â¼­ ±×´ë·Î ¼øÈ¸(iterate)ÇÏ¸é ÀÌÅÍ·¹ÀÌÅÍ°¡ ±úÁ® ÀÓÀÇ ÁÖ¼Ò¸¦ ÀĞ´Ù°¡ Å©·¡½Ã°¡ ³­´Ù.
+			// g_monster_mutex·Î Àá±Ù »óÅÂ¿¡¼­ Æ÷ÀÎÅÍ¸¸ ½º³À¼¦À¸·Î º¹»çÇÑ µÚ, ¶ôÀ» Ç®°í ¾ÈÀüÇÏ°Ô ¼øÈ¸ÇÑ´Ù.
 			std::vector<CMonster*> monstersSnapshot;
 			{
 				std::lock_guard<std::mutex> lock(g_monster_mutex);
@@ -944,15 +981,15 @@ void CGameFramework::UpdateItemRotation(long long itemID, const XMFLOAT3& look, 
 //	if (it != g_monsters.end())
 //	{
 //
-//		// ê¸°ì¡´ ëª¬ìŠ¤í„° ìœ„ì¹˜/ìƒíƒœ/HP ê°±ì‹ 
+//		// ±âÁ¸ ¸ó½ºÅÍ À§Ä¡/»óÅÂ/HP °»½Å
 //		it->second->SetPosition(pos);
 //		UpdateMonsterState(it->second, state);
 //
-//		cout << "[OnMonsterSpawned] ID=" << monsterID << " pos=(" << pos.x << "," << pos.y << "," << pos.z << ") ê°±ì‹ \n";
+//		cout << "[OnMonsterSpawned] ID=" << monsterID << " pos=(" << pos.x << "," << pos.y << "," << pos.z << ") °»½Å\n";
 //	}
 //	else
 //	{
-//		//// ëª¬ìŠ¤í„° ê°ì²´ ìƒˆë¡œ ìƒì„± (ìƒì„±ì íŒŒë¼ë¯¸í„°ëŠ” ì ì ˆíˆ ìˆ˜ì •)
+//		//// ¸ó½ºÅÍ °´Ã¼ »õ·Î »ı¼º (»ı¼ºÀÚ ÆÄ¶ó¹ÌÅÍ´Â ÀûÀıÈ÷ ¼öÁ¤)
 //		//CSpider* pMonster = new CSpider(pd3dDevice, pd3dCommandList, pRootSignature, pModel, 5);
 //		//pMonster->SetPosition(pos);
 //		//UpdateMonsterState(pMonster, state);
@@ -960,7 +997,7 @@ void CGameFramework::UpdateItemRotation(long long itemID, const XMFLOAT3& look, 
 //
 //		//g_monsters[monsterID] = pMonster;
 //
-//		//// ì”¬ì—ì„œ ê´€ë¦¬í•˜ëŠ” ë¦¬ìŠ¤íŠ¸ë‚˜ ë°°ì—´ì—ë„ ì¶”ê°€í•  ìˆ˜ ìˆìŒ
+//		//// ¾À¿¡¼­ °ü¸®ÇÏ´Â ¸®½ºÆ®³ª ¹è¿­¿¡µµ Ãß°¡ÇÒ ¼ö ÀÖÀ½
 //
 //
 //
@@ -978,10 +1015,10 @@ void CGameFramework::OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int st
 
 	if (pExisting)
 	{
-		// â”€â”€ ê¸°ì¡´: ì´ë¯¸ ë“±ë¡ëœ ëª¬ìŠ¤í„° ìœ„ì¹˜/ìƒíƒœ ê°±ì‹  (ë¦¬ìŠ¤í° í¬í•¨) â”€â”€
+		// ¦¡¦¡ ±âÁ¸: ÀÌ¹Ì µî·ÏµÈ ¸ó½ºÅÍ À§Ä¡/»óÅÂ °»½Å (¸®½ºÆù Æ÷ÇÔ) ¦¡¦¡
 		CMonster* pMonster = pExisting;
 
-		// ì£½ì—ˆë‹¤ê°€ ë‹¤ì‹œ ìŠ¤í°ë˜ëŠ” ê²½ìš° â†’ ìƒíƒœ ì´ˆê¸°í™”
+		// Á×¾ú´Ù°¡ ´Ù½Ã ½ºÆùµÇ´Â °æ¿ì ¡æ »óÅÂ ÃÊ±âÈ­
 		if (pMonster->IsDead())
 		{
 			pMonster->ResetHP();
@@ -990,20 +1027,20 @@ void CGameFramework::OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int st
 		pMonster->SetPosition(pos);
 		UpdateMonsterState(pMonster, state);
 
-		cout << "[OnMonsterSpawned] ê°±ì‹  ID=" << monsterID
+		cout << "[OnMonsterSpawned] °»½Å ID=" << monsterID
 			<< " pos=(" << pos.x << "," << pos.y << "," << pos.z << ")\n";
 	}
 	else
 	{
-		// â”€â”€ ìƒˆ ID: MONSTER_DESCS í…Œì´ë¸”ë¡œ ëª¨ë¸ íŒŒì¼Â·HP ì¡°íšŒ í›„ ë™ì  ìƒì„± â”€â”€
+		// ¦¡¦¡ »õ ID: MONSTER_DESCS Å×ÀÌºí·Î ¸ğµ¨ ÆÄÀÏ¡¤HP Á¶È¸ ÈÄ µ¿Àû »ı¼º ¦¡¦¡
 
-		// ì„œë²„ ID ê·œì¹™: startID, startID+1, startID+2 â†’ 3ë§ˆë¦¬ì”© ë¬¶ìŒ
-		// MONSTER_DESCS[i].startID ê¸°ì¤€ìœ¼ë¡œ ì–´ëŠ ì¢…ë¥˜ì¸ì§€ ì—­ì¶”ì‚°
+		// ¼­¹ö ID ±ÔÄ¢: startID, startID+1, startID+2 ¡æ 3¸¶¸®¾¿ ¹­À½
+		// MONSTER_DESCS[i].startID ±âÁØÀ¸·Î ¾î´À Á¾·ùÀÎÁö ¿ªÃß»ê
 		const MonsterDesc* pDesc = nullptr;
 		for (const auto& desc : MONSTER_DESCS)
 		{
 			int offset = monsterID - desc.startID;
-			if (offset >= 0 && offset < 3)   // 3ë§ˆë¦¬ ë¬¶ìŒ
+			if (offset >= 0 && offset < 3)   // 3¸¶¸® ¹­À½
 			{
 				pDesc = &desc;
 				break;
@@ -1012,11 +1049,11 @@ void CGameFramework::OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int st
 
 		if (!pDesc)
 		{
-			cout << "[OnMonsterSpawned] ì•Œ ìˆ˜ ì—†ëŠ” ID=" << monsterID << " â†’ ìŠ¤í‚µ\n";
+			cout << "[OnMonsterSpawned] ¾Ë ¼ö ¾ø´Â ID=" << monsterID << " ¡æ ½ºÅµ\n";
 			return;
 		}
 
-		// CommandList ì‚¬ìš©ì„ ìœ„í•´ Reset í•„ìš” (ResetCommandList í—¬í¼ê°€ ìˆìœ¼ë©´ í™œìš©)
+		// CommandList »ç¿ëÀ» À§ÇØ Reset ÇÊ¿ä (ResetCommandList ÇïÆÛ°¡ ÀÖÀ¸¸é È°¿ë)
 		m_pd3dCommandAllocator->Reset();
 		m_pd3dCommandList->Reset(m_pd3dCommandAllocator, nullptr);
 
@@ -1026,7 +1063,7 @@ void CGameFramework::OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int st
 			m_ppScenes[m_nCurrentScene]->GetGraphicsRootSignature(),
 			pDesc->modelPath,
 			5,          // nAnimationTracks: Idle/Walk/Attack/GetHit/Death
-			nullptr,    // pModel: nullptr â†’ ë‚´ë¶€ì—ì„œ íŒŒì¼ ë¡œë“œ
+			nullptr,    // pModel: nullptr ¡æ ³»ºÎ¿¡¼­ ÆÄÀÏ ·Îµå
 			pDesc->hp,
 			monsterID
 		);
@@ -1035,33 +1072,33 @@ void CGameFramework::OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int st
 		if (pDesc->scale != 1.0f)
 			pMonster->SetScale(pDesc->scale, pDesc->scale, pDesc->scale);
 
-		// í”Œë ˆì´ì–´ ì°¸ì¡° ì—°ê²° (HPë°” LookAtìš©)
+		// ÇÃ·¹ÀÌ¾î ÂüÁ¶ ¿¬°á (HP¹Ù LookAt¿ë)
 		CScene* pScene = m_ppScenes[m_nCurrentScene];
 		if (pScene && pScene->m_pPlayer)
 			pMonster->SetPlayer(pScene->m_pPlayer);
 
 		UpdateMonsterState(pMonster, state);
 
-		// Sceneì˜ m_Monsters ë²¡í„°ì— ì¶”ê°€ (Render/Animate ë£¨í”„ì— í¬í•¨ë¨)
+		// SceneÀÇ m_Monsters º¤ÅÍ¿¡ Ãß°¡ (Render/Animate ·çÇÁ¿¡ Æ÷ÇÔµÊ)
 		pScene->m_Monsters.push_back(pMonster);
 
-		// Upload Buffer í•´ì œ (GPU ì—…ë¡œë“œ ì™„ë£Œ í›„)
+		// Upload Buffer ÇØÁ¦ (GPU ¾÷·Îµå ¿Ï·á ÈÄ)
 		m_pd3dCommandList->Close();
 		ID3D12CommandList* ppCmdLists[] = { m_pd3dCommandList };
 		m_pd3dCommandQueue->ExecuteCommandLists(1, ppCmdLists);
-		WaitForGpuComplete();   // ê¸°ì¡´ í—¬í¼ í•¨ìˆ˜ ì‚¬ìš©
+		WaitForGpuComplete();   // ±âÁ¸ ÇïÆÛ ÇÔ¼ö »ç¿ë
 
 		pMonster->ReleaseUploadBuffers();
 
-		cout << "[OnMonsterSpawned] ìƒˆ ëª¬ìŠ¤í„° ìƒì„± ID=" << monsterID
-			<< " ëª¨ë¸=" << pDesc->modelPath
+		cout << "[OnMonsterSpawned] »õ ¸ó½ºÅÍ »ı¼º ID=" << monsterID
+			<< " ¸ğµ¨=" << pDesc->modelPath
 			<< " pos=(" << pos.x << "," << pos.y << "," << pos.z << ")\n";
 	}
 }
 
 void CGameFramework::UpdateMonsterState(CMonster* pMonster, int state)
 {
-	// ì• ë‹ˆë©”ì´ì…˜ íŠ¸ë™ ì„¤ì • ë“±
+	// ¾Ö´Ï¸ŞÀÌ¼Ç Æ®·¢ ¼³Á¤ µî
 	for (int i = 0; i < 5; ++i)
 		pMonster->m_pSkinnedAnimationController->SetTrackEnable(i, false);
 
@@ -1089,7 +1126,7 @@ void CGameFramework::UpdateMonsterPosition(int monsterID, const XMFLOAT3& pos, c
 		std::cout << "[Error] Monster ID not found: " << monsterID << std::endl;
 		return;
 	}
-	/*	printf("[Net] Monster %d â†’ pos=(%.1f, %.1f, %.1f) state=%d\n",
+	/*	printf("[Net] Monster %d ¡æ pos=(%.1f, %.1f, %.1f) state=%d\n",
 			monsterID, pos.x, pos.y, pos.z, state);*/
 	pMonster->SetPosition(pos);
 	//pMonster->CalculateBoundingBox();
@@ -1098,17 +1135,17 @@ void CGameFramework::UpdateMonsterPosition(int monsterID, const XMFLOAT3& pos, c
 	float len = sqrtf(rot.x * rot.x + rot.z * rot.z);
 	if (len > 0.001f)
 	{
-		XMFLOAT3 look = { rot.x / len, 0.0f, rot.z / len };  // XZ ì •ê·œí™”
+		XMFLOAT3 look = { rot.x / len, 0.0f, rot.z / len };  // XZ Á¤±ÔÈ­
 		XMFLOAT3 up = { 0.0f, 1.0f, 0.0f };
 
-		// right = up Ã— look
+		// right = up ¡¿ look
 		XMFLOAT3 right = {
 			 up.y * look.z - up.z * look.y,
 			 up.z * look.x - up.x * look.z,
 			 up.x * look.y - up.y * look.x
 		};
 
-		// right ì •ê·œí™”
+		// right Á¤±ÔÈ­
 		float rlen = sqrtf(right.x * right.x + right.y * right.y + right.z * right.z);
 		if (rlen > 0.001f) { right.x /= rlen; right.y /= rlen; right.z /= rlen; }
 
@@ -1150,7 +1187,7 @@ void CGameFramework::OnBossSpawned(long long bossID, const XMFLOAT3& pos, int hp
 	if (!scene || !scene->m_pBoss) return;
 
 	scene->m_pBoss->SetMaxHP((float)maxHp);
-	scene->m_pBoss->SetHP((float)hp);         // ResetHP() ëŒ€ì‹  ì„œë²„ê°€ ì¤€ ì‹¤ì œ HPë¡œ ì„¤ì •
+	scene->m_pBoss->SetHP((float)hp);         // ResetHP() ´ë½Å ¼­¹ö°¡ ÁØ ½ÇÁ¦ HP·Î ¼³Á¤
 	scene->m_pBoss->SetPositionOnTerrain(pos);
 	scene->m_pBoss->TransitionTo(BossState::Idle);
 

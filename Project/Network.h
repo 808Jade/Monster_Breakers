@@ -46,6 +46,10 @@ struct PendingBossSpawn {
     int       hp;
     int       maxHp;
 };
+struct PendingBossDeath {
+    long long bossID;
+    long long killerID;
+};
 enum class PendingMissionUiType {
     Info,
     Progress,
@@ -67,6 +71,7 @@ extern std::vector<PendingMonsterSpawn>     g_pendingMonsterSpawns;
 
 extern std::mutex                           g_pendingBossMutex;
 extern std::vector<PendingBossSpawn>        g_pendingBossSpawns;
+extern std::vector<PendingBossDeath>        g_pendingBossDeaths;
 
 // otherplayer
 extern std::unordered_map<long long, OtherPlayer*> g_other_players;
