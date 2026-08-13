@@ -119,6 +119,9 @@ public:
 	void SetMaxVelocityY(float fMaxVelocity) { m_fMaxVelocityY = fMaxVelocity; }
 	void SetVelocity(const XMFLOAT3& xmf3Velocity) { m_xmf3Velocity = xmf3Velocity; }
 	void SetPosition(const XMFLOAT3& xmf3Position) { Move(XMFLOAT3(xmf3Position.x - m_xmf3Position.x, xmf3Position.y - m_xmf3Position.y, xmf3Position.z - m_xmf3Position.z), false); }
+	// 로그인/리스폰처럼 서버가 확정한 위치로 옮길 때 사용한다.
+	// 입력 이동과 달리 이전 속도를 남기지 않아 다음 프레임에 스폰 위치가 밀리지 않는다.
+	void SnapToServerPosition(const XMFLOAT3& xmf3Position);
 	void SetPushDirection(const XMFLOAT3& direction) { m_lastPushDirection = direction; }
 	void SetSwordAttadckBoundingBox(const BoundingBox& bbSwordAttack) { m_swordAttackBoundingBox = bbSwordAttack; }
 

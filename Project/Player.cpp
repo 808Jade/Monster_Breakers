@@ -928,3 +928,20 @@ void CTerrainPlayer::StartAnimationBlend(int fromTrack, int toTrack, float blend
 	m_pSkinnedAnimationController->SetTrackWeight(fromTrack, startWeight);
 	m_pSkinnedAnimationController->SetTrackWeight(toTrack, 1.0f - startWeight);
 }
+
+void CPlayer::SnapToServerPosition(const XMFLOAT3& xmf3Position)
+{
+	const XMFLOAT3 xmf3Shift = XMFLOAT3(
+		xmf3Position.x - m_xmf3Position.x,
+		xmf3Position.y - m_xmf3Position.y,
+		xmf3Position.z - m_xmf3Position.z);
+
+	m_xmf3Position = xmf3Position;
+	m_xmf3Velocity = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	if (m_pCamera) m_pCamera->Move(xmf3Shift);
+
+	// 충돌/렌더링이 이전 프레임 행렬을 참조하지 않도록 즉시 동기화한다.
+	OnPrepareRender();
+	UpdateTransform(NULL);
+	CalculateBoundingBox();
+}

@@ -93,7 +93,7 @@ public:
 		m_pPlayer->Pgold = gold;
 	}
 	// The receive thread queues the spawn; the main thread applies it.
-	void UpdateMyPlayerPosition(const XMFLOAT3& position);
+	void UpdateMyPlayerPosition(const XMFLOAT3& position, uint8_t job);
 
 	void OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int state);
 	void OnBossSpawned(long long bossID, const XMFLOAT3& pos, int hp, int maxHp);
@@ -156,6 +156,7 @@ private:
 
 	std::mutex m_myPlayerPositionMutex;
 	XMFLOAT3 m_pendingMyPlayerPosition = { 0.0f, 0.0f, 0.0f };
+	uint8_t m_pendingMyPlayerJob = 0;
 	bool m_hasPendingMyPlayerPosition = false;
 	bool m_isServerSpawnApplied = false;
 

@@ -1,4 +1,4 @@
-ï»¿//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // File: CScene.cpp
 //-----------------------------------------------------------------------------
 #include "stdafx.h"
@@ -17,7 +17,7 @@ static bool Chance(int percent) { // 0~100
 	return dist(rng) <= percent;
 }
 
-// ëª¬ìŠ¤í„° ì¢…ë¥˜ë³„ ì •ë³´: { ëª¨ë¸ íŒŒì¼ëª…, ì„œë²„ ì‹œì‘ID, HP, ìŠ¤ì¼€ì¼ }
+// ¸ó½ºÅÍ Á¾·ùº° Á¤º¸: { ¸ğµ¨ ÆÄÀÏ¸í, ¼­¹ö ½ÃÀÛID, HP, ½ºÄÉÀÏ }
 //struct MonsterDesc {
 //	const char* modelPath;
 //	int         startID;
@@ -80,7 +80,7 @@ void CScene::BuildDefaultLightsAndMaterials(bool toggle)
 	m_pLights[0].m_xmf4Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
 	m_pLights[0].m_xmf4Diffuse = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
 	m_pLights[0].m_xmf4Specular = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	XMFLOAT3 lightDir = XMFLOAT3(0.5f, -1.0f, 0.5f); // ì•½ê°„ ëŒ€ê°ì„  ì•„ë˜ë¡œ
+	XMFLOAT3 lightDir = XMFLOAT3(0.5f, -1.0f, 0.5f); // ¾à°£ ´ë°¢¼± ¾Æ·¡·Î
 	XMVECTOR vLightDir = XMLoadFloat3(&lightDir);
 	vLightDir = XMVector3Normalize(vLightDir);
 	XMStoreFloat3(&m_pLights[0].m_xmf3Direction, vLightDir);
@@ -146,7 +146,7 @@ void CScene::InitializeCollisionSystem()
 	for (auto* obj : m_Monsters) {
 		m_CollisionManager.SetMonsters(&m_Monsters);
 	}
-	m_CollisionManager.SetBoss(m_pBoss); // ë³´ìŠ¤ë„ CollisionManagerê°€ ì•Œë„ë¡ ë“±ë¡
+	m_CollisionManager.SetBoss(m_pBoss); // º¸½ºµµ CollisionManager°¡ ¾Ëµµ·Ï µî·Ï
 
 	for (const auto& pair : m_pMap->m_mInstanceGroups)
 	{
@@ -200,7 +200,7 @@ void CScene::InitializeCollisionSystem()
 			continue;
 		}
 
-		// ìºì‹œëœ ì›”ë“œ ë°”ìš´ë”© ë°•ìŠ¤ ë°°ì—´ì„ ìˆœíšŒí•˜ë©° ì¿¼ë“œíŠ¸ë¦¬ì— ë°€ì–´ ë„£ê¸°
+		// Ä³½ÃµÈ ¿ùµå ¹Ù¿îµù ¹Ú½º ¹è¿­À» ¼øÈ¸ÇÏ¸ç ÄõµåÆ®¸®¿¡ ¹Ğ¾î ³Ö±â
 		for (size_t i = 0; i < group.vWorldColliders.size(); ++i)
 		{
 			ColliderInfo collider = group.vWorldColliders[i];
@@ -237,9 +237,9 @@ void CScene::BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 	struct UIInfo { std::wstring path; float left; float top; float width; float height; };
 
 	static const std::unordered_map<CLoadedModelInfo*, std::array<const wchar_t*, 3>> skillImageMap = {
-		{ m_pKnightModel, { L"Image/ë°©íŒ¨ë§‰ê¸°.dds", L"Image/ê°•íƒ€.dds",    L"Image/ë„ë°œ.dds"   } },
-		{ m_pWizardModel, { L"Image/í™”ì—¼êµ¬.dds",   L"Image/ê³µê²©ë ¥ë²„í”„.dds",  L"Image/ì²´ë ¥ë²„í”„.dds" } },
-		{ m_pThiefModel,  { L"Image/ë˜ì§€ê¸°.dds",   L"Image/íœ˜ë‘ë¥´ê¸°.dds", L"Image/ë’¤ë¡œìˆœë³´.dds" } },
+		{ m_pKnightModel, { L"Image/¹æÆĞ¸·±â.dds", L"Image/°­Å¸.dds",    L"Image/µµ¹ß.dds"   } },
+		{ m_pWizardModel, { L"Image/È­¿°±¸.dds",   L"Image/°ø°İ·Â¹öÇÁ.dds",  L"Image/Ã¼·Â¹öÇÁ.dds" } },
+		{ m_pThiefModel,  { L"Image/´øÁö±â.dds",   L"Image/ÈÖµÎ¸£±â.dds", L"Image/µÚ·Î¼øº¸.dds" } },
 	};
 
 	std::array<float, 3> skillSlotX{ 0.25f, 0.50f, 0.75f };
@@ -256,7 +256,7 @@ void CScene::BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 	}
 	for (size_t i = 0; i < uiList.size(); ++i)
 	{
-		// í…ìŠ¤ì²˜ ìƒì„± ë° ë¡œë“œ
+		// ÅØ½ºÃ³ »ı¼º ¹× ·Îµå
 		CTexture* pTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
 		pTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, const_cast<wchar_t*>(uiList[i].path.c_str()), RESOURCE_TEXTURE2D, 0);
 
@@ -269,7 +269,7 @@ void CScene::BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 		pShader->SetMesh(0, pMesh);
 		pShader->SetTexture(pTexture);
 
-		// mission.ddsëŠ” NPC ê·¼ì ‘ ìƒí˜¸ì‘ìš© ì‹œì—ë§Œ ë³´ì´ë„ë¡ ê¸°ë³¸ ë¹„í™œì„±í™”
+		// mission.dds´Â NPC ±ÙÁ¢ »óÈ£ÀÛ¿ë ½Ã¿¡¸¸ º¸ÀÌµµ·Ï ±âº» ºñÈ°¼ºÈ­
 		bool bIsMissionBg = (uiList[i].path == L"Image/mission.dds");
 		pShader->SetVisible(!bIsMissionBg);
 		if (bIsMissionBg)
@@ -284,7 +284,7 @@ void CScene::BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 
 	for (int i = 0; i < SKILL_COUNT; ++i)
 	{
-		// ìµœëŒ€ ì¿¨íƒ€ì„ ì´ˆê¸°í™” (ë ˆë²¨ ë°˜ì˜)
+		// ÃÖ´ë ÄğÅ¸ÀÓ ÃÊ±âÈ­ (·¹º§ ¹İ¿µ)
 		m_fSkillMaxCooldown[i] = CalcMaxCooldown(i);
 		m_fSkillCooldown[i] = 0.0f;
 
@@ -299,8 +299,8 @@ void CScene::UpdateUI(ID3D12GraphicsCommandList* pd3dCommandList)
 {
 	for (auto* obj : m_GameObjects) {
 		if (auto* textObj = dynamic_cast<CText*>(obj)) {
-			// ì¿¨íƒ€ì„ í…ìŠ¤íŠ¸ / ë¯¸ì…˜ í…ìŠ¤íŠ¸ëŠ” ê°ì ë³„ë„ ë¡œì§ìœ¼ë¡œ ê°±ì‹ ë˜ë¯€ë¡œ
-			// ì—¬ê¸°ì„œ ë ˆë²¨ í…ìŠ¤íŠ¸("LV. n")ë¡œ ë®ì–´ì“°ë©´ ì•ˆ ë¨
+			// ÄğÅ¸ÀÓ ÅØ½ºÆ® / ¹Ì¼Ç ÅØ½ºÆ®´Â °¢ÀÚ º°µµ ·ÎÁ÷À¸·Î °»½ÅµÇ¹Ç·Î
+			// ¿©±â¼­ ·¹º§ ÅØ½ºÆ®("LV. n")·Î µ¤¾î¾²¸é ¾È µÊ
 			bool bIsCooldownText = false;
 			for (int i = 0; i < SKILL_COUNT; ++i)
 				if (m_pCooldownTexts[i] == textObj) { bIsCooldownText = true; break; }
@@ -321,7 +321,7 @@ void CScene::UpdateUI(ID3D12GraphicsCommandList* pd3dCommandList)
 
 		bool onCooldown = (remCD > 0.0f);
 
-		// í…ìŠ¤íŠ¸: ë‚¨ì€ ì´ˆ(ì†Œìˆ˜ì  1ìë¦¬)
+		// ÅØ½ºÆ®: ³²Àº ÃÊ(¼Ò¼öÁ¡ 1ÀÚ¸®)
 		if (m_pCooldownTexts[i])
 		{
 			m_pCooldownTexts[i]->SetVisible(onCooldown);
@@ -353,7 +353,7 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 
 	m_pMap = new Map(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 
-	// í„°ë ˆì¸ ë³´ì • (1/4) Mesh Resolution
+	// ÅÍ·¹ÀÎ º¸Á¤ (1/4) Mesh Resolution
 	float fScaleX = 533.2781f / 4096.0f;
 	float fScaleZ = 534.9254f / 4096.0f;
 	float fScaleY = 29.68098f;
@@ -405,16 +405,16 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 	//m_pBoss->SetFrameName("Boss");
 	m_pBoss->SetTerrain(m_pTerrain);
 	m_pBoss->SetPosition(XMFLOAT3(-9999.0f, -9999.0f, -9999.0f));
-	// ì´ë™ íŒ¨í‚·ì˜ LookAt ì´í›„ì—ë„ ìœ ì§€ë˜ëŠ” ë³´ìŠ¤ ì „ìš© ì‹œê° í¬ê¸°.
+	// ÀÌµ¿ ÆĞÅ¶ÀÇ LookAt ÀÌÈÄ¿¡µµ À¯ÁöµÇ´Â º¸½º Àü¿ë ½Ã°¢ Å©±â.
 	m_pBoss->SetVisualScale(3.0f);
 
 	m_pGroundAttackRangeEffect = new CGroundAttackRangeEffect();
 	m_pGroundAttackRangeEffect->Create(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, 4);
-	// ì´í™íŠ¸ì˜ ì†Œìœ ê¶Œ(ìƒì„±/Animate/Render/Release)ì€ Sceneì´ ê·¸ëŒ€ë¡œ ê°€ì§€ê³ ,
-	// ë³´ìŠ¤ëŠ” í¬ì¸í„°ë§Œ ë°›ì•„ì„œ ìì‹ ì˜ ì• ë‹ˆë©”ì´ì…˜ íŠ¸ë™(ê³µê²© íŒ¨í„´)ì— ë”°ë¼ Spawn()ë§Œ í˜¸ì¶œí•œë‹¤.
+	// ÀÌÆåÆ®ÀÇ ¼ÒÀ¯±Ç(»ı¼º/Animate/Render/Release)Àº SceneÀÌ ±×´ë·Î °¡Áö°í,
+	// º¸½º´Â Æ÷ÀÎÅÍ¸¸ ¹Ş¾Æ¼­ ÀÚ½ÅÀÇ ¾Ö´Ï¸ŞÀÌ¼Ç Æ®·¢(°ø°İ ÆĞÅÏ)¿¡ µû¶ó Spawn()¸¸ È£ÃâÇÑ´Ù.
 	m_pBoss->SetGroundAttackRangeEffect(m_pGroundAttackRangeEffect);
 
-	// otherplayer ì„¤ì •
+	// otherplayer ¼³Á¤
 	m_nOtherPlayers = 6;
 	m_ppOtherPlayers = new OtherPlayer * [m_nOtherPlayers];
 	for (int i = 0; i < m_nOtherPlayers; ++i) m_ppOtherPlayers[i] = nullptr;
@@ -448,10 +448,10 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 	}
 
 	CInteractPrompt* pPressF = new CInteractPrompt(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature,
-		L"Image/PressF.dds", XMFLOAT3(-9.0f, 1.0f, 35.0f)); // ìœ„ì¹˜, ê¸°ë³¸ 2.5 ë²”ìœ„
+		L"Image/PressF.dds", XMFLOAT3(-9.0f, 1.0f, 35.0f)); // À§Ä¡, ±âº» 2.5 ¹üÀ§
 	m_GameObjects.push_back(pPressF);
 
-	// npc ìƒì„±
+	// npc »ı¼º
 	CNPC* pNPC = new CNPC(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 	m_GameObjects.push_back(pNPC);
 
@@ -621,7 +621,7 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 //
 #pragma region InventoryUIandShop
 
-//	// ì¸ë²¤í† ë¦¬ UI ë° ìƒì 
+//	// ÀÎº¥Åä¸® UI ¹× »óÁ¡
 //	m_Shaders.clear();
 //	m_Shaders.resize(10);
 //
@@ -708,7 +708,7 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 //	pInventoryShader->SetTexture(pTexture);
 //	m_Shaders[4] = pInventoryShader;
 //
-//	//ìƒì 
+//	//»óÁ¡
 //	CShopShader* pShopShader = new CShopShader(1);
 //	pShopShader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 //	pShopShader->BuildObjects(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, NULL, NULL);
@@ -723,7 +723,7 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 //
 //	m_Shaders[5] = pShopShader;
 //
-//	//ìƒì  4ì¹¸
+//	//»óÁ¡ 4Ä­
 //	CTextureToScreenShader* pShopSpace1Shader = new CTextureToScreenShader(1);
 //	pShopSpace1Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 //	CScreenRectMeshTextured* pShopMesh1 = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, -0.825f, 0.08f, 0.625f, 0.09f);
@@ -805,11 +805,11 @@ void CScene::ReleaseObjects()
 	}
 	m_vPlayers.clear();
 
-	// m_UITexturesì— ë‹´ê¸´ í…ìŠ¤ì²˜ë“¤ì€ BuildSimpleUI()ì—ì„œ pShader->SetTexture(pTexture)ë¡œ
-	// ì´ë¯¸ ê° ì…°ì´ë”ê°€ ì°¸ì¡°ì¹´ìš´íŠ¸(AddRef/Release)ë¡œ ì†Œìœ í•˜ê³  ìˆë‹¤.
-	// ë°”ë¡œ ìœ„ m_Shaders ë£¨í”„ì—ì„œ shader->Release() -> ~CTextureToScreenShader()ê°€
-	// m_pTexture->Release()ë¥¼ í˜¸ì¶œí•˜ë©´ì„œ ì°¸ì¡°ì¹´ìš´íŠ¸ê°€ 0ì´ ë˜ì–´ ì´ë¯¸ deleteëœ ìƒíƒœì´ë¯€ë¡œ,
-	// ì—¬ê¸°ì„œ ë˜ deleteí•˜ë©´ ì´ì¤‘ í•´ì œ(double free)ë¡œ í™ì´ ì†ìƒëœë‹¤. í¬ì¸í„° ì •ë¦¬ë§Œ í•œë‹¤.
+	// m_UITextures¿¡ ´ã±ä ÅØ½ºÃ³µéÀº BuildSimpleUI()¿¡¼­ pShader->SetTexture(pTexture)·Î
+	// ÀÌ¹Ì °¢ ¼ÎÀÌ´õ°¡ ÂüÁ¶Ä«¿îÆ®(AddRef/Release)·Î ¼ÒÀ¯ÇÏ°í ÀÖ´Ù.
+	// ¹Ù·Î À§ m_Shaders ·çÇÁ¿¡¼­ shader->Release() -> ~CTextureToScreenShader()°¡
+	// m_pTexture->Release()¸¦ È£ÃâÇÏ¸é¼­ ÂüÁ¶Ä«¿îÆ®°¡ 0ÀÌ µÇ¾î ÀÌ¹Ì deleteµÈ »óÅÂÀÌ¹Ç·Î,
+	// ¿©±â¼­ ¶Ç deleteÇÏ¸é ÀÌÁß ÇØÁ¦(double free)·Î ÈüÀÌ ¼Õ»óµÈ´Ù. Æ÷ÀÎÅÍ Á¤¸®¸¸ ÇÑ´Ù.
 	m_UITextures.clear();
 
 	ReleaseShaderVariables();
@@ -1079,7 +1079,7 @@ ID3D12RootSignature* CScene::CreateGraphicsRootSignature(ID3D12Device* pd3dDevic
 
 void CScene::CreateShaderVariables(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
 {
-	UINT ncbElementBytes = ((sizeof(LIGHTS) + 255) & ~255); //256ì˜ ë°°ìˆ˜
+	UINT ncbElementBytes = ((sizeof(LIGHTS) + 255) & ~255); //256ÀÇ ¹è¼ö
 	m_pd3dcbLights = ::CreateBufferResource(pd3dDevice, pd3dCommandList, NULL, ncbElementBytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, NULL);
 
 	m_pd3dcbLights->Map(0, NULL, (void**)&m_pcbMappedLights);
@@ -1197,11 +1197,11 @@ void CScene::CreateShadowResources(ID3D12Device* pd3dDevice, ID3D12GraphicsComma
 
 	HRESULT hr = pd3dDevice->CreateCommittedResource(
 		&heapProp, D3D12_HEAP_FLAG_NONE, &desc,
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, // ì‹œì‘ì€ SRV ìƒíƒœë¡œ ë‘ê³ , íŒ¨ìŠ¤ ì‹œì‘ ë•Œ DEPTH_WRITEë¡œ ë°°ë¦¬ì–´
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, // ½ÃÀÛÀº SRV »óÅÂ·Î µÎ°í, ÆĞ½º ½ÃÀÛ ¶§ DEPTH_WRITE·Î ¹è¸®¾î
 		&clearValue,
 		__uuidof(ID3D12Resource), (void**)&m_pd3dShadowMap);
 
-	// 2) DSV Heap (1ê°œ)
+	// 2) DSV Heap (1°³)
 	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
 	dsvHeapDesc.NumDescriptors = 1;
 	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
@@ -1216,7 +1216,7 @@ void CScene::CreateShadowResources(ID3D12Device* pd3dDevice, ID3D12GraphicsComma
 	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 	pd3dDevice->CreateDepthStencilView(m_pd3dShadowMap, &dsvDesc, m_d3dShadowDSV);
 
-	// 3) SRV ìƒì„± (CBV/SRV heapì˜ ê³ ì • indexì— ìƒì„±)
+	// 3) SRV »ı¼º (CBV/SRV heapÀÇ °íÁ¤ index¿¡ »ı¼º)
 	D3D12_CPU_DESCRIPTOR_HANDLE srvCPU = m_d3dSrvCPUDescriptorStartHandle;
 	D3D12_GPU_DESCRIPTOR_HANDLE srvGPU = m_d3dSrvGPUDescriptorStartHandle;
 
@@ -1244,7 +1244,7 @@ void CScene::CreateShadowResources(ID3D12Device* pd3dDevice, ID3D12GraphicsComma
 	m_ShadowViewport = { 0.0f, 0.0f, (float)SHADOW_MAP_SIZE, (float)SHADOW_MAP_SIZE, 0.0f, 1.0f };
 	m_ShadowScissor = { 0, 0, (LONG)SHADOW_MAP_SIZE, (LONG)SHADOW_MAP_SIZE };
 
-	// 6) Shadow PSO ìƒì„±
+	// 6) Shadow PSO »ı¼º
 	m_pShadowShader = new CShadowShader();
 	m_pShadowShader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 
@@ -1254,12 +1254,12 @@ void CScene::CreateShadowResources(ID3D12Device* pd3dDevice, ID3D12GraphicsComma
 
 void CScene::ShowMissionText(const std::wstring& text)
 {
-	// CFontMeshëŠ” x, yë¥¼ ê·¸ëŒ€ë¡œ ì •ì (NDC, clip-space) ì¢Œí‘œë¡œ ì‚¬ìš©í•œë‹¤.
-	// mission.dds íŒ¨ë„ì€ BuildSimpleUIì—ì„œ {left=0.35, top=0.5, width=0.25, height=0.5}
-	// (0~1, ì¢Œìƒë‹¨ ê¸°ì¤€) ìœ¼ë¡œ ë°°ì¹˜ë˜ëŠ”ë°, ì´ë¥¼ NDCë¡œ í™˜ì‚°í•˜ë©´
+	// CFontMesh´Â x, y¸¦ ±×´ë·Î Á¤Á¡(NDC, clip-space) ÁÂÇ¥·Î »ç¿ëÇÑ´Ù.
+	// mission.dds ÆĞ³ÎÀº BuildSimpleUI¿¡¼­ {left=0.35, top=0.5, width=0.25, height=0.5}
+	// (0~1, ÁÂ»ó´Ü ±âÁØ) À¸·Î ¹èÄ¡µÇ´Âµ¥, ÀÌ¸¦ NDC·Î È¯»êÇÏ¸é
 	//   x: left*2-1 ~ (left+width)*2-1  =>  -0.3 ~ 0.2
 	//   y: 1-top*2  ~ 1-(top+height)*2  =>   0.0 ~ -1.0
-	// ì´ ë²”ìœ„ ì•ˆ(íŒ¨ë„ ì¢Œì¸¡ ìƒë‹¨ ë¶€ê·¼)ì— í…ìŠ¤íŠ¸ê°€ ì°íˆë„ë¡ ì¢Œí‘œë¥¼ ì¡ëŠ”ë‹¤.
+	// ÀÌ ¹üÀ§ ¾È(ÆĞ³Î ÁÂÃø »ó´Ü ºÎ±Ù)¿¡ ÅØ½ºÆ®°¡ ÂïÈ÷µµ·Ï ÁÂÇ¥¸¦ Àâ´Â´Ù.
 	constexpr float MISSION_TEXT_X = -0.9f;
 	constexpr float MISSION_TEXT_Y = -0.5f;
 
@@ -1268,13 +1268,13 @@ void CScene::ShowMissionText(const std::wstring& text)
 		m_pMissionText = new CText(Device, Commandlist, m_pd3dGraphicsRootSignature,
 			text, MISSION_TEXT_X, MISSION_TEXT_Y);
 
-		// ì¿¨íƒ€ì„ í…ìŠ¤íŠ¸ì™€ ë™ì¼í•˜ê²Œ m_GameObjects ë Œë” ë£¨í”„ë¥¼ íƒ€ë„ë¡ ë“±ë¡í•œë‹¤.
-		// (RenderImplì—ì„œ ë³„ë„ë¡œ ìˆ˜ë™ Render() í˜¸ì¶œí•˜ë˜ ë°©ì‹ì€ ì œê±°)
+		// ÄğÅ¸ÀÓ ÅØ½ºÆ®¿Í µ¿ÀÏÇÏ°Ô m_GameObjects ·»´õ ·çÇÁ¸¦ Å¸µµ·Ï µî·ÏÇÑ´Ù.
+		// (RenderImpl¿¡¼­ º°µµ·Î ¼öµ¿ Render() È£ÃâÇÏ´ø ¹æ½ÄÀº Á¦°Å)
 		m_GameObjects.push_back(m_pMissionText);
 	}
 	else
 	{
-		// UpdateText(text, fixText) í˜•íƒœë¼ fixTextëŠ” ë¹ˆ ë¬¸ìì—´ë¡œ
+		// UpdateText(text, fixText) ÇüÅÂ¶ó fixText´Â ºó ¹®ÀÚ¿­·Î
 		m_pMissionText->UpdateText(text, L"");
 	}
 
@@ -1336,7 +1336,7 @@ float CScene::CalcMaxCooldown(int skillIndex) const
 {
 	if (!m_pPlayer) return SKILL_BASE_CD[skillIndex];
 	int lv = m_pPlayer->level[skillIndex]; // 0-based
-	// ë ˆë²¨ë‹¹ 5% ê°ì†Œ, ìµœëŒ€ 70% ê°ì†Œ(lv 14)
+	// ·¹º§´ç 5% °¨¼Ò, ÃÖ´ë 70% °¨¼Ò(lv 14)
 	float factor = 1.0f - std::min(lv * 0.05f, 0.70f);
 	return SKILL_BASE_CD[skillIndex] * factor;
 }
@@ -1351,8 +1351,8 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 	};
 
 	POINT pt;
-	GetCursorPos(&pt);        // screen ì¢Œí‘œ
-	ScreenToClient(hWnd, &pt); // client ì¢Œí‘œë¡œ ë³€í™˜
+	GetCursorPos(&pt);        // screen ÁÂÇ¥
+	ScreenToClient(hWnd, &pt); // client ÁÂÇ¥·Î º¯È¯
 
 	auto* p = dynamic_cast<CTerrainPlayer*>(m_pPlayer);
 
@@ -1408,10 +1408,10 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 
 				SkillSlot slot = static_cast<SkillSlot>(idx);
 				send_skill_upgrade(slot);
-				cout << "[ìŠ¤í‚¬ê°•í™” ì„±ê³µ] slot=" << idx << " ìƒˆë ˆë²¨=" << p->level[idx] << "\n";
+				cout << "[½ºÅ³°­È­ ¼º°ø] slot=" << idx << " »õ·¹º§=" << p->level[idx] << "\n";
 			}
 			else {
-				cout << "[ìŠ¤í‚¬ê°•í™” ì‹¤íŒ¨] slot=" << idx << "\n";
+				cout << "[½ºÅ³°­È­ ½ÇÆĞ] slot=" << idx << "\n";
 			}
 
 		}
@@ -1427,14 +1427,14 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 
 				if (!pHand) break;
 
-				// ìœ„ì¹˜/ë°©í–¥ ë³€ìˆ˜ë¡œ ë¨¼ì € ë°›ì•„ë‘ê¸°
+				// À§Ä¡/¹æÇâ º¯¼ö·Î ¸ÕÀú ¹Ş¾ÆµÎ±â
 				XMFLOAT3 firePos = pHand->GetPosition();
 				XMFLOAT3 fireLook = p->GetLook();
 
-				// ë¡œì»¬ ì´í™íŠ¸ ì‹¤í–‰
+				// ·ÎÄÃ ÀÌÆåÆ® ½ÇÇà
 				m_pFireballSystem->Emit(firePos, fireLook, 20.0f);
 
-				std::cout << "[SKILL] íŒŒì´ì–´ë³¼ ì†¡ì‹  | pos=("
+				std::cout << "[SKILL] ÆÄÀÌ¾îº¼ ¼Û½Å | pos=("
 					<< firePos.x << ", " << firePos.y << ", " << firePos.z
 					<< ") look=(" << fireLook.x << ", " << fireLook.y << ", " << fireLook.z << ")\n";
 
@@ -1457,7 +1457,7 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 
 				m_pWeaponThrowSystem->Emit(throwPos, throwDir, 30.0f, pWeapon);
 
-				std::cout << "[SKILL] ë„ì  ë¬´ê¸° ë˜ì§€ê¸° | pos=("
+				std::cout << "[SKILL] µµÀû ¹«±â ´øÁö±â | pos=("
 					<< throwPos.x << ", " << throwPos.y << ", " << throwPos.z
 					<< ") dir=(" << throwDir.x << ", " << throwDir.y << ", " << throwDir.z << ")\n";
 
@@ -1470,12 +1470,12 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 				int randomIndex = (rand() % 2) + 1;
 				std::string soundName = "knight_rk_" + std::to_string(randomIndex);
 				CSoundManager::GetInstance()->PlaySFX(soundName);
-				std::cout << "[SKILL] ê¸°ì‚¬ ë°©íŒ¨ë§‰ê¸° ì‹œì‘\n";
+				std::cout << "[SKILL] ±â»ç ¹æÆĞ¸·±â ½ÃÀÛ\n";
 
 				send_shield_block_packet(true);
 			}
 			else {
-				// ê¸°ì‚¬ ë°©íŒ¨ë§‰ê¸°ì´ë¯€ë¡œ ëª¬ìŠ¤í„° ê³µê²© X ì²˜ë¦¬
+				// ±â»ç ¹æÆĞ¸·±âÀÌ¹Ç·Î ¸ó½ºÅÍ °ø°İ X Ã³¸®
 			}
 			TriggerSkillCooldown(0);
 		}
@@ -1485,7 +1485,7 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 	{
 		if (m_pModel == m_pKnightModel)
 		{
-			std::cout << "[SKILL] ê¸°ì‚¬ ë°©íŒ¨ë§‰ê¸° ì¢…ë£Œ\n";
+			std::cout << "[SKILL] ±â»ç ¹æÆĞ¸·±â Á¾·á\n";
 			send_shield_block_packet(false);
 		}
 	}
@@ -1506,14 +1506,14 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 
 			for (auto* obj : m_GameObjects)
 			{
-				// ë³´ìŠ¤ë§µ ê°€ê¸°ìœ„í•œ ì‘ì—…
+				// º¸½º¸Ê °¡±âÀ§ÇÑ ÀÛ¾÷
 				if (auto* pPrompt = dynamic_cast<CInteractPrompt*>(obj))
 					if (pPrompt->IsInRange() && pPlayer) {
 						pPlayer->SetPosition(XMFLOAT3(219, 5, 18));
 						m_pBoss->ToggleHpbarVisible();
 					}
 
-				// NPCìœ„ì¹˜ì™€ í”Œë ˆì´ì–´ ìœ„ì¹˜ê°€ ê°€ê¹Œìš°ë©´ ë¯¸ì…˜ ìš”ì²­
+				// NPCÀ§Ä¡¿Í ÇÃ·¹ÀÌ¾î À§Ä¡°¡ °¡±î¿ì¸é ¹Ì¼Ç ¿äÃ»
 				if (auto* pNPC = dynamic_cast<CNPC*>(obj))
 				{
 					if (!pPlayer) continue;
@@ -1522,15 +1522,15 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 					XMFLOAT3 playerPos = pPlayer->GetPosition();
 					float distance = sqrt(pow(npcPos.x - playerPos.x, 2) + pow(npcPos.y - playerPos.y, 2) + pow(npcPos.z - playerPos.z, 2));
 					if (distance < 5.0f) {
-						// ì„œë²„ë¡œ ìƒí˜¸ì‘ìš© ìš”ì²­ë§Œ ë³´ëƒ„. ì‹¤ì œ í…ìŠ¤íŠ¸ í‘œì‹œëŠ”
-						// Network.cppì˜ SC_P_NPC_MISSION ìˆ˜ì‹  í•¸ë“¤ëŸ¬ì—ì„œ ShowMissionText() í˜¸ì¶œë¡œ ì²˜ë¦¬ë¨.
+						// ¼­¹ö·Î »óÈ£ÀÛ¿ë ¿äÃ»¸¸ º¸³¿. ½ÇÁ¦ ÅØ½ºÆ® Ç¥½Ã´Â
+						// Network.cppÀÇ SC_P_NPC_MISSION ¼ö½Å ÇÚµé·¯¿¡¼­ ShowMissionText() È£Ãâ·Î Ã³¸®µÊ.
 						send_npc_interact_packet(0);
 						bInteractedNPC = true;
 					}
 				}
 			}
 
-			// NPCì™€ ìƒí˜¸ì‘ìš©í•œ í”„ë ˆì„ì—ëŠ” ë³´ìŠ¤ ì²´ë ¥ë°” í† ê¸€(ë””ë²„ê·¸ìš©)ì„ ê±´ë„ˆëœ€
+			// NPC¿Í »óÈ£ÀÛ¿ëÇÑ ÇÁ·¹ÀÓ¿¡´Â º¸½º Ã¼·Â¹Ù Åä±Û(µğ¹ö±×¿ë)À» °Ç³Ê¶Ü
 			if (!bInteractedNPC && m_pBoss)
 				m_pBoss->ToggleHpbarVisible();
 			break;
@@ -1542,7 +1542,7 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 		case 'Q':
 			if (!IsSkillOnCooldown(1)) {
 				pPlayer->m_currentAnim = AnimationState::SKILL2;
-				// ë²•ì‚¬ otherplayer ê³µê²©ë ¥ ëŠ˜ë¦¬ê¸°
+				// ¹ı»ç otherplayer °ø°İ·Â ´Ã¸®±â
 				if (m_pModel == m_pWizardModel) {
 
 					send_buff_atk_packet();
@@ -1553,13 +1553,13 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 						int slot = kv.second;
 						OtherPlayer* otherPlayer = m_ppOtherPlayers[slot];
 						if (!otherPlayer) continue;
-						otherPlayer->damage += (pPlayer->level[2]); // ë‹¤ë¥¸ í”Œë ˆì´ì–´ ê³µê²©ë ¥ ì¦ê°€
+						otherPlayer->damage += (pPlayer->level[2]); // ´Ù¸¥ ÇÃ·¹ÀÌ¾î °ø°İ·Â Áõ°¡
 						m_pBeamSystem->Emit(otherPlayer->GetPosition(), pPlayer->GetPosition());
 					}
 
 					CSoundManager::GetInstance()->PlaySFX("wizard_q");
 				}
-				// ì´ë¶€ë¶„ ê¸°ì‚¬ q ìŠ¤í‚¬
+				// ÀÌºÎºĞ ±â»ç q ½ºÅ³
 				else if (m_pModel == m_pKnightModel)
 				{
 					XMFLOAT3 pos = pPlayer->GetPosition();
@@ -1596,14 +1596,14 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 				else if (m_pModel == m_pKnightModel) {
 					CSoundManager::GetInstance()->PlaySFX("knight_e");
 
-					send_taunt_packet(pPlayer->level[2] * 5); //ë„ë°œë²”ìœ„ëŠ” í”Œë ˆì´ì–´ ë ˆë²¨ì— ë”°ë¼ ì¦ê°€
-					// ê¸°ì‚¬ ë„ë°œ	
-					// ëª¬ìŠ¤í„°ë“¤ ê³µê²© ë©ˆì¶”ê³  lookat = ê¸°ì‚¬ ìœ„ì¹˜ë¡œ
-					// m_pLevel[2]ì˜ ê°’ì— ë”°ë¼ ë„ë°œ ì§€ì†ì‹œê°„ ì¦ê°€
+					send_taunt_packet(pPlayer->level[2] * 5); //µµ¹ß¹üÀ§´Â ÇÃ·¹ÀÌ¾î ·¹º§¿¡ µû¶ó Áõ°¡
+					// ±â»ç µµ¹ß	
+					// ¸ó½ºÅÍµé °ø°İ ¸ØÃß°í lookat = ±â»ç À§Ä¡·Î
+					// m_pLevel[2]ÀÇ °ª¿¡ µû¶ó µµ¹ß Áö¼Ó½Ã°£ Áõ°¡
 				}
 				else if (m_pModel == m_pThiefModel) {
-					const float SEARCH_RANGE = pPlayer->level[2] * 5;  // íƒìƒ‰ ë²”ìœ„
-					const float BEHIND_OFFSET = 2.0f;  // ëª¬ìŠ¤í„° ë’¤ ì–¼ë§ˆë‚˜ ë©€ë¦¬
+					const float SEARCH_RANGE = pPlayer->level[2] * 5;  // Å½»ö ¹üÀ§
+					const float BEHIND_OFFSET = 2.0f;  // ¸ó½ºÅÍ µÚ ¾ó¸¶³ª ¸Ö¸®
 
 					XMFLOAT3 playerPos = pPlayer->GetPosition();
 					XMVECTOR vPlayer = XMLoadFloat3(&playerPos);
@@ -1626,9 +1626,9 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 
 					if (pNearest) {
 						XMFLOAT3 monPos = pNearest->GetPosition();
-						XMFLOAT3 monLook = pNearest->GetLook();  // ëª¬ìŠ¤í„°ê°€ ë°”ë¼ë³´ëŠ” ë°©í–¥
+						XMFLOAT3 monLook = pNearest->GetLook();  // ¸ó½ºÅÍ°¡ ¹Ù¶óº¸´Â ¹æÇâ
 
-						// ëª¬ìŠ¤í„° ë’¤ìª½ = ëª¬ìŠ¤í„° ìœ„ì¹˜ - (ëª¬ìŠ¤í„° look * offset)
+						// ¸ó½ºÅÍ µÚÂÊ = ¸ó½ºÅÍ À§Ä¡ - (¸ó½ºÅÍ look * offset)
 						XMVECTOR vMonPos = XMLoadFloat3(&monPos);
 						XMVECTOR vMonLook = XMLoadFloat3(&monLook);
 						vMonLook = XMVector3Normalize(vMonLook);
@@ -1637,20 +1637,20 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 
 						XMFLOAT3 teleportPos;
 						XMStoreFloat3(&teleportPos, vBehind);
-						teleportPos.y = playerPos.y;  // yì¶•ì€ í”Œë ˆì´ì–´ ê·¸ëŒ€ë¡œ ìœ ì§€
+						teleportPos.y = playerPos.y;  // yÃàÀº ÇÃ·¹ÀÌ¾î ±×´ë·Î À¯Áö
 
-						// 2) í”Œë ˆì´ì–´ ìœ„ì¹˜ ì´ë™
+						// 2) ÇÃ·¹ÀÌ¾î À§Ä¡ ÀÌµ¿
 						pPlayer->SetPosition(teleportPos);
 
-						// 3) í”Œë ˆì´ì–´ê°€ ëª¬ìŠ¤í„°ë¥¼ ë°”ë¼ë³´ë„ë¡ íšŒì „
-						//    ë°©í–¥: teleportPos -> monPos
+						// 3) ÇÃ·¹ÀÌ¾î°¡ ¸ó½ºÅÍ¸¦ ¹Ù¶óº¸µµ·Ï È¸Àü
+						//    ¹æÇâ: teleportPos -> monPos
 						XMVECTOR vDir = XMVectorSubtract(XMLoadFloat3(&monPos), vBehind);
 						vDir = XMVector3Normalize(vDir);
 						XMFLOAT3 faceDir;
 						XMStoreFloat3(&faceDir, vDir);
 
-						// yì¶• íšŒì „ê° ê³„ì‚° í›„ í”Œë ˆì´ì–´ ë°©í–¥ ì„¤ì •
-						float yaw = atan2f(faceDir.x, faceDir.z);  // XZ í‰ë©´ ê°ë„
+						// yÃà È¸Àü°¢ °è»ê ÈÄ ÇÃ·¹ÀÌ¾î ¹æÇâ ¼³Á¤
+						float yaw = atan2f(faceDir.x, faceDir.z);  // XZ Æò¸é °¢µµ
 						pPlayer->Rotate(0.0f, XMConvertToDegrees(yaw), 0.0f);
 					}
 					CSoundManager::GetInstance()->PlaySFX("rogue_q");
@@ -1673,9 +1673,27 @@ bool CScene::ProcessInput(UCHAR* pKeysBuffer)
 
 void CScene::AnimateObjects(float fTimeElapsed)
 {
-	// ë„¤íŠ¸ì›Œí¬ ìŠ¤ë ˆë“œê°€ íì— ìŒ“ì•„ë‘” ë¯¸ì…˜ í…ìŠ¤íŠ¸ë¥¼ ë©”ì¸ ìŠ¤ë ˆë“œì—ì„œ ì•ˆì „í•˜ê²Œ ë°˜ì˜.
-	// (ShowMissionText ë‚´ë¶€ì—ì„œ D3D12 ë¦¬ì†ŒìŠ¤ë¥¼ ë§Œë“¤ê³  m_GameObjectsë¥¼ ê±´ë“œë¦¬ë¯€ë¡œ
-	//  ë°˜ë“œì‹œ ì´ ë£¨í”„ë³´ë‹¤ ë¨¼ì €, ê·¸ë¦¬ê³  ë©”ì¸ ìŠ¤ë ˆë“œì—ì„œë§Œ í˜¸ì¶œë˜ì–´ì•¼ í•¨)
+	{
+		std::vector<PendingBossDeath> pendingDeaths;
+		{
+			std::lock_guard<std::mutex> lock(g_pendingBossMutex);
+			if (!g_pendingBossDeaths.empty()) pendingDeaths.swap(g_pendingBossDeaths);
+		}
+		for (const auto& death : pendingDeaths)
+		{
+			if (!m_pBoss || death.bossID != m_pBoss->GetMonsterID()) continue;
+			if (m_pBoss->GetState() == BossState::Death) continue;
+			m_pBoss->SetHP(0.0f);
+			m_pBoss->SetHpbarVisible(false);
+			m_pBoss->TransitionTo(BossState::Death);
+			CSoundManager::GetInstance()->PlaySFX("boss_die_1");
+			CSoundManager::GetInstance()->PlayBGM("bgm_winner");
+			std::cout << "[BOSS] Death applied on main thread, killer=" << death.killerID << "\n";
+		}
+	}
+	// ³×Æ®¿öÅ© ½º·¹µå°¡ Å¥¿¡ ½×¾ÆµĞ ¹Ì¼Ç ÅØ½ºÆ®¸¦ ¸ŞÀÎ ½º·¹µå¿¡¼­ ¾ÈÀüÇÏ°Ô ¹İ¿µ.
+	// (ShowMissionText ³»ºÎ¿¡¼­ D3D12 ¸®¼Ò½º¸¦ ¸¸µé°í m_GameObjects¸¦ °Çµå¸®¹Ç·Î
+	//  ¹İµå½Ã ÀÌ ·çÇÁº¸´Ù ¸ÕÀú, ±×¸®°í ¸ŞÀÎ ½º·¹µå¿¡¼­¸¸ È£ÃâµÇ¾î¾ß ÇÔ)
 	{
 		std::vector<PendingMissionText> pending;
 		{
@@ -1715,12 +1733,12 @@ void CScene::AnimateObjects(float fTimeElapsed)
 
 	for (int i = 0; i < SKILL_COUNT; ++i)
 	{
-		// ë ˆë²¨ì´ ë°”ë€Œë©´ ìµœëŒ€ ì¿¨íƒ€ì„ ì¬ê³„ì‚°
+		// ·¹º§ÀÌ ¹Ù²î¸é ÃÖ´ë ÄğÅ¸ÀÓ Àç°è»ê
 		float newMax = CalcMaxCooldown(i);
 		if (std::fabsf(newMax - m_fSkillMaxCooldown[i]) > 0.01f)
 			m_fSkillMaxCooldown[i] = newMax;
 
-		// ë‚¨ì€ ì¿¨íƒ€ì„ ì°¨ê°
+		// ³²Àº ÄğÅ¸ÀÓ Â÷°¨
 		if (m_fSkillCooldown[i] > 0.0f)
 		{
 			m_fSkillCooldown[i] -= fTimeElapsed;
@@ -1732,14 +1750,14 @@ void CScene::AnimateObjects(float fTimeElapsed)
 
 	if (m_pBoss) { m_pBoss->Animate(fTimeElapsed); m_pBoss->Update(fTimeElapsed); }
 
-	// ë³´ìŠ¤ê°€ ì£½ìœ¼ë©´ 3ì´ˆê°„ ëŒ€ê¸°í–ˆë‹¤ê°€ ì—”ë”© ì”¬ìœ¼ë¡œ ì „í™˜í•œë‹¤.
+	// º¸½º°¡ Á×À¸¸é 3ÃÊ°£ ´ë±âÇß´Ù°¡ ¿£µù ¾ÀÀ¸·Î ÀüÈ¯ÇÑ´Ù.
 	if (m_pBoss && m_pBoss->IsDead() && !m_bEndSceneRequested)
 	{
 		m_fBossDeathTimer += fTimeElapsed;
 		if (m_fBossDeathTimer >= BOSS_DEATH_TO_END_DELAY)
 		{
-			m_bEndSceneRequested = true; // ì¤‘ë³µ ìš”ì²­ ë°©ì§€
-			gGameFramework.SetClearTime(m_fElapsedTime); // EndSceneì— í‘œì‹œí•  í´ë¦¬ì–´ íƒ€ì„ ì €ì¥
+			m_bEndSceneRequested = true; // Áßº¹ ¿äÃ» ¹æÁö
+			gGameFramework.SetClearTime(m_fElapsedTime); // EndScene¿¡ Ç¥½ÃÇÒ Å¬¸®¾î Å¸ÀÓ ÀúÀå
 			gGameFramework.RequestMoveToScene(3); // CEndScene
 		}
 	}
@@ -1761,7 +1779,7 @@ void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera
 
 void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv)
 {
-	// í˜„ì¬ í”„ë ˆì„ RT ë³´ê´€
+	// ÇöÀç ÇÁ·¹ÀÓ RT º¸°ü
 	m_CurrentRTV = rtv;
 	m_CurrentDSV = dsv;
 	m_bHasCurrentRT = true;
@@ -1791,7 +1809,7 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 	D3D12_GPU_VIRTUAL_ADDRESS d3dcbLightsGpuVirtualAddress = m_pd3dcbLights->GetGPUVirtualAddress();
 	pd3dCommandList->SetGraphicsRootConstantBufferView(2, d3dcbLightsGpuVirtualAddress);
 
-	// Shadow ì ìš©ì„ ìœ ì§€í•œë‹¤ë©´(ë©”ì¸íŒ¨ìŠ¤)
+	// Shadow Àû¿ëÀ» À¯ÁöÇÑ´Ù¸é(¸ŞÀÎÆĞ½º)
 	if (m_bEnableShadow && m_pd3dcbShadow) {
 		pd3dCommandList->SetGraphicsRootDescriptorTable(17, m_d3dShadowSRV);
 		pd3dCommandList->SetGraphicsRootConstantBufferView(18, m_pd3dcbShadow->GetGPUVirtualAddress());
@@ -1895,7 +1913,7 @@ void CScene::RenderShadowPass(ID3D12GraphicsCommandList* pd3dCommandList)
 	auto va = m_pd3dcbShadow->GetGPUVirtualAddress();
 	pd3dCommandList->SetGraphicsRootConstantBufferView(18, va);
 
-	// Monsters (ìŠ¤í‚¤ë‹ì´ë¼ê³  ê°€ì •)
+	// Monsters (½ºÅ°´×ÀÌ¶ó°í °¡Á¤)
 	for (auto* monster : m_Monsters)
 	{
 		if (!monster) continue;
@@ -1911,7 +1929,7 @@ void CScene::RenderShadowPass(ID3D12GraphicsCommandList* pd3dCommandList)
 		m_pBoss->RenderShadow(pd3dCommandList, m_pShadowShader, m_pSkinnedShadowShader);
 	}
 
-	// Player (ìŠ¤í‚¤ë‹ì´ë¼ê³  ê°€ì •)
+	// Player (½ºÅ°´×ÀÌ¶ó°í °¡Á¤)
 	if (m_pPlayer)
 	{
 /*		m_pSkinnedShadowShader->OnPrepareRender(pd3dCommandList);
@@ -2086,7 +2104,7 @@ void CStartScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM
 				char serverIP[16];
 				strcpy(serverIP, m_inputIP.c_str());
 				std::cout << "Connecting to: " << serverIP << std::endl;
-				InitializeNetwork(serverIP); // server IP ì „ë‹¬
+				InitializeNetwork(serverIP); // server IP Àü´Ş
 				gGameFramework.MoveToNextScene(1);
 			}
 			else if (wParam == VK_BACK && !m_inputIP.empty()) {
@@ -2182,7 +2200,7 @@ void CSelectScene::AnimateObjects(float fTimeElapsed)
 	if (m_SceneId != -1 && m_bLoadingRenderedOnce)
 	{
 		int next = m_SceneId;
-		m_SceneId = -1;                 // ì¤‘ë³µ ì „í™˜ ë°©ì§€(ê¶Œì¥)
+		m_SceneId = -1;                 // Áßº¹ ÀüÈ¯ ¹æÁö(±ÇÀå)
 		gGameFramework.RequestMoveToScene(next);
 	}
 }
@@ -2197,8 +2215,8 @@ void CSelectScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM w
 	};
 
 	POINT pt;
-	GetCursorPos(&pt);        // screen ì¢Œí‘œ
-	ScreenToClient(hWnd, &pt); // client ì¢Œí‘œë¡œ ë³€í™˜
+	GetCursorPos(&pt);        // screen ÁÂÇ¥
+	ScreenToClient(hWnd, &pt); // client ÁÂÇ¥·Î º¯È¯
 
 	switch (nMessageID)
 	{
@@ -2260,8 +2278,8 @@ void CEndScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList
 
 	m_Shaders[0] = pTextureToScreenShader;
 
-	// VICTORY íƒ€ì´í‹€ ì•„ë˜ì— ìˆë˜ ê³ ì • ìë§‰(ì´ë¯¸ì§€ì— êµ¬ìš´ í•œê¸€ ìë§‰, í°íŠ¸ ë¯¸ì§€ì›ìœ¼ë¡œ ë„¤ëª¨ ê¹¨ì§) ëŒ€ì‹ 
-	// í”Œë ˆì´ì–´ ID / í´ë¦¬ì–´ íƒ€ì„ì„ CTextë¡œ í‘œì‹œí•œë‹¤. (ë‹¤ë¥¸ ì”¬ì—ì„œ ì“°ëŠ” CTextì™€ ë™ì¼í•œ ë°©ì‹)
+	// VICTORY Å¸ÀÌÆ² ¾Æ·¡¿¡ ÀÖ´ø °íÁ¤ ÀÚ¸·(ÀÌ¹ÌÁö¿¡ ±¸¿î ÇÑ±Û ÀÚ¸·, ÆùÆ® ¹ÌÁö¿øÀ¸·Î ³×¸ğ ±úÁü) ´ë½Å
+	// ÇÃ·¹ÀÌ¾î ID / Å¬¸®¾î Å¸ÀÓÀ» CText·Î Ç¥½ÃÇÑ´Ù. (´Ù¸¥ ¾À¿¡¼­ ¾²´Â CText¿Í µ¿ÀÏÇÑ ¹æ½Ä)
 	std::wstring wUserName(user_name.begin(), user_name.end());
 	std::wstring idLine = L"ID: " + wUserName;
 
@@ -2284,12 +2302,12 @@ void CEndScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList
 
 void CEndScene::UpdateUI(ID3D12GraphicsCommandList* pd3dCommandList)
 {
-	// ê¸°ë³¸ CScene::UpdateUI()ëŠ” m_GameObjectsì— ìˆëŠ” CTextë¥¼ ì „ë¶€
-	// "LV. " + m_pPlayer->level[...] ë¡œ ë®ì–´ì“´ë‹¤. ì´ê±´ CTerrainPlayer(ì‹¤ì œ ê²Œì„ í”Œë ˆì´ ì”¬)ì˜
-	// ë ˆë²¨ í‘œì‹œ í…ìŠ¤íŠ¸ë¥¼ ìœ„í•œ ë¡œì§ì¸ë°, EndSceneì€ ê·¸ëŸ° í…ìŠ¤íŠ¸ê°€ ì—†ê³  ëŒ€ì‹ 
-	// m_pIDText/m_pTimeTextë¥¼ ê°–ê³  ìˆì–´ì„œ, ê¸°ë³¸ ë™ì‘ì„ ê·¸ëŒ€ë¡œ ë¬¼ë ¤ë°›ìœ¼ë©´
-	// ì´ ë‘˜ì´ ë§¤ í”„ë ˆì„ "LV. 1"(EndSceneì˜ CPlayerëŠ” ë ˆë²¨ì„ ì„¸íŒ…í•œ ì ì´ ì—†ì–´ ê¸°ë³¸ê°’ 1)ë¡œ
-	// ë®ì–´ì¨ì ¸ ë²„ë¦°ë‹¤. EndSceneì—ì„œëŠ” ì´ ë¡œì§ ìì²´ê°€ í•„ìš” ì—†ìœ¼ë¯€ë¡œ ì•„ë¬´ê²ƒë„ í•˜ì§€ ì•ŠëŠ”ë‹¤.
+	// ±âº» CScene::UpdateUI()´Â m_GameObjects¿¡ ÀÖ´Â CText¸¦ ÀüºÎ
+	// "LV. " + m_pPlayer->level[...] ·Î µ¤¾î¾´´Ù. ÀÌ°Ç CTerrainPlayer(½ÇÁ¦ °ÔÀÓ ÇÃ·¹ÀÌ ¾À)ÀÇ
+	// ·¹º§ Ç¥½Ã ÅØ½ºÆ®¸¦ À§ÇÑ ·ÎÁ÷ÀÎµ¥, EndSceneÀº ±×·± ÅØ½ºÆ®°¡ ¾ø°í ´ë½Å
+	// m_pIDText/m_pTimeText¸¦ °®°í ÀÖ¾î¼­, ±âº» µ¿ÀÛÀ» ±×´ë·Î ¹°·Á¹ŞÀ¸¸é
+	// ÀÌ µÑÀÌ ¸Å ÇÁ·¹ÀÓ "LV. 1"(EndSceneÀÇ CPlayer´Â ·¹º§À» ¼¼ÆÃÇÑ ÀûÀÌ ¾ø¾î ±âº»°ª 1)·Î
+	// µ¤¾î½áÁ® ¹ö¸°´Ù. EndScene¿¡¼­´Â ÀÌ ·ÎÁ÷ ÀÚÃ¼°¡ ÇÊ¿ä ¾øÀ¸¹Ç·Î ¾Æ¹«°Íµµ ÇÏÁö ¾Ê´Â´Ù.
 }
 
 void CEndScene::ReleaseObjects()
