@@ -1,10 +1,10 @@
-ï»¿#include "stdafx.h"
+#include "stdafx.h"
 #include "CollisionManager.h"
 #include "Object.h"
 #include "Player.h"
 #include "CBossMonster.h"
 
-// ëª¬ìŠ¤í„° ë¨¸ë¦¬ ìœ„ì¯¤ì— ìˆ«ìê°€ ëœ¨ë„ë¡ ì£¼ëŠ” ìˆ˜ì§ ì˜¤í”„ì…‹(ì›”ë“œ ìœ ë‹›). ëª¬ìŠ¤í„° ëª¨ë¸ í¬ê¸°ì— ë§ê²Œ ì¡°ì •.
+// ¸ó½ºÅÍ ¸Ó¸® À§Âë¿¡ ¼ıÀÚ°¡ ¶ßµµ·Ï ÁÖ´Â ¼öÁ÷ ¿ÀÇÁ¼Â(¿ùµå À¯´Ö). ¸ó½ºÅÍ ¸ğµ¨ Å©±â¿¡ ¸Â°Ô Á¶Á¤.
 static const float DAMAGE_NUMBER_Y_OFFSET = 2.0f;
 
 CCollisionManager::CCollisionManager()
@@ -81,15 +81,15 @@ void CCollisionManager::Update(CPlayer* player)
     if (!tp) return;
 
     AnimationState curAnim = tp->m_currentAnim;
-    bool isAttacking = (curAnim == AnimationState::ATTACK);  // ì¢Œí´ë¦­ - ëª¨ë“  ì§ì—… ê³µí†µ
-    bool isSkill1 = (curAnim == AnimationState::SKILL1);  // ìš°í´ë¦­ - level[0]
+    bool isAttacking = (curAnim == AnimationState::ATTACK);  // ÁÂÅ¬¸¯ - ¸ğµç Á÷¾÷ °øÅë
+    bool isSkill1 = (curAnim == AnimationState::SKILL1);  // ¿ìÅ¬¸¯ - level[0]
     bool isSkill2 = (curAnim == AnimationState::SKILL2);  // Q      - level[1]
     bool isSkill3 = (curAnim == AnimationState::SKILL3);  // E      - level[2]
     bool isMage = (player->m_ePlayerClass == PlayerClass::MAGE);
     bool isRogue = (player->m_ePlayerClass == PlayerClass::ROGUE);
     bool isKnight = (player->m_ePlayerClass == PlayerClass::KNIGHT);
 
-    // â”€â”€ íŒŒì´ì–´ë³¼ ì¶©ëŒ (ë²•ì‚¬ SKILL1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ¦¡¦¡ ÆÄÀÌ¾îº¼ Ãæµ¹ (¹ı»ç SKILL1) ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
     if (isMage && m_pFireballSystem && m_pMonsters)
     {
         auto activeParticles = m_pFireballSystem->GetActiveParticles();
@@ -113,13 +113,13 @@ void CCollisionManager::Update(CPlayer* player)
                         xmf3HitPos.y += DAMAGE_NUMBER_Y_OFFSET;
                         m_pDamageNumberSystem->Spawn(xmf3HitPos, dmg);
                     }
-                    m_pFireballSystem->DeactivateAt(idx);  // íŒŒì´ì–´ë³¼ ì†Œë©¸
+                    m_pFireballSystem->DeactivateAt(idx);  // ÆÄÀÌ¾îº¼ ¼Ò¸ê
                     break;
                 }
             }
         }
 
-        // â”€â”€ íŒŒì´ì–´ë³¼ vs ë³´ìŠ¤ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ¦¡¦¡ ÆÄÀÌ¾îº¼ vs º¸½º ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
         if (m_pBoss && !m_pBoss->IsDead())
         {
             m_pBoss->CalculateBoundingBox();
@@ -139,14 +139,14 @@ void CCollisionManager::Update(CPlayer* player)
                         xmf3HitPos.y += DAMAGE_NUMBER_Y_OFFSET;
                         m_pDamageNumberSystem->Spawn(xmf3HitPos, dmg);
                     }
-                    m_pFireballSystem->DeactivateAt(idx);  // íŒŒì´ì–´ë³¼ ì†Œë©¸
+                    m_pFireballSystem->DeactivateAt(idx);  // ÆÄÀÌ¾îº¼ ¼Ò¸ê
                     break;
                 }
             }
         }
     }
 
-    // â”€â”€ íˆ¬ì²™ ë¬´ê¸° ì¶©ëŒ (ë„ì  SKILL1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ¦¡¦¡ ÅõÃ´ ¹«±â Ãæµ¹ (µµÀû SKILL1) ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
     if (isRogue && m_pWeaponThrowSystem && m_pWeaponThrowSystem->IsActive() && m_pMonsters)
     {
         BoundingSphere throwSphere(
@@ -168,12 +168,12 @@ void CCollisionManager::Update(CPlayer* player)
                     xmf3HitPos.y += DAMAGE_NUMBER_Y_OFFSET;
                     m_pDamageNumberSystem->Spawn(xmf3HitPos, dmg);
                 }
-                m_pWeaponThrowSystem->Deactivate();  // ë¬´ê¸° ì†Œë©¸ + ì† ë¬´ê¸° ë³µì›
+                m_pWeaponThrowSystem->Deactivate();  // ¹«±â ¼Ò¸ê + ¼Õ ¹«±â º¹¿ø
                 break;
             }
         }
 
-        // â”€â”€ íˆ¬ì²™ ë¬´ê¸° vs ë³´ìŠ¤ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ¦¡¦¡ ÅõÃ´ ¹«±â vs º¸½º ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
         if (m_pBoss && !m_pBoss->IsDead() && m_pWeaponThrowSystem->IsActive())
         {
             m_pBoss->CalculateBoundingBox();
@@ -188,15 +188,15 @@ void CCollisionManager::Update(CPlayer* player)
                     xmf3HitPos.y += DAMAGE_NUMBER_Y_OFFSET;
                     m_pDamageNumberSystem->Spawn(xmf3HitPos, dmg);
                 }
-                m_pWeaponThrowSystem->Deactivate();  // ë¬´ê¸° ì†Œë©¸ + ì† ë¬´ê¸° ë³µì›
+                m_pWeaponThrowSystem->Deactivate();  // ¹«±â ¼Ò¸ê + ¼Õ ¹«±â º¹¿ø
             }
         }
     }
 
-    // â”€â”€ ë¬´ê¸° ì¶©ëŒ (weapon BoundingBox ê¸°ë°˜) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        // ì¢Œí´ë¦­(ATTACK): ëª¨ë“  ì§ì—… ê³µí†µ, ê¸°ë³¸ damage
-        // ê¸°ì‚¬  Q(SKILL2): level[1] ë³´ë„ˆìŠ¤
-        // ë„ì   Q(SKILL2): level[1] ë³´ë„ˆìŠ¤
+    // ¦¡¦¡ ¹«±â Ãæµ¹ (weapon BoundingBox ±â¹İ) ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+        // ÁÂÅ¬¸¯(ATTACK): ¸ğµç Á÷¾÷ °øÅë, ±âº» damage
+        // ±â»ç  Q(SKILL2): level[1] º¸³Ê½º
+        // µµÀû  Q(SKILL2): level[1] º¸³Ê½º
 
     int weaponDmg = 0;
     bool isWeaponSwing = false;
@@ -204,12 +204,12 @@ void CCollisionManager::Update(CPlayer* player)
     if (isAttacking)
     {
         isWeaponSwing = true;
-        weaponDmg = player->damage;  // ê¸°ë³¸ ê³µê²© - ë ˆë²¨ ë³´ë„ˆìŠ¤ ì—†ìŒ
+        weaponDmg = player->damage;  // ±âº» °ø°İ - ·¹º§ º¸³Ê½º ¾øÀ½
     }
-    else if (!isMage && isSkill2)   // Q - ê¸°ì‚¬/ë„ì 
+    else if (!isMage && isSkill2)   // Q - ±â»ç/µµÀû
     {
         isWeaponSwing = true;
-        weaponDmg = player->damage + player->level[1] * 10;  // Q ìŠ¤í‚¬ ë ˆë²¨
+        weaponDmg = player->damage + player->level[1] * 10;  // Q ½ºÅ³ ·¹º§
     }
 
     if (isWeaponSwing && !m_bHitProcessed && m_pMonsters)
@@ -227,7 +227,7 @@ void CCollisionManager::Update(CPlayer* player)
                 {
                     XMFLOAT3 xmf3HitPos = monster->GetPosition();
                     xmf3HitPos.y += DAMAGE_NUMBER_Y_OFFSET;
-                    bool bCritical = !isAttacking; // ê¸°ë³¸ ê³µê²©ì´ ì•„ë‹Œ Q ìŠ¤í‚¬ íƒ€ê²©ì€ í¬ë¦¬í‹°ì»¬ ìƒ‰ìƒìœ¼ë¡œ ê°•ì¡°
+                    bool bCritical = !isAttacking; // ±âº» °ø°İÀÌ ¾Æ´Ñ Q ½ºÅ³ Å¸°İÀº Å©¸®Æ¼ÄÃ »ö»óÀ¸·Î °­Á¶
                     m_pDamageNumberSystem->Spawn(xmf3HitPos, weaponDmg, bCritical);
                 }
                 m_bHitProcessed = true;
@@ -235,7 +235,7 @@ void CCollisionManager::Update(CPlayer* player)
         }
     }
 
-    // â”€â”€ ë¬´ê¸° ìŠ¤ìœ™(ê¸°ë³¸ê³µê²©+Q) vs ë³´ìŠ¤ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ¦¡¦¡ ¹«±â ½ºÀ®(±âº»°ø°İ+Q) vs º¸½º ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
     if (isWeaponSwing && !m_bBossHitProcessed && m_pBoss && !m_pBoss->IsDead())
     {
         m_pBoss->CalculateBoundingBox();
@@ -255,27 +255,31 @@ void CCollisionManager::Update(CPlayer* player)
         }
     }
 
-    // ê³µê²© ì• ë‹ˆë©”ì´ì…˜ ì¢…ë£Œ ì‹œ íˆíŠ¸ í”Œë˜ê·¸ ë¦¬ì…‹
+    // °ø°İ ¾Ö´Ï¸ŞÀÌ¼Ç Á¾·á ½Ã È÷Æ® ÇÃ·¡±× ¸®¼Â
     if (!isWeaponSwing)
     {
         m_bHitProcessed = false;
         m_bBossHitProcessed = false;
     }
 
-    // â”€â”€ í™˜ê²½ ì¶©ëŒ (ì¿¼ë“œíŠ¸ë¦¬) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    // í”Œë ˆì´ì–´ê°€ ì†í•œ ë…¸ë“œ íƒìƒ‰
+    // A replicated spawn can initially overlap a map collider. Let the player settle
+    // before applying the horizontal collision push-out.
+    if (player->HasSpawnCollisionGrace()) return;
+
+    // ¦¡¦¡ È¯°æ Ãæµ¹ (ÄõµåÆ®¸®) ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+    // ÇÃ·¹ÀÌ¾î°¡ ¼ÓÇÑ ³ëµå Å½»ö
     QuadTreeNode* playerNode = m_pQuadTree->FindNode(m_pQuadTree->root, player->GetBoundingBox());
     if (!playerNode) return;
 
-    //if (m_frameCounter++ % 60 == 0) // 60 í”„ë ˆì„ë§ˆë‹¤ ì¶œë ¥
+    //if (m_frameCounter++ % 60 == 0) // 60 ÇÁ·¹ÀÓ¸¶´Ù Ãâ·Â
     //    cout << playerNode->bounds.Center.x << ", " << playerNode->bounds.Center.z << endl;
 
-    // ê·¼ì²˜ ì˜¤ë¸Œì íŠ¸ ìˆ˜ì§‘
+    // ±ÙÃ³ ¿ÀºêÁ§Æ® ¼öÁı
     m_objects.clear();
     m_colliderinfos.clear();
     CollectNearbyObjects(playerNode, player->GetBoundingBox(), m_objects, m_colliderinfos);
 
-    // object ëŒ€ìƒ ì¶©ëŒ ê²€ì‚¬ ë° ì²˜ë¦¬
+    // object ´ë»ó Ãæµ¹ °Ë»ç ¹× Ã³¸®
     for (CGameObject* obj : m_objects)
     {
         std::string ObjectFrameName = obj->GetFrameName();
@@ -284,14 +288,14 @@ void CCollisionManager::Update(CPlayer* player)
         {
             HandleCollision(player, obj);
         }
-        // for ê²€ ê³µê²© ì¶©ëŒ?
+        // for °Ë °ø°İ Ãæµ¹?
         //if (std::string::npos != ObjectFrameName.find("SalamanderPA") && obj != player && player->GetSwordAttackBoundingBox().Intersects(obj->GetBoundingBox()))
         //{
         //    HandleCollision(player, obj);
         //}
     }
 
-    // ColliderInfo ëŒ€ìƒ ì¶©ëŒ ê²€ì‚¬ ë° ì²˜ë¦¬
+    // ColliderInfo ´ë»ó Ãæµ¹ °Ë»ç ¹× Ã³¸®
     for (const ColliderInfo& col : m_colliderinfos)
     {
         if (CheckIntersection(player->GetBoundingBox(), col))
@@ -303,11 +307,11 @@ void CCollisionManager::Update(CPlayer* player)
 
 bool CCollisionManager::IsColliding(const BoundingBox& box1, const BoundingBox& box2)
 {
-    // Xì¶• ì¶©ëŒ ê²€ì‚¬
+    // XÃà Ãæµ¹ °Ë»ç
     if (fabs(box1.Center.x - box2.Center.x) > (box1.Extents.x + box2.Extents.x))
         return false;
 
-    // Zì¶• ì¶©ëŒ ê²€ì‚¬
+    // ZÃà Ãæµ¹ °Ë»ç
     if (fabs(box1.Center.z - box2.Center.z) > (box1.Extents.z + box2.Extents.z))
         return false;
 
@@ -332,7 +336,7 @@ void CCollisionManager::RenderDebug(ID3D12GraphicsCommandList* pd3dCommandList, 
 {
     if (!m_pDebugCube) return;
 
-    // ì™€ì´ì–´í”„ë ˆì„(ì„ )ìœ¼ë¡œ ê·¸ë¦¬ê¸° ìœ„í•œ íŒŒì´í”„ë¼ì¸(PSO) ì„¸íŒ…
+    // ¿ÍÀÌ¾îÇÁ·¹ÀÓ(¼±)À¸·Î ±×¸®±â À§ÇÑ ÆÄÀÌÇÁ¶óÀÎ(PSO) ¼¼ÆÃ
     //pd3dCommandList->SetPipelineState(m_pWireframePSO);
 
     for (const ColliderInfo& col : m_colliderinfos)
@@ -341,15 +345,15 @@ void CCollisionManager::RenderDebug(ID3D12GraphicsCommandList* pd3dCommandList, 
         {
         case ColliderType::AABB:
         {
-            // 1. ì¶©ëŒì²´ì˜ ì¤‘ì‹¬(Center)ê³¼ í¬ê¸°(Extents)ë¥¼ ë°”íƒ•ìœ¼ë¡œ ì›”ë“œ í–‰ë ¬ì„ ë§Œë“­ë‹ˆë‹¤.
-            // ExtentsëŠ” ì ˆë°˜ í¬ê¸°ì´ë¯€ë¡œ 2ë°°ë¥¼ ê³±í•´ ìŠ¤ì¼€ì¼ì„ ë§ì¶¥ë‹ˆë‹¤.
+            // 1. Ãæµ¹Ã¼ÀÇ Áß½É(Center)°ú Å©±â(Extents)¸¦ ¹ÙÅÁÀ¸·Î ¿ùµå Çà·ÄÀ» ¸¸µì´Ï´Ù.
+            // Extents´Â Àı¹İ Å©±âÀÌ¹Ç·Î 2¹è¸¦ °öÇØ ½ºÄÉÀÏÀ» ¸ÂÃä´Ï´Ù.
             DirectX::XMMATRIX matScale = DirectX::XMMatrixScaling(col.aabb.Extents.x * 2.0f, col.aabb.Extents.y * 2.0f, col.aabb.Extents.z * 2.0f);
             DirectX::XMMATRIX matTrans = DirectX::XMMatrixTranslation(col.aabb.Center.x, col.aabb.Center.y, col.aabb.Center.z);
 
             DirectX::XMFLOAT4X4 worldMat;
             DirectX::XMStoreFloat4x4(&worldMat, matScale * matTrans);
 
-            // 2. ë§Œë“¤ì–´ë‘” ë‹¨ì¼ ê°ì²´ì˜ ì›”ë“œ í–‰ë ¬ì„ ì§€ê¸ˆ ê²€ì‚¬ ì¤‘ì¸ ì¶©ëŒì²´ ìœ„ì¹˜ë¡œ 'ìˆœê°„ì´ë™' ì‹œí‚µë‹ˆë‹¤.
+            // 2. ¸¸µé¾îµĞ ´ÜÀÏ °´Ã¼ÀÇ ¿ùµå Çà·ÄÀ» Áö±İ °Ë»ç ÁßÀÎ Ãæµ¹Ã¼ À§Ä¡·Î '¼ø°£ÀÌµ¿' ½ÃÅµ´Ï´Ù.
             m_pDebugCube->m_xmf4x4World = worldMat;
 
             m_pDebugCube->Render(pd3dCommandList, pCamera);
@@ -360,25 +364,25 @@ void CCollisionManager::RenderDebug(ID3D12GraphicsCommandList* pd3dCommandList, 
         {
             using namespace DirectX;
 
-            // 1. í¬ê¸° (Scale): ExtentsëŠ” ì ˆë°˜ í¬ê¸°ì´ë¯€ë¡œ 2ë°°ë¥¼ ê³±í•´ì¤ë‹ˆë‹¤.
+            // 1. Å©±â (Scale): Extents´Â Àı¹İ Å©±âÀÌ¹Ç·Î 2¹è¸¦ °öÇØÁİ´Ï´Ù.
             XMMATRIX matScale = XMMatrixScaling(col.obb.Extents.x * 2.0f,
                 col.obb.Extents.y * 2.0f,
                 col.obb.Extents.z * 2.0f);
 
-            // 2. íšŒì „ (Rotation) [í•µì‹¬!]: OBBê°€ ê°€ì§„ ì¿¼í„°ë‹ˆì–¸(Orientation) ì •ë³´ë¥¼ íšŒì „ í–‰ë ¬ë¡œ ë³€í™˜í•©ë‹ˆë‹¤.
+            // 2. È¸Àü (Rotation) [ÇÙ½É!]: OBB°¡ °¡Áø ÄõÅÍ´Ï¾ğ(Orientation) Á¤º¸¸¦ È¸Àü Çà·Ä·Î º¯È¯ÇÕ´Ï´Ù.
             XMVECTOR quat = XMLoadFloat4(&col.obb.Orientation);
             XMMATRIX matRot = XMMatrixRotationQuaternion(quat);
 
-            // 3. ì´ë™ (Translation): ì¤‘ì‹¬ì  ìœ„ì¹˜
+            // 3. ÀÌµ¿ (Translation): Áß½ÉÁ¡ À§Ä¡
             XMMATRIX matTrans = XMMatrixTranslation(col.obb.Center.x,
                 col.obb.Center.y,
                 col.obb.Center.z);
 
-            // 4. ì›”ë“œ í–‰ë ¬ ì¡°í•© (â˜…ë°˜ë“œì‹œ Scale -> Rotation -> Translation ìˆœì„œë¡œ ê³±í•´ì•¼ í•©ë‹ˆë‹¤â˜…)
+            // 4. ¿ùµå Çà·Ä Á¶ÇÕ (¡Ú¹İµå½Ã Scale -> Rotation -> Translation ¼ø¼­·Î °öÇØ¾ß ÇÕ´Ï´Ù¡Ú)
             XMFLOAT4X4 worldMat;
             XMStoreFloat4x4(&worldMat, matScale * matRot * matTrans);
 
-            // 5. AABB ê·¸ë¦´ ë•Œ ì“°ë˜ ê·¸ íë¸Œ ê°ì²´ë¥¼ ê·¸ëŒ€ë¡œ ì¬ì‚¬ìš©í•´ì„œ ê·¸ë¦½ë‹ˆë‹¤!
+            // 5. AABB ±×¸± ¶§ ¾²´ø ±× Å¥ºê °´Ã¼¸¦ ±×´ë·Î Àç»ç¿ëÇØ¼­ ±×¸³´Ï´Ù!
             m_pDebugCube->m_xmf4x4World = worldMat;
             m_pDebugCube->Render(pd3dCommandList, pCamera);
 
@@ -497,7 +501,7 @@ void CCollisionManager::HandleCollision(CPlayer* player, CGameObject* obj)
         BoundingBox playerBox = player->GetBoundingBox();
         BoundingBox objBox = obj->GetBoundingBox();
 
-        // Min, Max ê³„ì‚°
+        // Min, Max °è»ê
         DirectX::XMFLOAT3 playerMin, playerMax, objMin, objMax;
         playerMin.x = playerBox.Center.x - playerBox.Extents.x;
         playerMin.y = playerBox.Center.y - playerBox.Extents.y;
@@ -513,25 +517,25 @@ void CCollisionManager::HandleCollision(CPlayer* player, CGameObject* obj)
         objMax.y = objBox.Center.y + objBox.Extents.y;
         objMax.z = objBox.Center.z + objBox.Extents.z;
 
-        // ê²¹ì¹¨ í¬ê¸° ê³„ì‚° (x, zì¶•)
+        // °ãÄ§ Å©±â °è»ê (x, zÃà)
         DirectX::XMFLOAT3 overlap;
         overlap.x = std::min(playerMax.x, objMax.x) - std::max(playerMin.x, objMin.x);
         overlap.z = std::min(playerMax.z, objMax.z) - std::max(playerMin.z, objMin.z);
 
-        // ê²¹ì¹¨ì´ ì‘ì€ ì¶•ì„ ê¸°ì¤€ìœ¼ë¡œ í”Œë ˆì´ì–´ ìœ„ì¹˜ ì¡°ì •
+        // °ãÄ§ÀÌ ÀÛÀº ÃàÀ» ±âÁØÀ¸·Î ÇÃ·¹ÀÌ¾î À§Ä¡ Á¶Á¤
         if (overlap.x < overlap.z)
         {
             if (playerPos.x < objBox.Center.x)
-                playerPos.x = objMin.x - playerBox.Extents.x; // ì™¼ìª½ìœ¼ë¡œ ë°€ì–´ëƒ„
+                playerPos.x = objMin.x - playerBox.Extents.x; // ¿ŞÂÊÀ¸·Î ¹Ğ¾î³¿
             else
-                playerPos.x = objMax.x + playerBox.Extents.x; // ì˜¤ë¥¸ìª½ìœ¼ë¡œ ë°€ì–´ëƒ„
+                playerPos.x = objMax.x + playerBox.Extents.x; // ¿À¸¥ÂÊÀ¸·Î ¹Ğ¾î³¿
         }
         else
         {
             if (playerPos.z < objBox.Center.z)
-                playerPos.z = objMin.z - playerBox.Extents.z; // ì•„ë˜ë¡œ ë°€ì–´ëƒ„
+                playerPos.z = objMin.z - playerBox.Extents.z; // ¾Æ·¡·Î ¹Ğ¾î³¿
             else
-                playerPos.z = objMax.z + playerBox.Extents.z; // ìœ„ë¡œ ë°€ì–´ëƒ„
+                playerPos.z = objMax.z + playerBox.Extents.z; // À§·Î ¹Ğ¾î³¿
         }
         player->SetPosition(playerPos);
         player->SetVelocity({ 0.0f, 0.0f, 0.0f });
@@ -589,7 +593,7 @@ void CCollisionManager::HandleCollision(CPlayer* player, const ColliderInfo& col
 
         if (distance > 0.0001f)
         {
-            // í”Œë ˆì´ì–´ ë°˜ê²½ì„ maxê°€ ì•„ë‹Œ min ë˜ëŠ” ì•½ê°„ ì¤„ì—¬ì„œ íƒ€ì´íŠ¸í•˜ê²Œ ì„¤ì •
+            // ÇÃ·¹ÀÌ¾î ¹İ°æÀ» max°¡ ¾Æ´Ñ min ¶Ç´Â ¾à°£ ÁÙ¿©¼­ Å¸ÀÌÆ®ÇÏ°Ô ¼³Á¤
             float playerRadius = std::min(playerBox.Extents.x, playerBox.Extents.z) * 0.8f;
             float safeDistance = playerRadius + colinfo.sphere.Radius;
 
@@ -605,39 +609,39 @@ void CCollisionManager::HandleCollision(CPlayer* player, const ColliderInfo& col
 
     case ColliderType::OBB:
     {
-        // OBB í‘œë©´ì—ì„œ ê°€ì¥ ê°€ê¹Œìš´ ì (Closest Point)ì„ ì°¾ì•„ ë°€ì–´ë‚´ê¸°
+        // OBB Ç¥¸é¿¡¼­ °¡Àå °¡±î¿î Á¡(Closest Point)À» Ã£¾Æ ¹Ğ¾î³»±â
         using namespace DirectX;
 
         XMVECTOR vPlayerCenter = XMLoadFloat3(&playerBox.Center);
         XMVECTOR vObbCenter = XMLoadFloat3(&colinfo.obb.Center);
         XMVECTOR vObbOrient = XMLoadFloat4(&colinfo.obb.Orientation);
 
-        // 1. í”Œë ˆì´ì–´ ìœ„ì¹˜ë¥¼ OBBì˜ ë¡œì»¬ ê³µê°„(íšŒì „ì´ í’€ë¦° ë˜‘ë°”ë¥¸ ìƒíƒœ)ìœ¼ë¡œ ë³€í™˜
+        // 1. ÇÃ·¹ÀÌ¾î À§Ä¡¸¦ OBBÀÇ ·ÎÄÃ °ø°£(È¸ÀüÀÌ Ç®¸° ¶È¹Ù¸¥ »óÅÂ)À¸·Î º¯È¯
         XMVECTOR vInvOrient = XMQuaternionInverse(vObbOrient);
         XMVECTOR vLocalPlayer = XMVector3Rotate(XMVectorSubtract(vPlayerCenter, vObbCenter), vInvOrient);
 
         XMFLOAT3 localPlayerPos;
         XMStoreFloat3(&localPlayerPos, vLocalPlayer);
 
-        // 2. ë¡œì»¬ ê³µê°„ì—ì„œ OBBì˜ ê²½ê³„(Extents) ì•ˆìœ¼ë¡œ ìœ„ì¹˜ë¥¼ ì œí•œ(Clamp)í•˜ì—¬ ê°€ì¥ ê°€ê¹Œìš´ í‘œë©´ ì ì„ ì°¾ìŒ
+        // 2. ·ÎÄÃ °ø°£¿¡¼­ OBBÀÇ °æ°è(Extents) ¾ÈÀ¸·Î À§Ä¡¸¦ Á¦ÇÑ(Clamp)ÇÏ¿© °¡Àå °¡±î¿î Ç¥¸é Á¡À» Ã£À½
         XMFLOAT3 closestPoint;
         closestPoint.x = std::clamp(localPlayerPos.x, -colinfo.obb.Extents.x, colinfo.obb.Extents.x);
-        closestPoint.y = 0.0f; // Yì¶•ì€ ë¬´ì‹œ
+        closestPoint.y = 0.0f; // YÃàÀº ¹«½Ã
         closestPoint.z = std::clamp(localPlayerPos.z, -colinfo.obb.Extents.z, colinfo.obb.Extents.z);
 
-        // 3. ì°¾ì€ í‘œë©´ ì ì„ ë‹¤ì‹œ ì›”ë“œ ê³µê°„ìœ¼ë¡œ ë³µêµ¬
+        // 3. Ã£Àº Ç¥¸é Á¡À» ´Ù½Ã ¿ùµå °ø°£À¸·Î º¹±¸
         XMVECTOR vLocalClosest = XMLoadFloat3(&closestPoint);
         XMVECTOR vWorldClosest = XMVectorAdd(XMVector3Rotate(vLocalClosest, vObbOrient), vObbCenter);
 
-        // 4. í”Œë ˆì´ì–´ ì¤‘ì‹¬ê³¼ ê°€ì¥ ê°€ê¹Œìš´ í‘œë©´ ì  ì‚¬ì´ì˜ ê±°ë¦¬ ê³„ì‚°
+        // 4. ÇÃ·¹ÀÌ¾î Áß½É°ú °¡Àå °¡±î¿î Ç¥¸é Á¡ »çÀÌÀÇ °Å¸® °è»ê
         XMVECTOR vPushDir = XMVectorSubtract(vPlayerCenter, vWorldClosest);
         vPushDir = XMVectorSetY(vPushDir, 0.0f);
         float distance = XMVectorGetX(XMVector3Length(vPushDir));
 
-        // í”Œë ˆì´ì–´ì˜ ì‹¤ì œ ì¶©ëŒ ë°˜ê²½ (ì‹œê°ì  í¬ê¸°ë³´ë‹¤ ì‚´ì§ ì‘ê²Œ ì£¼ë©´ ê²Œì„ì´ ì¾Œì í•´ì§‘ë‹ˆë‹¤)
+        // ÇÃ·¹ÀÌ¾îÀÇ ½ÇÁ¦ Ãæµ¹ ¹İ°æ (½Ã°¢Àû Å©±âº¸´Ù »ìÂ¦ ÀÛ°Ô ÁÖ¸é °ÔÀÓÀÌ ÄèÀûÇØÁı´Ï´Ù)
         float playerRadius = std::min(playerBox.Extents.x, playerBox.Extents.z) * 0.8f;
 
-        // í”Œë ˆì´ì–´ ì¤‘ì‹¬ì´ OBB í‘œë©´ì„ íŒŒê³ ë“¤ì—ˆë‹¤ë©´(distance < playerRadius) ë°–ìœ¼ë¡œ ë°€ì–´ëƒ„
+        // ÇÃ·¹ÀÌ¾î Áß½ÉÀÌ OBB Ç¥¸éÀ» ÆÄ°íµé¾ú´Ù¸é(distance < playerRadius) ¹ÛÀ¸·Î ¹Ğ¾î³¿
         if (distance < playerRadius && distance > 0.0001f)
         {
             vPushDir = XMVector3Normalize(vPushDir);
@@ -646,10 +650,10 @@ void CCollisionManager::HandleCollision(CPlayer* player, const ColliderInfo& col
             playerPos.x += XMVectorGetX(vPushDir) * overlap;
             playerPos.z += XMVectorGetZ(vPushDir) * overlap;
         }
-        // í”Œë ˆì´ì–´ ì¤‘ì‹¬ì´ ì•„ì˜ˆ OBB ë‚´ë¶€ì— ì™„ì „íˆ ë“¤ì–´ê°€ ë²„ë¦° ì˜ˆì™¸ ìƒí™© ì²˜ë¦¬ (ì¤‘ì‹¬ ë°©í–¥ìœ¼ë¡œ ë°€ì–´ë‚´ê¸°)
+        // ÇÃ·¹ÀÌ¾î Áß½ÉÀÌ ¾Æ¿¹ OBB ³»ºÎ¿¡ ¿ÏÀüÈ÷ µé¾î°¡ ¹ö¸° ¿¹¿Ü »óÈ² Ã³¸® (Áß½É ¹æÇâÀ¸·Î ¹Ğ¾î³»±â)
         else if (distance <= 0.0001f)
         {
-            // OBB ì¤‘ì‹¬ì—ì„œ í”Œë ˆì´ì–´ ë°©í–¥ìœ¼ë¡œ ê°•ì œë¡œ ì‚´ì§ ë°€ì–´ëƒ„
+            // OBB Áß½É¿¡¼­ ÇÃ·¹ÀÌ¾î ¹æÇâÀ¸·Î °­Á¦·Î »ìÂ¦ ¹Ğ¾î³¿
             XMVECTOR vEscapeDir = XMVectorSubtract(vPlayerCenter, vObbCenter);
             vEscapeDir = XMVectorSetY(vEscapeDir, 0.0f);
             if (XMVectorGetX(XMVector3LengthSq(vEscapeDir)) > 0.0001f) {
@@ -658,7 +662,7 @@ void CCollisionManager::HandleCollision(CPlayer* player, const ColliderInfo& col
                 playerPos.z += XMVectorGetZ(vEscapeDir) * playerRadius;
             }
             else {
-                playerPos.x += playerRadius; // ì™„ì „ ì¤‘ì‹¬ì´ë©´ ì„ì˜ì˜ ë°©í–¥(Xì¶•)ìœ¼ë¡œ ë°€ì–´ëƒ„
+                playerPos.x += playerRadius; // ¿ÏÀü Áß½ÉÀÌ¸é ÀÓÀÇÀÇ ¹æÇâ(XÃà)À¸·Î ¹Ğ¾î³¿
             }
         }
         break;

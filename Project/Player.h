@@ -1,4 +1,4 @@
-ï»¿#pragma once
+#pragma once
 
 #define DIR_FORWARD				0x01
 #define DIR_BACKWARD			0x02
@@ -16,9 +16,9 @@
 
 enum class PlayerClass
 {
-	KNIGHT,   // ê¸°ì‚¬  - ê°•íƒ€(Q): ë°”ë‹¥ ê· ì—´
-	MAGE,     // ë²•ì‚¬  - í™”ì—¼êµ¬ ë“± ë³„ë„ ì´í™íŠ¸
-	ROGUE,    // ë„ì   - SM_Weapon_01
+	KNIGHT,   // ±â»ç  - °­Å¸(Q): ¹Ù´Ú ±Õ¿­
+	MAGE,     // ¹ı»ç  - È­¿°±¸ µî º°µµ ÀÌÆåÆ®
+	ROGUE,    // µµÀû  - SM_Weapon_01
 	UNKNOWN
 };
 
@@ -62,7 +62,7 @@ protected:
 
 	CCamera* m_pCamera = NULL;
 
-	XMFLOAT3			m_lastPushDirection; // ë§ˆì§€ë§‰ ì¶©ëŒ ë°©í–¥ ì €ì¥
+	XMFLOAT3			m_lastPushDirection; // ¸¶Áö¸· Ãæµ¹ ¹æÇâ ÀúÀå
 	BoundingCylinder	m_BoundingCylinder;
 
 	BoundingBox			m_swordAttackBoundingBox;
@@ -89,17 +89,18 @@ public:
 	int level[3] = { 1,1,1 };
 	PlayerClass          m_ePlayerClass = PlayerClass::UNKNOWN;
 
-	// ì•„ì´í…œ
-	int m_nSelectedInventoryIndex = -1;  // ê¸°ë³¸ê°’ì€ 0ë²ˆ (1ë²ˆ ìŠ¬ë¡¯)
+	// ¾ÆÀÌÅÛ
+	int m_nSelectedInventoryIndex = -1;  // ±âº»°ªÀº 0¹ø (1¹ø ½½·Ô)
 	/*std::vector<CGameObject*> m_pHeldItems;*/
 	CGameObject* m_pHeldItems[4] = { nullptr };
 	CGameObject* m_pHand = NULL;
 	bool bflashlight = false;
 
-	float m_fPrevHP = 100.f;              // ì§ì „ í”„ë ˆì„ HP (í”¼ê²© ê°ì§€ìš©)
-	float m_fHitFlashTimer = 0.0f;        // ë‚¨ì€ í”Œë˜ì‹œ ì‹œê°„
-	static constexpr float HIT_FLASH_DURATION = 0.4f;  // ê¹œë¹¡ì„ ì§€ì† ì‹œê°„(ì´ˆ)
-	static constexpr float HIT_FLASH_BLINK_SPEED = 25.0f; // ê¹œë¹¡ì´ëŠ” ì†ë„
+	float m_fPrevHP = 100.f;              // Á÷Àü ÇÁ·¹ÀÓ HP (ÇÇ°İ °¨Áö¿ë)
+	float m_fHitFlashTimer = 0.0f;        // ³²Àº ÇÃ·¡½Ã ½Ã°£
+	float m_fSpawnCollisionGrace = 0.0f;  // ¼­¹ö ½ºÆù Á÷ÈÄ È¯°æ Ãæµ¹ ¹Ğ¾î³»±â ¹æÁö
+	static constexpr float HIT_FLASH_DURATION = 0.4f;  // ±ôºıÀÓ Áö¼Ó ½Ã°£(ÃÊ)
+	static constexpr float HIT_FLASH_BLINK_SPEED = 25.0f; // ±ôºıÀÌ´Â ¼Óµµ
 
 	void TriggerHitFlash() { m_fHitFlashTimer = HIT_FLASH_DURATION; }
 public:
@@ -119,10 +120,12 @@ public:
 	void SetMaxVelocityY(float fMaxVelocity) { m_fMaxVelocityY = fMaxVelocity; }
 	void SetVelocity(const XMFLOAT3& xmf3Velocity) { m_xmf3Velocity = xmf3Velocity; }
 	void SetPosition(const XMFLOAT3& xmf3Position) { Move(XMFLOAT3(xmf3Position.x - m_xmf3Position.x, xmf3Position.y - m_xmf3Position.y, xmf3Position.z - m_xmf3Position.z), false); }
-	// ë¡œê·¸ì¸/ë¦¬ìŠ¤í°ì²˜ëŸ¼ ì„œë²„ê°€ í™•ì •í•œ ìœ„ì¹˜ë¡œ ì˜®ê¸¸ ë•Œ ì‚¬ìš©í•œë‹¤.
-	// ì…ë ¥ ì´ë™ê³¼ ë‹¬ë¦¬ ì´ì „ ì†ë„ë¥¼ ë‚¨ê¸°ì§€ ì•Šì•„ ë‹¤ìŒ í”„ë ˆì„ì— ìŠ¤í° ìœ„ì¹˜ê°€ ë°€ë¦¬ì§€ ì•ŠëŠ”ë‹¤.
+	// ·Î±×ÀÎ/¸®½ºÆùÃ³·³ ¼­¹ö°¡ È®Á¤ÇÑ À§Ä¡·Î ¿Å±æ ¶§ »ç¿ëÇÑ´Ù.
+	// ÀÔ·Â ÀÌµ¿°ú ´Ş¸® ÀÌÀü ¼Óµµ¸¦ ³²±âÁö ¾Ê¾Æ ´ÙÀ½ ÇÁ·¹ÀÓ¿¡ ½ºÆù À§Ä¡°¡ ¹Ğ¸®Áö ¾Ê´Â´Ù.
 	void SnapToServerPosition(const XMFLOAT3& xmf3Position);
 	void SetPushDirection(const XMFLOAT3& direction) { m_lastPushDirection = direction; }
+	void BeginSpawnCollisionGrace(float seconds) { m_fSpawnCollisionGrace = seconds; }
+	bool HasSpawnCollisionGrace() const { return m_fSpawnCollisionGrace > 0.0f; }
 	void SetSwordAttadckBoundingBox(const BoundingBox& bbSwordAttack) { m_swordAttackBoundingBox = bbSwordAttack; }
 
 	void SetScale(XMFLOAT3& xmf3Scale) { m_xmf3Scale = xmf3Scale; }
@@ -205,7 +208,7 @@ public:
 	ID3D12Device* device = nullptr;
 	ID3D12GraphicsCommandList* cmdList = nullptr;
 	void SetHPWidth(float newWidth);
-	float m_fPrevHPBarWidth = -1.0f; // ì§ì „ HPë°” í­ ìºì‹œ(ì¸ìŠ¤í„´ìŠ¤ë³„). ì˜ˆì „ì—” í•¨ìˆ˜ ì§€ì—­ staticì´ë¼ ëª¨ë“  ì¸ìŠ¤í„´ìŠ¤/ì”¬ ì¬ì‹œì‘ ê°„ì— ê³µìœ ë˜ëŠ” ë²„ê·¸ê°€ ìˆì—ˆìŒ.
+	float m_fPrevHPBarWidth = -1.0f; // Á÷Àü HP¹Ù Æø Ä³½Ã(ÀÎ½ºÅÏ½ºº°). ¿¹Àü¿£ ÇÔ¼ö Áö¿ª staticÀÌ¶ó ¸ğµç ÀÎ½ºÅÏ½º/¾À Àç½ÃÀÛ °£¿¡ °øÀ¯µÇ´Â ¹ö±×°¡ ÀÖ¾úÀ½.
 
 	void PlayAnimationTrack(int trackIndex, float speed = 1.0f);
 	bool IsAnimationFinished(int trackIndex);

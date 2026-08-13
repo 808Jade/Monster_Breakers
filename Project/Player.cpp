@@ -1,4 +1,4 @@
-ï»¿//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // File: CPlayer.cpp
 //-----------------------------------------------------------------------------
 
@@ -89,7 +89,7 @@ void CPlayer::Move(const XMFLOAT3& xmf3Shift, bool bUpdateVelocity)
 	}
 	CalculateBoundingBox();
 
-	// BGM ì¬ìƒ ë¡œì§ í•˜ë“œ ì½”ë”©
+	// BGM Àç»ı ·ÎÁ÷ ÇÏµå ÄÚµù
 	BgmState nextBgmState;
 	float x = m_xmf3Position.x;
 	float z = m_xmf3Position.z;
@@ -130,7 +130,7 @@ void CPlayer::Rotate(float x, float y, float z)
 	DWORD nCurrentCameraMode = m_pCamera->GetMode();
 	if (nCurrentCameraMode == FIRST_PERSON_CAMERA)
 	{
-		// 1ì¸ì¹­ì€ ê¸°ì¡´ê³¼ ë™ì¼í•˜ê²Œ ì‹œì =ëª¸í†µ ë°©í–¥ì´ ê·¸ëŒ€ë¡œ ë¬¶ì—¬ ìˆì–´ì•¼ í•˜ë¯€ë¡œ ë³€ê²½í•˜ì§€ ì•ŠìŒ.
+		// 1ÀÎÄªÀº ±âÁ¸°ú µ¿ÀÏÇÏ°Ô ½ÃÁ¡=¸öÅë ¹æÇâÀÌ ±×´ë·Î ¹­¿© ÀÖ¾î¾ß ÇÏ¹Ç·Î º¯°æÇÏÁö ¾ÊÀ½.
 		if (x != 0.0f)
 		{
 			m_fPitch += x;
@@ -159,36 +159,36 @@ void CPlayer::Rotate(float x, float y, float z)
 	}
 	else if (nCurrentCameraMode == THIRD_PERSON_CAMERA)
 	{
-		// 3ì¸ì¹­ì—ì„œëŠ” ëª¸í†µ ë°©í–¥ë§Œ íšŒì „ì‹œí‚¨ë‹¤. ì¹´ë©”ë¼(ì‹œì )ëŠ” ë§ˆìš°ìŠ¤ íœ í´ë¦­ ë“œë˜ê·¸ë¡œ
-		// CThirdPersonCamera::AddOrbitRotationì„ í†µí•´ ì™„ì „íˆ ë³„ë„ë¡œ íšŒì „í•˜ë¯€ë¡œ ì—¬ê¸°ì„œëŠ” ê±´ë“œë¦¬ì§€ ì•ŠëŠ”ë‹¤.
+		// 3ÀÎÄª¿¡¼­´Â ¸öÅë ¹æÇâ¸¸ È¸Àü½ÃÅ²´Ù. Ä«¸Ş¶ó(½ÃÁ¡)´Â ¸¶¿ì½º ÈÙÅ¬¸¯ µå·¡±×·Î
+		// CThirdPersonCamera::AddOrbitRotationÀ» ÅëÇØ ¿ÏÀüÈ÷ º°µµ·Î È¸ÀüÇÏ¹Ç·Î ¿©±â¼­´Â °Çµå¸®Áö ¾Ê´Â´Ù.
 		if (y != 0.0f)
 		{
-			// 1. ì¹´ë©”ë¼ì˜ Look(ì•) ë°©í–¥ ë²¡í„°ë¥¼ ê°€ì ¸ì˜µë‹ˆë‹¤. 
-			// (ì£¼ì˜: m_pCamera->GetLookVector() ë¶€ë¶„ì€ ì‹¤ì œ ì¹´ë©”ë¼ì˜ Lookì„ ê°€ì ¸ì˜¤ëŠ” í•¨ìˆ˜ë‚˜ ë³€ìˆ˜ë¡œ ìˆ˜ì •í•´ì£¼ì„¸ìš”)
+			// 1. Ä«¸Ş¶óÀÇ Look(¾Õ) ¹æÇâ º¤ÅÍ¸¦ °¡Á®¿É´Ï´Ù. 
+			// (ÁÖÀÇ: m_pCamera->GetLookVector() ºÎºĞÀº ½ÇÁ¦ Ä«¸Ş¶óÀÇ LookÀ» °¡Á®¿À´Â ÇÔ¼ö³ª º¯¼ö·Î ¼öÁ¤ÇØÁÖ¼¼¿ä)
 			XMFLOAT3 camLook = m_pCamera->GetLookVector();
 
-			// 2. ì…ë ¥ëœ yë§Œí¼ íšŒì „í–ˆì„ ë•Œì˜ 'ì˜ˆìƒ' í”Œë ˆì´ì–´ Look ë²¡í„° êµ¬í•˜ê¸°
+			// 2. ÀÔ·ÂµÈ y¸¸Å­ È¸ÀüÇßÀ» ¶§ÀÇ '¿¹»ó' ÇÃ·¹ÀÌ¾î Look º¤ÅÍ ±¸ÇÏ±â
 			XMMATRIX mtxPredictedRot = XMMatrixRotationAxis(XMLoadFloat3(&m_xmf3Up), XMConvertToRadians(y));
 			XMFLOAT3 predictedLook = Vector3::TransformNormal(m_xmf3Look, mtxPredictedRot);
 
-			// 3. ì¹´ë©”ë¼ Lookê³¼ ì˜ˆìƒ í”Œë ˆì´ì–´ Look ì‚¬ì´ì˜ ê°ë„ ì°¨ì´ êµ¬í•˜ê¸° (Yì¶• íšŒì „ì´ë¯€ë¡œ XZ í‰ë©´ ê¸°ì¤€)
-			// ë‚´ì (Dot)ê³¼ ì™¸ì (Cross)ì˜ Yì„±ë¶„ì„ ì´ìš©í•´ -180ë„ ~ 180ë„ ì‚¬ì´ì˜ ì •í™•í•œ ê°ë„ë¥¼ ë„ì¶œí•©ë‹ˆë‹¤.
+			// 3. Ä«¸Ş¶ó Look°ú ¿¹»ó ÇÃ·¹ÀÌ¾î Look »çÀÌÀÇ °¢µµ Â÷ÀÌ ±¸ÇÏ±â (YÃà È¸ÀüÀÌ¹Ç·Î XZ Æò¸é ±âÁØ)
+			// ³»Àû(Dot)°ú ¿ÜÀû(Cross)ÀÇ Y¼ººĞÀ» ÀÌ¿ëÇØ -180µµ ~ 180µµ »çÀÌÀÇ Á¤È®ÇÑ °¢µµ¸¦ µµÃâÇÕ´Ï´Ù.
 			float dot = camLook.x * predictedLook.x + camLook.z * predictedLook.z;
 			float cross = camLook.z * predictedLook.x - camLook.x * predictedLook.z;
 			float diffAngle = XMConvertToDegrees(atan2(cross, dot));
 
-			// 4. ê°ë„ê°€ ì¢Œìš° 90ë„ë¥¼ ë„˜ì–´ê°€ë©´ ì‹¤ì œ ì ìš©í•  íšŒì „ëŸ‰(actualY)ì„ 90ë„ ì»·ì— ë§ê²Œ ì¤„ì…ë‹ˆë‹¤.
+			// 4. °¢µµ°¡ ÁÂ¿ì 90µµ¸¦ ³Ñ¾î°¡¸é ½ÇÁ¦ Àû¿ëÇÒ È¸Àü·®(actualY)À» 90µµ ÄÆ¿¡ ¸Â°Ô ÁÙÀÔ´Ï´Ù.
 			float actualY = y;
 			if (diffAngle > 90.0f)
 			{
-				actualY = y - (diffAngle - 90.0f); // ì˜¤ë¥¸ìª½ 90ë„ ì´ˆê³¼ë¶„ë§Œí¼ ëºŒ
+				actualY = y - (diffAngle - 90.0f); // ¿À¸¥ÂÊ 90µµ ÃÊ°úºĞ¸¸Å­ »­
 			}
 			else if (diffAngle < -90.0f)
 			{
-				actualY = y - (diffAngle - (-90.0f)); // ì™¼ìª½ 90ë„ ì´ˆê³¼ë¶„ë§Œí¼ ë”í•¨
+				actualY = y - (diffAngle - (-90.0f)); // ¿ŞÂÊ 90µµ ÃÊ°úºĞ¸¸Å­ ´õÇÔ
 			}
 
-			// 5. ì œí•œëœ íšŒì „ê°’(actualY)ìœ¼ë¡œë§Œ ì‹¤ì œ íšŒì „ ì ìš©
+			// 5. Á¦ÇÑµÈ È¸Àü°ª(actualY)À¸·Î¸¸ ½ÇÁ¦ È¸Àü Àû¿ë
 			if (actualY != 0.0f)
 			{
 				m_fYaw += actualY;
@@ -276,17 +276,17 @@ void CPlayer::CalculateBoundingBox()
 	m_BoundingCylinder.Height = mergedBox.Extents.y * 2.0f;
 	m_BoundingCylinder.Center = mergedBox.Center;
 
-	// 3. ì›í†µì„ ê°ì‹¸ëŠ” AABBë¡œ ë³€í™˜
+	// 3. ¿øÅëÀ» °¨½Î´Â AABB·Î º¯È¯
 	ConvertCylinderToAABB(m_BoundingCylinder, m_BoundingBox);
 }
 
 void CPlayer::GenerateSwordAttackBoundingBox()
 {
-	// ë°”ìš´ë”© ë°•ìŠ¤ì˜ ì¤‘ì‹¬: í”Œë ˆì´ì–´ ìœ„ì¹˜ì—ì„œ ì „ë°©(Look) ë°©í–¥ìœ¼ë¡œ 0.5f ì´ë™
+	// ¹Ù¿îµù ¹Ú½ºÀÇ Áß½É: ÇÃ·¹ÀÌ¾î À§Ä¡¿¡¼­ Àü¹æ(Look) ¹æÇâÀ¸·Î 0.5f ÀÌµ¿
 	XMFLOAT3 forwardOffset = Vector3::ScalarProduct(Vector3::Normalize(m_xmf3Look), 0.5f);
 	m_swordAttackBoundingBox.Center = Vector3::Add(m_xmf3Position, forwardOffset);
 
-	// ë°”ìš´ë”© ë°•ìŠ¤ì˜ í¬ê¸°
+	// ¹Ù¿îµù ¹Ú½ºÀÇ Å©±â
 	m_swordAttackBoundingBox.Extents = XMFLOAT3(0.5f, 0.5f, 1.0f);
 }
 
@@ -294,7 +294,7 @@ BoundingBox CPlayer::GetWeaponAttackBoundingBox()
 {
 	BoundingBox emptyBox{};
 	emptyBox.Center = XMFLOAT3(0, 0, 0);
-	emptyBox.Extents = XMFLOAT3(0, 0, 0);   // ë„ ë°•ìŠ¤
+	emptyBox.Extents = XMFLOAT3(0, 0, 0);   // ³Î ¹Ú½º
 
 	CGameObject* pWeapon = nullptr;
 
@@ -314,7 +314,13 @@ BoundingBox CPlayer::GetWeaponAttackBoundingBox()
 
 void CPlayer::Update(float fTimeElapsed)
 {
-	// --- í”¼ê²© ê°ì§€ (HPê°€ ì¤„ì—ˆìœ¼ë©´ ëª¬ìŠ¤í„°/ë‹¤ë¥¸ ëŒ€ìƒì—ê²Œ ê³µê²©ë°›ì€ ê²ƒ) ---
+	if (m_fSpawnCollisionGrace > 0.0f)
+	{
+		m_fSpawnCollisionGrace -= fTimeElapsed;
+		if (m_fSpawnCollisionGrace < 0.0f) m_fSpawnCollisionGrace = 0.0f;
+	}
+
+	// --- ÇÇ°İ °¨Áö (HP°¡ ÁÙ¾úÀ¸¸é ¸ó½ºÅÍ/´Ù¸¥ ´ë»ó¿¡°Ô °ø°İ¹ŞÀº °Í) ---
 	if (currentHP < m_fPrevHP) {
 		TriggerHitFlash();
 	}
@@ -416,7 +422,7 @@ void CPlayer::OnPrepareRender()
 
 void CPlayer::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
 {
-	// ê¹œë¹¡ì„: 0.4ì´ˆ ë™ì•ˆ siníŒŒë¡œ on/offë¥¼ ë°˜ë³µ â†’ "ê¹œë¹¡ê¹œë¹¡" ëŠë‚Œ
+	// ±ôºıÀÓ: 0.4ÃÊ µ¿¾È sinÆÄ·Î on/off¸¦ ¹İº¹ ¡æ "±ôºı±ôºı" ´À³¦
 	float intensity = 0.0f;
 	if (m_fHitFlashTimer > 0.0f)
 	{
@@ -465,21 +471,21 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLi
 	}
 	else
 	{
-		// FindFrameìœ¼ë¡œ ì§ì—… ì „ìš© ë³¸ ìœ ë¬´ë¥¼ íŒë³„
-		// (í”„ë¡œì íŠ¸ì— ëª¨ë¸ ì´ë¦„ ë©¤ë²„ê°€ ìˆë‹¤ë©´ ê·¸ ë°©ì‹ì„ ìš°ì„  ì‚¬ìš©)
-		if (FindFrame("SM_Weapon_04"))       // ê¸°ì‚¬ ì „ìš© ë¬´ê¸° ë³¸
+		// FindFrameÀ¸·Î Á÷¾÷ Àü¿ë º» À¯¹«¸¦ ÆÇº°
+		// (ÇÁ·ÎÁ§Æ®¿¡ ¸ğµ¨ ÀÌ¸§ ¸â¹ö°¡ ÀÖ´Ù¸é ±× ¹æ½ÄÀ» ¿ì¼± »ç¿ë)
+		if (FindFrame("SM_Weapon_04"))       // ±â»ç Àü¿ë ¹«±â º»
 			m_ePlayerClass = PlayerClass::KNIGHT;
-		else if (FindFrame("SM_Weapon_01"))  // ë„ì  ì „ìš© ë¬´ê¸° ë³¸
+		else if (FindFrame("SM_Weapon_01"))  // µµÀû Àü¿ë ¹«±â º»
 			m_ePlayerClass = PlayerClass::ROGUE;
 		else
 			m_ePlayerClass = PlayerClass::MAGE;
 	}
 
 	m_pSkinnedAnimationController = new CAnimationController(pd3dDevice, pd3dCommandList, 7, pPlayerModel);
-	m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); // ê¸°ë³¸
-	m_pSkinnedAnimationController->SetTrackAnimationSet(1, 1); // ê±·ê¸°
-	m_pSkinnedAnimationController->SetTrackAnimationSet(2, 2); // ë›°ê¸°
-	m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); // ê¸°ë³¸ê³µê²©
+	m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); // ±âº»
+	m_pSkinnedAnimationController->SetTrackAnimationSet(1, 1); // °È±â
+	m_pSkinnedAnimationController->SetTrackAnimationSet(2, 2); // ¶Ù±â
+	m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); // ±âº»°ø°İ
 	m_pSkinnedAnimationController->SetTrackAnimationSet(4, 4); // skill 1
 	m_pSkinnedAnimationController->SetTrackAnimationSet(5, 5); // skill 2
 	m_pSkinnedAnimationController->SetTrackAnimationSet(6, 6); // skill 3
@@ -601,7 +607,7 @@ void CTerrainPlayer::OnPlayerUpdateCallback(float fTimeElapsed)
 	XMFLOAT3 xmf3Scale = pTerrain->GetScale();
 	XMFLOAT3 xmf3PlayerPosition = GetPosition();
 
-	// í„°ë ˆì¸ ë³´ì • (3/4)
+	// ÅÍ·¹ÀÎ º¸Á¤ (3/4)
 	float terrainX = -156.71f;
 	float terrainY = -14.43f;
 	float terrainZ = -255.0f;
@@ -634,7 +640,7 @@ void CTerrainPlayer::OnCameraUpdateCallback(float fTimeElapsed)
 	XMFLOAT3 xmf3Scale = pTerrain->GetScale();
 	XMFLOAT3 xmf3CameraPosition = m_pCamera->GetPosition();
 
-	// í„°ë ˆì¸ ë³´ì • (4/4)
+	// ÅÍ·¹ÀÎ º¸Á¤ (4/4)
 	float terrainX = -156.71f;
 	float terrainY = -14.43f;
 	float terrainZ = -255.0f;
@@ -796,10 +802,10 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 	//	Item* pItem = dynamic_cast<Item*>(pObj);
 	//	if (!pItem) continue;
 
-	//	// í˜„ì¬ ì›”ë“œ ì¢Œí‘œ ê°€ì ¸ì˜¤ê¸°
+	//	// ÇöÀç ¿ùµå ÁÂÇ¥ °¡Á®¿À±â
 	//	XMFLOAT3 curPos = pItem->GetPosition();
 
-	//	// ì„œë²„ ë™ê¸°í™”
+	//	// ¼­¹ö µ¿±âÈ­
 	//	SendItemMove(pItem->GetUniqueID(), curPos);
 	//}
 
@@ -856,7 +862,7 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 				std::string soundName = "Footstep0" + std::to_string(randomIndex);
 				CSoundManager::GetInstance()->PlaySFX(soundName);
 
-				footstepTimer = 0.0f; // íƒ€ì´ë¨¸ ì´ˆê¸°í™”
+				footstepTimer = 0.0f; // Å¸ÀÌ¸Ó ÃÊ±âÈ­
 			}
 		}
 		else
@@ -867,13 +873,13 @@ void CTerrainPlayer::Update(float fTimeElapsed)
 				std::string soundName = "Footstep0" + std::to_string(randomIndex);
 				CSoundManager::GetInstance()->PlaySFX(soundName);
 
-				footstepTimer = 0.0f; // íƒ€ì´ë¨¸ ì´ˆê¸°í™”
+				footstepTimer = 0.0f; // Å¸ÀÌ¸Ó ÃÊ±âÈ­
 			}
 		}
 	}
 	else
 	{
-		// ë›°ê±°ë‚˜ ê±·ì§€ ì•Šìœ¼ë©´ íƒ€ì´ë¨¸ ì´ˆê¸°í™”
+		// ¶Ù°Å³ª °ÈÁö ¾ÊÀ¸¸é Å¸ÀÌ¸Ó ÃÊ±âÈ­
 		footstepTimer = 0.0f;
 	}
 }
@@ -882,9 +888,9 @@ void CTerrainPlayer::SetHPWidth(float newWidth)
 {
 	if (m_playerHP && m_playerHP->m_nMeshes > 0 && m_playerHP->m_ppMeshes[0])
 	{
-		// ì˜ˆì „ ë°©ì‹(ë©”ì‹œë¥¼ ìƒˆë¡œ ë§Œë“¤ê³  SetMeshë¡œ êµì²´)ì€ GPUê°€ ì´ì „ í”„ë ˆì„ì—ì„œ
-		// ê·¸ ë²„í…ìŠ¤ ë²„í¼ë¥¼ ì•„ì§ ì½ëŠ” ì¤‘ì¼ ìˆ˜ ìˆì–´ í™ ì†ìƒì„ ìœ ë°œí•  ìˆ˜ ìˆì—ˆë‹¤.
-		// CScreenRectMeshTextured::UpdateRect()ë¡œ ê°™ì€ ë²„í¼ì˜ ë‚´ìš©ë§Œ ê°±ì‹ í•œë‹¤.
+		// ¿¹Àü ¹æ½Ä(¸Ş½Ã¸¦ »õ·Î ¸¸µé°í SetMesh·Î ±³Ã¼)Àº GPU°¡ ÀÌÀü ÇÁ·¹ÀÓ¿¡¼­
+		// ±× ¹öÅØ½º ¹öÆÛ¸¦ ¾ÆÁ÷ ÀĞ´Â ÁßÀÏ ¼ö ÀÖ¾î Èü ¼Õ»óÀ» À¯¹ßÇÒ ¼ö ÀÖ¾ú´Ù.
+		// CScreenRectMeshTextured::UpdateRect()·Î °°Àº ¹öÆÛÀÇ ³»¿ë¸¸ °»½ÅÇÑ´Ù.
 		auto* pRect = static_cast<CScreenRectMeshTextured*>(m_playerHP->m_ppMeshes[0]);
 		pRect->UpdateRect(0.25f, newWidth, 0.85f, 0.1f);
 	}
@@ -909,11 +915,11 @@ bool CTerrainPlayer::IsAnimationFinished(int trackIndex)
 
 void CTerrainPlayer::StartAnimationBlend(int fromTrack, int toTrack, float blendTime)
 {
-	// ì§„í–‰ ì¤‘ì¸ ë¸”ë Œë“œê°€ ìˆìœ¼ë©´ í˜„ì¬ weightë¥¼ fromì˜ ì‹œì‘ê°’ìœ¼ë¡œ ì‚¬ìš©
+	// ÁøÇà ÁßÀÎ ºí·»µå°¡ ÀÖÀ¸¸é ÇöÀç weight¸¦ fromÀÇ ½ÃÀÛ°ªÀ¸·Î »ç¿ë
 	float startWeight = 1.0f;
 	if (m_animBlend.active && m_animBlend.to == fromTrack) {
 		float t = m_animBlend.elapsed / m_animBlend.duration;
-		startWeight = t; // í˜„ì¬ê¹Œì§€ ì˜¬ë¼ì˜¨ weightì—ì„œ ì‹œì‘
+		startWeight = t; // ÇöÀç±îÁö ¿Ã¶ó¿Â weight¿¡¼­ ½ÃÀÛ
 	}
 
 	m_animBlend.from = fromTrack;
@@ -940,7 +946,7 @@ void CPlayer::SnapToServerPosition(const XMFLOAT3& xmf3Position)
 	m_xmf3Velocity = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	if (m_pCamera) m_pCamera->Move(xmf3Shift);
 
-	// ì¶©ëŒ/ë Œë”ë§ì´ ì´ì „ í”„ë ˆì„ í–‰ë ¬ì„ ì°¸ì¡°í•˜ì§€ ì•Šë„ë¡ ì¦‰ì‹œ ë™ê¸°í™”í•œë‹¤.
+	// Ãæµ¹/·»´õ¸µÀÌ ÀÌÀü ÇÁ·¹ÀÓ Çà·ÄÀ» ÂüÁ¶ÇÏÁö ¾Êµµ·Ï Áï½Ã µ¿±âÈ­ÇÑ´Ù.
 	OnPrepareRender();
 	UpdateTransform(NULL);
 	CalculateBoundingBox();
